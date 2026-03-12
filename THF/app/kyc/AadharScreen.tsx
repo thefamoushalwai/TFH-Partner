@@ -139,7 +139,7 @@ export default function AadharScreen({ onBack, onUpload, onSkip }: AadharScreenP
               if (onSkip) {
                 onSkip();
               } else {
-                router.push('/kyc/SelfieScreen');
+                router.push('/(tabs)/DashboardScreen');
               }
             }}
             activeOpacity={0.7}

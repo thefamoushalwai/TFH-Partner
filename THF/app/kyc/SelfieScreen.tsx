@@ -76,7 +76,7 @@ export default function SelfieScreen({ onBack, onProceed }: SelfieScreenProps) {
             if (onProceed) {
               onProceed();
             } else {
-              router.replace('/(tabs)/DashboardScreen');
+              router.replace('/kyc/AadharScreen');
             }
           }}
           activeOpacity={0.85}

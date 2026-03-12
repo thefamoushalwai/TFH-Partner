@@ -46,13 +46,7 @@ export default function MobileLoginScreen({ onGetStarted }: MobileLoginScreenPro
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         {/* Hero Image */}
-        <View style={styles.imageContainer}>
-          <Image
-            source={require('../../assets/THF/login.png')} // Replace with your image path
-            style={styles.heroImage}
-            resizeMode="cover"
-          />
-        </View>
+
 
         {/* Bottom Content */}
         <View style={styles.bottomSheet}>
@@ -65,7 +59,7 @@ export default function MobileLoginScreen({ onGetStarted }: MobileLoginScreenPro
               placeholder="Enter your mobile number"
               placeholderTextColor="#b0b0b0"
               keyboardType="phone-pad"
-              maxLength={15}
+              maxLength={10}
               value={mobile}
               onChangeText={setMobile}
               returnKeyType="done"
@@ -117,6 +111,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingTop: 30,
     paddingBottom: 24,
+    marginTop: 100,
   },
   title: {
     fontSize: 16,

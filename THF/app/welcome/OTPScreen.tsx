@@ -24,7 +24,7 @@ interface OTPScreenProps {
   onBack?: () => void;
 }
 
-export default function OTPScreen({ phoneNumber = '+91 99278204579', onVerify, onBack }: OTPScreenProps) {
+export default function OTPScreen({ phoneNumber = '+91 9205394233', onVerify, onBack }: OTPScreenProps) {
   const router = useRouter();
   const [otp, setOtp] = useState(Array(OTP_LENGTH).fill(''));
   const [focusedIndex, setFocusedIndex] = useState(0);
@@ -74,7 +74,7 @@ export default function OTPScreen({ phoneNumber = '+91 99278204579', onVerify, o
       if (onVerify) {
         onVerify(otp.join(''));
       } else {
-        router.replace('/kyc/DetailsScreen');
+        router.replace('/kyc/ExperienceScreen');
       }
     }
   };

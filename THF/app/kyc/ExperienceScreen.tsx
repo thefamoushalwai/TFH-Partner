@@ -21,22 +21,32 @@ const OPTIONS = [
 
 interface ExperienceScreenProps {
   onBack?: () => void;
-  onContinue?: (selected: string) => void;
+  onContinue?: (selected: string[]) => void;
 }
 
 export default function ExperienceScreen({ onBack, onContinue }: ExperienceScreenProps) {
   const router = useRouter();
-  const [selected, setSelected] = useState<string | null>(null);
+  const [selected, setSelected] = useState<string[]>([]);
+
+  const toggleOption = (option: string) => {
+    if (selected.includes(option)) {
+      setSelected(selected.filter((item) => item !== option));
+    } else {
+      setSelected([...selected, option]);
+    }
+  };
 
   const handleContinue = () => {
-    if (selected) {
+    if (selected.length > 0) {
       if (onContinue) {
         onContinue(selected);
       } else {
-        router.push('/kyc/AadharScreen');
+        router.push('/kyc/DetailsScreen');
       }
     }
   };
+
+  const isSelected = (option: string) => selected.includes(option);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -75,16 +85,16 @@ export default function ExperienceScreen({ onBack, onContinue }: ExperienceScree
               key={option}
               style={[
                 styles.optionRow,
-                selected === option && styles.optionRowSelected,
+                isSelected(option) && styles.optionRowSelected,
               ]}
-              onPress={() => setSelected(option)}
+              onPress={() => toggleOption(option)}
               activeOpacity={0.7}
             >
-              <Text style={[styles.optionText, selected === option && styles.optionTextSelected]}>
+              <Text style={[styles.optionText, isSelected(option) && styles.optionTextSelected]}>
                 {option}
               </Text>
-              <View style={[styles.radio, selected === option && styles.radioSelected]}>
-                {selected === option && <View style={styles.radioInner} />}
+              <View style={[styles.checkbox, isSelected(option) && styles.checkboxSelected]}>
+                {isSelected(option) && <Text style={styles.checkMark}>✓</Text>}
               </View>
             </TouchableOpacity>
           ))}
@@ -94,12 +104,12 @@ export default function ExperienceScreen({ onBack, onContinue }: ExperienceScree
       {/* Continue Button */}
       <View style={styles.footer}>
         <TouchableOpacity
-          style={[styles.continueBtn, selected && styles.continueBtnActive]}
+          style={[styles.continueBtn, selected.length > 0 && styles.continueBtnActive]}
           onPress={handleContinue}
-          activeOpacity={selected ? 0.85 : 1}
-          disabled={!selected}
+          activeOpacity={selected.length > 0 ? 0.85 : 1}
+          disabled={selected.length === 0}
         >
-          <Text style={[styles.continueText, selected && styles.continueTextActive]}>
+          <Text style={[styles.continueText, selected.length > 0 && styles.continueTextActive]}>
             Continue
           </Text>
         </TouchableOpacity>
@@ -148,35 +158,37 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   optionRowSelected: {
-    borderColor: '#E8304A',
-    backgroundColor: '#fff8f8',
+    // No red background or border when selected, keeps the same appearance as unselected
   },
   optionText: {
     fontSize: 15,
-    color: '#444',
+    color: '#666',
     fontWeight: '400',
   },
   optionTextSelected: {
-    color: '#111',
-    fontWeight: '500',
+    color: '#444',
+    fontWeight: '400',
   },
 
-  /* Radio */
-  radio: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    borderWidth: 2,
-    borderColor: '#ccc',
+  /* Checkbox */
+  checkbox: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: '#555',
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: '#fff',
   },
-  radioSelected: { borderColor: '#E8304A' },
-  radioInner: {
-    width: 11,
-    height: 11,
-    borderRadius: 5.5,
-    backgroundColor: '#E8304A',
+  checkboxSelected: {
+    borderColor: '#0b8a5b',
+    backgroundColor: '#0b8a5b',
+  },
+  checkMark: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '900',
   },
 
   /* Footer */

@@ -5,9 +5,11 @@ import {
   TouchableOpacity,
   ScrollView,
   StyleSheet,
-  SafeAreaView,
+
   StatusBar,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import Navbar from '../../components/Navbar';
 
 /* ── Types ── */
 interface Transaction {
@@ -53,40 +55,8 @@ function TransactionRow({ transaction }: { transaction: Transaction }) {
 }
 
 /* ── Bottom Tab Bar ── */
-const TABS = [
-  { id: 'home', label: 'Home', icon: '🏠' },
-  { id: 'bookings', label: 'My Bookings', icon: '📅' },
-  { id: 'earnings', label: 'Earnings', icon: '💰' },
-  { id: 'profile', label: 'Profile', icon: '👤' },
-];
 
-function TabBar({
-  activeTab,
-  onTabChange,
-}: {
-  activeTab: string;
-  onTabChange?: (tab: string) => void;
-}) {
-  return (
-    <View style={tabStyles.container}>
-      {TABS.map((tab) => (
-        <TouchableOpacity
-          key={tab.id}
-          style={tabStyles.tab}
-          onPress={() => onTabChange?.(tab.id)}
-          activeOpacity={0.7}
-        >
-          <Text style={[tabStyles.icon, activeTab === tab.id && tabStyles.iconActive]}>
-            {tab.icon}
-          </Text>
-          <Text style={[tabStyles.label, activeTab === tab.id && tabStyles.labelActive]}>
-            {tab.label}
-          </Text>
-        </TouchableOpacity>
-      ))}
-    </View>
-  );
-}
+
 
 /* ── Default Data ── */
 const DEFAULT_TRANSACTIONS: Transaction[] = [
@@ -122,22 +92,7 @@ export default function EarningsScreen({
       <StatusBar barStyle="dark-content" backgroundColor="#fff" />
 
       {/* ── Top Nav ── */}
-      <View style={styles.navbar}>
-        <View style={styles.logoRow}>
-          <View style={styles.logoBox}>
-            <Text style={styles.logoText}>TFH</Text>
-          </View>
-          <View>
-            <Text style={styles.brandLine}>The</Text>
-            <Text style={styles.brandLine}>Famous</Text>
-            <Text style={styles.brandLine}>Halwai</Text>
-          </View>
-        </View>
-        <TouchableOpacity style={styles.helpBtn} onPress={onHelp} activeOpacity={0.8}>
-          <Text style={styles.helpIcon}>📞</Text>
-          <Text style={styles.helpText}>Help</Text>
-        </TouchableOpacity>
-      </View>
+      <Navbar onHelp={onHelp} />
 
       <ScrollView
         style={styles.scroll}
@@ -190,7 +145,7 @@ export default function EarningsScreen({
       </ScrollView>
 
       {/* ── Bottom Tab Bar ── */}
-      <TabBar activeTab={activeTab} onTabChange={handleTabChange} />
+    
     </SafeAreaView>
   );
 }
@@ -201,40 +156,7 @@ const styles = StyleSheet.create({
   scroll: { flex: 1 },
   scrollContent: { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 8 },
 
-  /* Navbar */
-  navbar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
-  },
-  logoRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  logoBox: {
-    width: 36,
-    height: 36,
-    borderRadius: 8,
-    backgroundColor: '#E8304A',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  logoText: { color: '#fff', fontWeight: '800', fontSize: 12, letterSpacing: 0.5 },
-  brandLine: { fontSize: 11, color: '#333', fontWeight: '400', lineHeight: 14 },
-  helpBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    borderWidth: 1.5,
-    borderColor: '#e0e0e0',
-    borderRadius: 20,
-    paddingVertical: 6,
-    paddingHorizontal: 14,
-  },
-  helpIcon: { fontSize: 13 },
-  helpText: { fontSize: 14, color: '#333', fontWeight: '500' },
+
 
   pageTitle: { fontSize: 22, fontWeight: '700', color: '#111', marginBottom: 4 },
   monthLabel: { fontSize: 14, color: '#888', marginBottom: 16 },

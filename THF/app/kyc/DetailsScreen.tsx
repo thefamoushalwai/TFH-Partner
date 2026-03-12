@@ -14,6 +14,7 @@ import {
   View,
 } from 'react-native';
 
+
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -150,7 +151,7 @@ export default function DetailsScreen({ onBack, onRegister }: DetailsScreenProps
       if (onRegister) {
         onRegister({ name, email, emergency, gender, city, address });
       } else {
-        router.push('/kyc/ExperienceScreen');
+        router.push('/kyc/UploadDocumentsScreen_1');
       }
     }
   };

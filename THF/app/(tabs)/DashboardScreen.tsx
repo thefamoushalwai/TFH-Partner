@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   View,
   Text,
@@ -6,11 +6,12 @@ import {
   TouchableOpacity,
   ScrollView,
   StyleSheet,
-  SafeAreaView,
+
   StatusBar,
   Dimensions,
 } from 'react-native';
-
+import { SafeAreaView } from 'react-native-safe-area-context';
+import Navbar from '../../components/Navbar';
 const { width } = Dimensions.get('window');
 
 /* ── Types ── */
@@ -38,7 +39,6 @@ interface DashboardScreenProps {
   onViewDetail?: (booking: Booking) => void;
   onLocation?: (booking: Booking) => void;
   onCallClient?: (booking: Booking) => void;
-  onTabChange?: (tab: string) => void;
 }
 
 /* ── Summary Card ── */
@@ -117,35 +117,7 @@ function BookingCard({
   );
 }
 
-/* ── Bottom Tab Bar ── */
-const TABS = [
-  { id: 'home', label: 'Home', icon: '🏠' },
-  { id: 'bookings', label: 'My Bookings', icon: '📅' },
-  { id: 'earnings', label: 'Earnings', icon: '💰' },
-  { id: 'profile', label: 'Profile', icon: '👤' },
-];
 
-function TabBar({ activeTab, onTabChange }: { activeTab: string; onTabChange?: (tab: string) => void }) {
-  return (
-    <View style={tabStyles.container}>
-      {TABS.map((tab) => (
-        <TouchableOpacity
-          key={tab.id}
-          style={tabStyles.tab}
-          onPress={() => onTabChange?.(tab.id)}
-          activeOpacity={0.7}
-        >
-          <Text style={[tabStyles.icon, activeTab === tab.id && tabStyles.iconActive]}>
-            {tab.icon}
-          </Text>
-          <Text style={[tabStyles.label, activeTab === tab.id && tabStyles.labelActive]}>
-            {tab.label}
-          </Text>
-        </TouchableOpacity>
-      ))}
-    </View>
-  );
-}
 
 /* ── Main Screen ── */
 const DEFAULT_BOOKINGS: Booking[] = [
@@ -184,36 +156,14 @@ export default function DashboardScreen({
   onViewDetail,
   onLocation,
   onCallClient,
-  onTabChange,
 }: DashboardScreenProps) {
-  const [activeTab, setActiveTab] = useState('home');
-
-  const handleTabChange = (tab: string) => {
-    setActiveTab(tab);
-    onTabChange?.(tab);
-  };
 
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#fff" />
 
       {/* ── Top Nav ── */}
-      <View style={styles.navbar}>
-        <View style={styles.logoRow}>
-          <View style={styles.logoBox}>
-            <Text style={styles.logoText}>TFH</Text>
-          </View>
-          <View>
-            <Text style={styles.brandLine1}>The</Text>
-            <Text style={styles.brandLine2}>Famous</Text>
-            <Text style={styles.brandLine2}>Halwai</Text>
-          </View>
-        </View>
-        <TouchableOpacity style={styles.helpBtn} onPress={onHelp} activeOpacity={0.8}>
-          <Text style={styles.helpIcon}>📞</Text>
-          <Text style={styles.helpText}>Help</Text>
-        </TouchableOpacity>
-      </View>
+      <Navbar onHelp={onHelp} />
 
       <ScrollView
         style={styles.scroll}
@@ -268,9 +218,6 @@ export default function DashboardScreen({
 
         <View style={{ height: 16 }} />
       </ScrollView>
-
-      {/* ── Bottom Tab Bar ── */}
-      <TabBar activeTab={activeTab} onTabChange={handleTabChange} />
     </SafeAreaView>
   );
 }
@@ -281,41 +228,7 @@ const styles = StyleSheet.create({
   scroll: { flex: 1 },
   scrollContent: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 8 },
 
-  /* Navbar */
-  navbar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
-  },
-  logoRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  logoBox: {
-    width: 36,
-    height: 36,
-    borderRadius: 8,
-    backgroundColor: '#E8304A',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  logoText: { color: '#fff', fontWeight: '800', fontSize: 12, letterSpacing: 0.5 },
-  brandLine1: { fontSize: 11, color: '#333', fontWeight: '600', lineHeight: 14 },
-  brandLine2: { fontSize: 11, color: '#333', fontWeight: '400', lineHeight: 14 },
-  helpBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    borderWidth: 1.5,
-    borderColor: '#e0e0e0',
-    borderRadius: 20,
-    paddingVertical: 6,
-    paddingHorizontal: 14,
-  },
-  helpIcon: { fontSize: 13 },
-  helpText: { fontSize: 14, color: '#333', fontWeight: '500' },
+
 
   /* Welcome Card */
   welcomeCard: {
@@ -457,18 +370,4 @@ const bookingStyles = StyleSheet.create({
   callBtnText: { fontSize: 13, color: '#2e7d32', fontWeight: '600' },
 });
 
-const tabStyles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    backgroundColor: '#fff',
-    borderTopWidth: 1,
-    borderTopColor: '#f0f0f0',
-    paddingBottom: 8,
-    paddingTop: 8,
-  },
-  tab: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 4 },
-  icon: { fontSize: 20, marginBottom: 3, opacity: 0.4 },
-  iconActive: { opacity: 1 },
-  label: { fontSize: 11, color: '#aaa', fontWeight: '500' },
-  labelActive: { color: '#E8304A', fontWeight: '600' },
-});
+
