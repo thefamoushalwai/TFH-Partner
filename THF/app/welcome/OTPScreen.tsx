@@ -1,5 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
+  ActivityIndicator,
+  Alert,
   KeyboardAvoidingView,
   NativeSyntheticEvent,
   Platform,
@@ -12,25 +14,34 @@ import {
   View,
 } from 'react-native';
 
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
+
+import { sendOtp, verifyOtp } from '@/lib/auth';
 
 const OTP_LENGTH = 6;
 const RESEND_SECONDS = 30;
 
 interface OTPScreenProps {
-  phoneNumber?: string;
   onVerify?: (otp: string) => void;
   onBack?: () => void;
 }
 
-export default function OTPScreen({ phoneNumber = '+91 9205394233', onVerify, onBack }: OTPScreenProps) {
+export default function OTPScreen({ onVerify, onBack }: OTPScreenProps) {
   const router = useRouter();
+  const params = useLocalSearchParams<{ verificationId?: string; phoneNumber?: string }>();
+
+  const [verificationId, setVerificationId] = useState(params.verificationId ?? '');
+  const phoneNumber = params.phoneNumber ?? '+91 9205394233';
+
   const [otp, setOtp] = useState(Array(OTP_LENGTH).fill(''));
   const [focusedIndex, setFocusedIndex] = useState(0);
   const [whatsapp, setWhatsapp] = useState(true);
   const [timer, setTimer] = useState(RESEND_SECONDS);
   const [canResend, setCanResend] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [resending, setResending] = useState(false);
+
   const inputRefs = useRef<(TextInput | null)[]>([]);
 
   // Countdown timer
@@ -40,15 +51,28 @@ export default function OTPScreen({ phoneNumber = '+91 9205394233', onVerify, on
     return () => clearInterval(id);
   }, [timer]);
 
-  const handleResend = () => {
+  /* ── Resend OTP ── */
+  const handleResend = async () => {
     if (!canResend) return;
-    setOtp(Array(OTP_LENGTH).fill(''));
-    setFocusedIndex(0);
-    inputRefs.current[0]?.focus();
-    setTimer(RESEND_SECONDS);
-    setCanResend(false);
+
+    setResending(true);
+    try {
+      const newVerificationId = await sendOtp(phoneNumber);
+      setVerificationId(newVerificationId);
+      setOtp(Array(OTP_LENGTH).fill(''));
+      setFocusedIndex(0);
+      inputRefs.current[0]?.focus();
+      setTimer(RESEND_SECONDS);
+      setCanResend(false);
+    } catch (error: any) {
+      console.error('Resend OTP error:', error);
+      Alert.alert('Error', error?.message || 'Failed to resend OTP. Please try again.');
+    } finally {
+      setResending(false);
+    }
   };
 
+  /* ── OTP Input Handling ── */
   const handleChange = (text: string, index: number) => {
     const digit = text.replace(/[^0-9]/g, '').slice(-1);
     const newOtp = [...otp];
@@ -69,21 +93,57 @@ export default function OTPScreen({ phoneNumber = '+91 9205394233', onVerify, on
 
   const isComplete = otp.every((d) => d !== '');
 
-  const handleVerify = () => {
-    if (isComplete) {
-      if (onVerify) {
-        onVerify(otp.join(''));
-      } else {
-        router.replace('/kyc/ExperienceScreen');
+  /* ── Verify OTP with Firebase ── */
+  const handleVerify = async () => {
+    if (!isComplete) return;
+
+    const otpCode = otp.join('');
+
+    if (onVerify) {
+      onVerify(otpCode);
+      return;
+    }
+
+    if (!verificationId) {
+      Alert.alert('Error', 'Verification session expired. Please go back and try again.');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const user = await verifyOtp(verificationId, otpCode);
+      console.log('Firebase user signed in:', user.uid);
+      // Navigate to the next screen after successful verification
+      router.replace('/kyc/ExperienceScreen');
+    } catch (error: any) {
+      console.error('OTP verify error:', error);
+
+      let message = 'Invalid OTP. Please try again.';
+      if (error?.code === 'auth/invalid-verification-code') {
+        message = 'The OTP you entered is incorrect. Please check and try again.';
+      } else if (error?.code === 'auth/code-expired') {
+        message = 'The OTP has expired. Please resend and try again.';
+      } else if (error?.code === 'auth/session-expired') {
+        message = 'Your session has expired. Please go back and request a new OTP.';
       }
+
+      Alert.alert('Verification Failed', message);
+    } finally {
+      setLoading(false);
     }
   };
 
   const pad = (n: number) => String(n).padStart(2, '0');
 
+  // Format phone for display (e.g. "+919205394233" → "+91 9205394233")
+  const displayPhone = phoneNumber.startsWith('+91') && !phoneNumber.includes(' ')
+    ? `+91 ${phoneNumber.slice(3)}`
+    : phoneNumber;
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -108,7 +168,7 @@ export default function OTPScreen({ phoneNumber = '+91 9205394233', onVerify, on
           <Text style={styles.heading}>Enter the 6 digit OTP</Text>
           <Text style={styles.subheading}>
             Enter the six digit code we have sent to{'\n'}
-            <Text style={styles.phone}>{phoneNumber}</Text>
+            <Text style={styles.phone}>{displayPhone}</Text>
           </Text>
 
           {/* OTP Boxes */}
@@ -130,6 +190,7 @@ export default function OTPScreen({ phoneNumber = '+91 9205394233', onVerify, on
                 maxLength={1}
                 textAlign="center"
                 caretHidden
+                editable={!loading}
               />
             ))}
           </View>
@@ -138,9 +199,13 @@ export default function OTPScreen({ phoneNumber = '+91 9205394233', onVerify, on
           <Text style={styles.resendText}>
             {"Didn't get the OTP? "}
             {canResend ? (
-              <Text style={styles.resendLink} onPress={handleResend}>
-                Resend SMS
-              </Text>
+              resending ? (
+                <Text style={styles.resendTimer}>Sending…</Text>
+              ) : (
+                <Text style={styles.resendLink} onPress={handleResend}>
+                  Resend SMS
+                </Text>
+              )
             ) : (
               <Text style={styles.resendTimer}>
                 Resend SMS in 00:{pad(timer)}
@@ -165,14 +230,18 @@ export default function OTPScreen({ phoneNumber = '+91 9205394233', onVerify, on
 
           {/* Verify Button */}
           <TouchableOpacity
-            style={[styles.verifyBtn, isComplete && styles.verifyBtnActive]}
+            style={[styles.verifyBtn, isComplete && !loading && styles.verifyBtnActive]}
             onPress={handleVerify}
-            activeOpacity={isComplete ? 0.85 : 1}
-            disabled={!isComplete}
+            activeOpacity={isComplete && !loading ? 0.85 : 1}
+            disabled={!isComplete || loading}
           >
-            <Text style={[styles.verifyText, isComplete && styles.verifyTextActive]}>
-              Verify
-            </Text>
+            {loading ? (
+              <ActivityIndicator color="#fff" size="small" />
+            ) : (
+              <Text style={[styles.verifyText, isComplete && styles.verifyTextActive]}>
+                Verify
+              </Text>
+            )}
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>

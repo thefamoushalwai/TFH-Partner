@@ -72,18 +72,17 @@ export default function AadharScreen({ onBack, onUpload, onSkip }: AadharScreenP
           <Text style={styles.heading}>Enter your Aadhar details</Text>
           <Text style={styles.subheading}>Upload your own documents for a faster process!</Text>
 
-          {/* 👇 Replace with your Aadhar card image */}
           <View style={styles.cardContainer}>
             <Image
-              source={require('../../assets/THF/aadhar_card.png')} // 👈 Replace with your image
+              source={require('../../assets/THF/aadhar_card.png')}
               style={styles.cardImage}
               resizeMode="contain"
             />
           </View>
 
           {/* Aadhar Number Input */}
-          <View style={[styles.inputWrapper, focused && styles.inputWrapperFocused]}>
-            <Text style={[styles.floatLabel, focused && styles.floatLabelFocused]}>
+          <View style={[styles.inputWrapper]}>
+            <Text style={[styles.floatLabel]}>
               Enter Aadhar number
             </Text>
             <View style={styles.inputRow}>
@@ -166,17 +165,16 @@ const styles = StyleSheet.create({
   /* Card Image */
   cardContainer: {
     width: '100%',
-    backgroundColor: '#b0b8c8',
+    backgroundColor: '#ffffff',
     borderRadius: 16,
     overflow: 'hidden',
     marginBottom: 24,
     alignItems: 'center',
     paddingVertical: 16,
-    paddingHorizontal: 12,
   },
   cardImage: {
-    width: width - 64,
-    height: (width - 64) * 0.6,
+    width: width,
+    height: (width) * 0.6,
   },
 
   /* Input */
@@ -190,7 +188,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     backgroundColor: '#fff',
   },
-  inputWrapperFocused: { borderColor: '#E8304A' },
+
   floatLabel: { fontSize: 11, color: '#aaa', fontWeight: '500', letterSpacing: 0.3, marginBottom: 2 },
   floatLabelFocused: { color: '#E8304A' },
   inputRow: { flexDirection: 'row', alignItems: 'center' },

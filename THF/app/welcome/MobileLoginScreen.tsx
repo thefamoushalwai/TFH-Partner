@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import {
+  ActivityIndicator,
+  Alert,
   Dimensions,
-  Image,
   KeyboardAvoidingView,
   Platform,
   StatusBar,
@@ -15,6 +16,8 @@ import {
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { sendOtp } from '@/lib/auth';
+
 const { height } = Dimensions.get('window');
 
 interface MobileLoginScreenProps {
@@ -24,16 +27,39 @@ interface MobileLoginScreenProps {
 export default function MobileLoginScreen({ onGetStarted }: MobileLoginScreenProps) {
   const router = useRouter();
   const [mobile, setMobile] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const isValid = mobile.trim().length >= 10;
 
-  const handleGetStarted = () => {
-    if (isValid) {
-      if (onGetStarted) {
-        onGetStarted(mobile.trim());
-      } else {
-        router.push('/welcome/OTPScreen');
-      }
+  const handleGetStarted = async () => {
+    if (!isValid) return;
+
+    if (onGetStarted) {
+      onGetStarted(mobile.trim());
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const phoneNumber = `+91${mobile.trim()}`;
+      const verificationId = await sendOtp(phoneNumber);
+
+      // Navigate to OTP screen with the verificationId & phone number
+      router.push({
+        pathname: '/welcome/OTPScreen',
+        params: {
+          verificationId,
+          phoneNumber,
+        },
+      });
+    } catch (error: any) {
+      console.error('OTP send error:', error);
+      Alert.alert(
+        'Error',
+        error?.message || 'Failed to send OTP. Please try again.',
+      );
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -64,19 +90,24 @@ export default function MobileLoginScreen({ onGetStarted }: MobileLoginScreenPro
               onChangeText={setMobile}
               returnKeyType="done"
               onSubmitEditing={handleGetStarted}
+              editable={!loading}
             />
           </View>
 
           {/* Get Started Button */}
           <TouchableOpacity
-            style={[styles.button, isValid ? styles.buttonActive : styles.buttonDisabled]}
+            style={[styles.button, isValid && !loading ? styles.buttonActive : styles.buttonDisabled]}
             onPress={handleGetStarted}
-            activeOpacity={isValid ? 0.85 : 1}
-            disabled={!isValid}
+            activeOpacity={isValid && !loading ? 0.85 : 1}
+            disabled={!isValid || loading}
           >
-            <Text style={[styles.buttonText, isValid ? styles.buttonTextActive : styles.buttonTextDisabled]}>
-              Get Started
-            </Text>
+            {loading ? (
+              <ActivityIndicator color="#fff" size="small" />
+            ) : (
+              <Text style={[styles.buttonText, isValid ? styles.buttonTextActive : styles.buttonTextDisabled]}>
+                Get Started
+              </Text>
+            )}
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>

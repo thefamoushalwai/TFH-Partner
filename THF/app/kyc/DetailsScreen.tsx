@@ -13,10 +13,24 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-
+import { SvgXml } from 'react-native-svg';
 
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
+
+const SELECTED_SVG = `<svg width="24" height="24" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g clip-path="url(#clip0)">
+<rect x="1.35" y="1.35" width="15.3" height="15.3" rx="7.65" fill="#03884B"/>
+<g clip-path="url(#clip1)">
+<path d="M5.5 9L8 11.5L13 6.5" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+</g>
+<defs>
+<clipPath id="clip0"><rect width="18" height="18" fill="white"/></clipPath>
+<clipPath id="clip1"><rect width="12" height="12" fill="white" transform="translate(3 3)"/></clipPath>
+</defs>
+</svg>`;
+
 
 const GENDERS = ['Male', 'Female', 'Other'];
 const CITIES = ['Delhi', 'Mumbai', 'Bangalore', 'Chennai', 'Hyderabad', 'Kolkata', 'Pune', 'Ahmedabad'];
@@ -54,9 +68,7 @@ function FloatingInput({ label, value, onChangeText, keyboardType = 'default', m
           placeholderTextColor="#bbb"
         />
         {showValid && (
-          <View style={inputStyles.checkCircle}>
-            <Text style={inputStyles.checkMark}>✓</Text>
-          </View>
+          <SvgXml xml={SELECTED_SVG} width={24} height={24} style={{ marginLeft: 8 }} />
         )}
       </View>
     </View>
@@ -104,7 +116,7 @@ function DropdownField({ label, value, options, onSelect }: DropdownFieldProps) 
                   <Text style={[dropStyles.optionText, value === item && dropStyles.optionTextSelected]}>
                     {item}
                   </Text>
-                  {value === item && <Text style={dropStyles.optionCheck}>✓</Text>}
+                  {value === item && <SvgXml xml={SELECTED_SVG} width={20} height={20} />}
                 </TouchableOpacity>
               )}
             />
@@ -309,5 +321,4 @@ const dropStyles = StyleSheet.create({
   optionSelected: { backgroundColor: '#fff8f8' },
   optionText: { fontSize: 15, color: '#444' },
   optionTextSelected: { color: '#E8304A', fontWeight: '600' },
-  optionCheck: { color: '#E8304A', fontWeight: '700', fontSize: 15 },
 });

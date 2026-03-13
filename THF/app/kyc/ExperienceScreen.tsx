@@ -8,7 +8,22 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { SvgXml } from 'react-native-svg';
 import { SafeAreaView } from 'react-native-safe-area-context';
+
+const SELECTED_SVG = `<svg width="24" height="24" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g clip-path="url(#clip0)">
+<rect x="1.35" y="1.35" width="15.3" height="15.3" rx="7.65" fill="#03884B"/>
+<g clip-path="url(#clip1)">
+<path d="M5.5 9L8 11.5L13 6.5" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+</g>
+<defs>
+<clipPath id="clip0"><rect width="18" height="18" fill="white"/></clipPath>
+<clipPath id="clip1"><rect width="12" height="12" fill="white" transform="translate(3 3)"/></clipPath>
+</defs>
+</svg>`;
+
 const OPTIONS = [
   'Hotel',
   'Hostels',
@@ -94,7 +109,10 @@ export default function ExperienceScreen({ onBack, onContinue }: ExperienceScree
                 {option}
               </Text>
               <View style={[styles.checkbox, isSelected(option) && styles.checkboxSelected]}>
-                {isSelected(option) && <Text style={styles.checkMark}>✓</Text>}
+                {isSelected(option)
+                  ? <SvgXml xml={SELECTED_SVG} width={24} height={24} />
+                  : null
+                }
               </View>
             </TouchableOpacity>
           ))}
@@ -182,13 +200,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   checkboxSelected: {
-    borderColor: '#0b8a5b',
-    backgroundColor: '#0b8a5b',
-  },
-  checkMark: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '900',
+    borderWidth: 0,        // hide the grey ring — SVG draws its own circle
+    backgroundColor: 'transparent',
   },
 
   /* Footer */
