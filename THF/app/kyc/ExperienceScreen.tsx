@@ -1,6 +1,8 @@
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
+  ActivityIndicator,
+  Alert,
   ScrollView,
   StatusBar,
   StyleSheet,
@@ -10,6 +12,11 @@ import {
 } from 'react-native';
 import { SvgXml } from 'react-native-svg';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { auth } from '@/src/services/firebaseConfig';
+import { updateUserProfile, getUserProfile } from '@/src/services/userService';
+
+const PROFILE_CACHE_KEY = 'user_profile_cache';
 
 const SELECTED_SVG = `<svg width="24" height="24" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
 <g clip-path="url(#clip0)">
@@ -42,6 +49,7 @@ interface ExperienceScreenProps {
 export default function ExperienceScreen({ onBack, onContinue }: ExperienceScreenProps) {
   const router = useRouter();
   const [selected, setSelected] = useState<string[]>([]);
+  const [saving, setSaving] = useState(false);
 
   const toggleOption = (option: string) => {
     if (selected.includes(option)) {
@@ -51,13 +59,35 @@ export default function ExperienceScreen({ onBack, onContinue }: ExperienceScree
     }
   };
 
-  const handleContinue = () => {
-    if (selected.length > 0) {
-      if (onContinue) {
-        onContinue(selected);
-      } else {
-        router.push('/kyc/DetailsScreen');
-      }
+  const handleContinue = async () => {
+    if (selected.length === 0 || saving) return;
+
+    if (onContinue) {
+      onContinue(selected);
+      return;
+    }
+
+    const uid = auth.currentUser?.uid;
+    if (!uid) {
+      Alert.alert('Error', 'Not logged in. Please restart the app.');
+      return;
+    }
+
+    setSaving(true);
+    try {
+      // Save experience tags to Firestore
+      await updateUserProfile(uid, { experience: selected });
+
+      // Update AsyncStorage cache
+      const fresh = await getUserProfile(uid);
+      if (fresh) await AsyncStorage.setItem(PROFILE_CACHE_KEY, JSON.stringify(fresh));
+
+      router.push('/kyc/DetailsScreen');
+    } catch (err: any) {
+      console.error('[ExperienceScreen] save error:', err);
+      Alert.alert('Error', err?.message ?? 'Failed to save. Please try again.');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -122,14 +152,18 @@ export default function ExperienceScreen({ onBack, onContinue }: ExperienceScree
       {/* Continue Button */}
       <View style={styles.footer}>
         <TouchableOpacity
-          style={[styles.continueBtn, selected.length > 0 && styles.continueBtnActive]}
+          style={[styles.continueBtn, selected.length > 0 && !saving && styles.continueBtnActive]}
           onPress={handleContinue}
-          activeOpacity={selected.length > 0 ? 0.85 : 1}
-          disabled={selected.length === 0}
+          activeOpacity={selected.length > 0 && !saving ? 0.85 : 1}
+          disabled={selected.length === 0 || saving}
         >
-          <Text style={[styles.continueText, selected.length > 0 && styles.continueTextActive]}>
-            Continue
-          </Text>
+          {saving ? (
+            <ActivityIndicator color="#fff" size="small" />
+          ) : (
+            <Text style={[styles.continueText, selected.length > 0 && styles.continueTextActive]}>
+              Continue
+            </Text>
+          )}
         </TouchableOpacity>
       </View>
     </SafeAreaView>

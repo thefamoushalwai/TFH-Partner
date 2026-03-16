@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -6,12 +6,16 @@ import {
   TouchableOpacity,
   ScrollView,
   StyleSheet,
-
+  ActivityIndicator,
   StatusBar,
   Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Navbar from '../../components/Navbar';
+import { useUserStore } from '@/src/hooks/useUserStore';
+import { getPartnerBookings, type Booking as FirestoreBooking } from '@/src/services/bookingService';
+import { auth } from '@/src/services/firebaseConfig';
+import dayjs from 'dayjs';
 const { width } = Dimensions.get('window');
 
 /* ── Types ── */
@@ -120,61 +124,56 @@ function BookingCard({
 
 
 /* ── Main Screen ── */
-const DEFAULT_BOOKINGS: Booking[] = [
-  {
-    id: '1',
-    time: '02',
-    period: 'pm',
-    nextUpLabel: 'Next up - in 2 hours',
-    clientName: 'Deepak Sharma',
-    occasion: 'Anniversay',
-    guests: 8,
-    location: 'Lajpat Nagar',
-  },
-  {
-    id: '2',
-    time: '07',
-    period: 'pm',
-    nextUpLabel: 'Next up - in 5 hours',
-    clientName: 'Deepak Sharma',
-    occasion: 'Anniversay',
-    guests: 8,
-    location: 'Lajpat Nagar',
-  },
-];
+export default function DashboardScreen() {
+  const { profile, loading: profileLoading } = useUserStore();
+  const [bookings, setBookings] = useState<FirestoreBooking[]>([]);
+  const [bookingsLoading, setBookingsLoading] = useState(true);
 
-export default function DashboardScreen({
-  chefName = 'Vinod Singh',
-  chefId = '1234',
-  isVerified = true,
-  profileImage,
-  bookings = 100,
-  earned = 32,
-  ratings = 4.9,
-  todaysBookings = DEFAULT_BOOKINGS,
-  onHelp,
-  onViewDetail,
-  onLocation,
-  onCallClient,
-}: DashboardScreenProps) {
+  useEffect(() => {
+    const uid = auth.currentUser?.uid;
+    if (!uid) { setBookingsLoading(false); return; }
+    getPartnerBookings(uid)
+      .then(setBookings)
+      .catch(console.error)
+      .finally(() => setBookingsLoading(false));
+  }, []);
+
+  const chefName = profile?.name ?? '';
+  const chefId = auth.currentUser?.uid?.slice(0, 6).toUpperCase() ?? '----';
+  const isVerified = profile?.kycStatus === 'approved';
+
+  // Today's bookings (status = active or accepted with today's date)
+  const todayStr = dayjs().format('YYYY-MM-DD');
+  const todaysBookings = bookings.filter((b) => {
+    const bDate = b.date ? dayjs((b.date as any).toDate?.() ?? b.date).format('YYYY-MM-DD') : null;
+    return bDate === todayStr && (b.status === 'active' || b.status === 'accepted' || b.status === 'pending');
+  });
+
+  // Stats: total completed bookings & earnings
+  const completedCount = bookings.filter(b => b.status === 'completed').length;
+  const totalEarned = bookings
+    .filter(b => b.status === 'completed')
+    .reduce((sum, b) => sum + (b.amount ?? 0), 0);
+
+  if (profileLoading) {
+    return (
+      <SafeAreaView style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator color="#E8304A" size="large" />
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+      <Navbar />
+      <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
 
-      {/* ── Top Nav ── */}
-      <Navbar onHelp={onHelp} />
-
-      <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
         {/* ── Welcome Card ── */}
         <View style={styles.welcomeCard}>
           <View style={styles.welcomeLeft}>
             <Text style={styles.welcomeHi}>Welcome!</Text>
-            <Text style={styles.welcomeName}>{chefName}</Text>
+            <Text style={styles.welcomeName}>{chefName || 'Partner'}</Text>
             <View style={styles.badgeRow}>
               {isVerified && (
                 <View style={styles.verifiedBadge}>
@@ -186,35 +185,45 @@ export default function DashboardScreen({
               </View>
             </View>
           </View>
-          {profileImage ? (
-            <Image source={profileImage} style={styles.avatar} />
-          ) : (
-            <View style={styles.avatarPlaceholder}>
-              <Text style={styles.avatarInitial}>{chefName.charAt(0)}</Text>
-            </View>
-          )}
+          <View style={styles.avatarPlaceholder}>
+            <Text style={styles.avatarInitial}>{chefName ? chefName.charAt(0).toUpperCase() : '?'}</Text>
+          </View>
         </View>
 
         {/* ── Today's Summary ── */}
         <Text style={styles.sectionTitle}>Today's Summary</Text>
         <View style={styles.summaryRow}>
-          <SummaryCard icon="📋" label="Bookings" value={String(bookings)} iconBg="#FFF0F0" />
-          <SummaryCard icon="💰" label="Earned" value={`₹${earned}`} iconBg="#FFF5E0" />
-          <SummaryCard icon="⭐" label="Ratings" value={String(ratings)} iconBg="#FFFBE0" />
+          <SummaryCard icon="📋" label="Bookings" value={String(completedCount)} iconBg="#FFF0F0" />
+          <SummaryCard icon="💰" label="Earned" value={`₹${totalEarned}`} iconBg="#FFF5E0" />
+          <SummaryCard icon="⭐" label="KYC" value={profile?.kycStatus ?? 'pending'} iconBg="#FFFBE0" />
         </View>
 
         {/* ── Today's Bookings ── */}
         <Text style={styles.sectionTitle}>Today's Bookings</Text>
-        {todaysBookings.map((booking, index) => (
-          <BookingCard
-            key={booking.id}
-            booking={booking}
-            showActions={index === 0}
-            onViewDetail={() => onViewDetail?.(booking)}
-            onLocation={() => onLocation?.(booking)}
-            onCallClient={() => onCallClient?.(booking)}
-          />
-        ))}
+        {bookingsLoading ? (
+          <ActivityIndicator color="#E8304A" style={{ marginTop: 20 }} />
+        ) : todaysBookings.length === 0 ? (
+          <View style={styles.emptyCard}>
+            <Text style={styles.emptyText}>No bookings for today 🎉</Text>
+          </View>
+        ) : (
+          todaysBookings.map((booking, index) => (
+            <BookingCard
+              key={booking.bookingId}
+              booking={{
+                id: booking.bookingId,
+                time: dayjs((booking.date as any).toDate?.() ?? booking.date).format('hh'),
+                period: dayjs((booking.date as any).toDate?.() ?? booking.date).format('a'),
+                nextUpLabel: index === 0 ? 'Next up' : 'Upcoming',
+                clientName: booking.clientName,
+                occasion: booking.eventType,
+                guests: booking.guests,
+                location: booking.location,
+              }}
+              showActions={index === 0}
+            />
+          ))
+        )}
 
         <View style={{ height: 16 }} />
       </ScrollView>
@@ -291,6 +300,21 @@ const styles = StyleSheet.create({
     gap: 10,
     marginBottom: 24,
   },
+
+  /* Empty state */
+  emptyCard: {
+    backgroundColor: '#fff',
+    borderRadius: 14,
+    padding: 24,
+    alignItems: 'center',
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 1,
+  },
+  emptyText: { fontSize: 14, color: '#999', fontWeight: '500' },
 });
 
 const summaryStyles = StyleSheet.create({

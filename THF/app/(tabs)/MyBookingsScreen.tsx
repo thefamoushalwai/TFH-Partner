@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -6,9 +6,13 @@ import {
   ScrollView,
   StyleSheet,
   StatusBar,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Navbar from '../../components/Navbar';
+import { auth } from '@/src/services/firebaseConfig';
+import { getPartnerBookings, type Booking as FSBooking } from '@/src/services/bookingService';
+import dayjs from 'dayjs';
 
 /* ── Types ── */
 type BookingStatus = 'Today' | 'Active' | 'Completed' | 'Upcoming';
@@ -142,42 +146,65 @@ const DEFAULT_BOOKINGS: Booking[] = [
 const FILTER_TABS: FilterTab[] = ['All', 'Today', 'Upcoming', 'Completed'];
 
 /* ── Main Screen ── */
-export default function MyBookingsScreen({
-  dateLabel = '25 Feb 2026 | 00 pm today',
-  nextUp = DEFAULT_NEXT_UP,
-  bookings = DEFAULT_BOOKINGS,
-  onHelp,
-  onNavigate,
-  onCallClient,
-  onBookingPress,
-  onTabChange,
-}: MyBookingsScreenProps) {
-  const [activeTab, setActiveTab] = useState('bookings');
+export default function MyBookingsScreen() {
+  const [fsBookings, setFsBookings] = useState<FSBooking[]>([]);
+  const [loading, setLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState<FilterTab>('All');
 
-  const handleTabChange = (tab: string) => {
-    setActiveTab(tab);
-    onTabChange?.(tab);
-  };
+  const dateLabel = dayjs().format('DD MMM YYYY | hh:mm a');
+
+  useEffect(() => {
+    const uid = auth.currentUser?.uid;
+    if (!uid) { setLoading(false); return; }
+    getPartnerBookings(uid)
+      .then(setFsBookings)
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, []);
+
+  // Map Firestore bookings to the local display Booking shape
+  const mappedBookings: Booking[] = fsBookings.map((b) => {
+    const dateObj = (b.date as any).toDate ? (b.date as any).toDate() : new Date(b.date as any);
+    const d = dayjs(dateObj);
+    const now = dayjs();
+    let status: BookingStatus = 'Upcoming';
+    if (d.isSame(now, 'day')) status = 'Today';
+    if (b.status === 'active') status = 'Active';
+    if (b.status === 'completed') status = 'Completed';
+    return {
+      id: b.bookingId,
+      day: d.format('DD'),
+      month: d.format('MMM'),
+      title: `Booking - ${b.clientName}`,
+      time: d.format('h:mm A'),
+      guests: b.guests,
+      location: b.location,
+      amount: b.amount,
+      status,
+    };
+  });
+
+  // Next up: earliest today/upcoming non-completed booking
+  const nextUpBooking = mappedBookings.find(b => b.status === 'Today' || b.status === 'Active');
+  const nextUp: NextUpBooking = nextUpBooking
+    ? {
+        label: nextUpBooking.status === 'Active' ? 'Active booking' : 'Next up today',
+        title: nextUpBooking.title,
+        time: nextUpBooking.time,
+        locationNote: nextUpBooking.location,
+        guests: nextUpBooking.guests,
+        cuisine: fsBookings.find(b => b.bookingId === nextUpBooking.id)?.eventType ?? '',
+      }
+    : DEFAULT_NEXT_UP;
 
   const filteredBookings =
-    activeFilter === 'All'
-      ? bookings
-      : bookings.filter((b) => b.status === activeFilter);
+    activeFilter === 'All' ? mappedBookings : mappedBookings.filter(b => b.status === activeFilter);
 
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#fff" />
-
-      {/* ── Navbar ── */}
-      <Navbar onHelp={onHelp} />
-
-      <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Heading */}
+      <Navbar />
+      <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <Text style={styles.pageTitle}>My Bookings</Text>
         <Text style={styles.dateLabel}>{dateLabel}</Text>
 
@@ -187,23 +214,12 @@ export default function MyBookingsScreen({
           <Text style={styles.nextUpTitle}>{nextUp.title}</Text>
           <Text style={styles.nextUpMeta}>Time: {nextUp.time}</Text>
           <Text style={styles.nextUpMeta}>Location: {nextUp.locationNote}</Text>
-          <Text style={styles.nextUpMeta}>
-            {nextUp.guests} guests | {nextUp.cuisine}
-          </Text>
-
+          <Text style={styles.nextUpMeta}>{nextUp.guests} guests | {nextUp.cuisine}</Text>
           <View style={styles.nextUpActions}>
-            <TouchableOpacity
-              style={styles.navBtn}
-              onPress={() => onNavigate?.(nextUp)}
-              activeOpacity={0.8}
-            >
+            <TouchableOpacity style={styles.navBtn} activeOpacity={0.8}>
               <Text style={styles.navBtnText}>Navigate location</Text>
             </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.callBtn}
-              onPress={() => onCallClient?.(nextUp)}
-              activeOpacity={0.8}
-            >
+            <TouchableOpacity style={styles.callBtn} activeOpacity={0.8}>
               <Text style={styles.callBtnText}>Call Client</Text>
             </TouchableOpacity>
           </View>
@@ -218,28 +234,28 @@ export default function MyBookingsScreen({
               onPress={() => setActiveFilter(tab)}
               activeOpacity={0.8}
             >
-              <Text style={[styles.filterTabText, activeFilter === tab && styles.filterTabTextActive]}>
-                {tab}
-              </Text>
+              <Text style={[styles.filterTabText, activeFilter === tab && styles.filterTabTextActive]}>{tab}</Text>
             </TouchableOpacity>
           ))}
         </View>
 
         {/* ── Booking List ── */}
-        <View style={styles.bookingsList}>
-          {filteredBookings.map((booking) => (
-            <BookingCard
-              key={booking.id}
-              booking={booking}
-              onPress={() => onBookingPress?.(booking)}
-            />
-          ))}
-        </View>
+        {loading ? (
+          <ActivityIndicator color="#E8304A" style={{ marginTop: 20 }} />
+        ) : filteredBookings.length === 0 ? (
+          <View style={styles.emptyCard}>
+            <Text style={styles.emptyText}>No bookings found</Text>
+          </View>
+        ) : (
+          <View style={styles.bookingsList}>
+            {filteredBookings.map((booking) => (
+              <BookingCard key={booking.id} booking={booking} />
+            ))}
+          </View>
+        )}
 
         <View style={{ height: 16 }} />
       </ScrollView>
-
-    
     </SafeAreaView>
   );
 }
@@ -306,6 +322,20 @@ const styles = StyleSheet.create({
 
   /* List */
   bookingsList: { gap: 12 },
+
+  /* Empty state */
+  emptyCard: {
+    backgroundColor: '#fff',
+    borderRadius: 14,
+    padding: 24,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 1,
+  },
+  emptyText: { fontSize: 14, color: '#999', fontWeight: '500' },
 });
 
 const cardStyles = StyleSheet.create({

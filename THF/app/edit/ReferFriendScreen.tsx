@@ -8,24 +8,56 @@ import {
   StatusBar,
   KeyboardAvoidingView,
   Platform,
+  ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { auth } from '@/src/services/firebaseConfig';
+import { createReferral, isPhoneAlreadyReferred } from '@/src/services/referralService';
 
 interface ReferFriendScreenProps {
   onGenerate?: (data: { name: string; contact: string; email: string }) => void;
 }
 
-export default function ReferFriendScreen({ onGenerate }: ReferFriendScreenProps) {
+export default function ReferFriendScreen() {
   const [name, setName] = useState('');
   const [contact, setContact] = useState('');
   const [email, setEmail] = useState('');
   const [focusedField, setFocusedField] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
 
-  const isValid = name.trim().length > 0 && contact.trim().length >= 10;
+  const rawPhone = contact.replace(/\D/g, '');
+  const isValid = name.trim().length > 0 && rawPhone.length >= 10;
 
-  const handleGenerate = () => {
-    if (isValid && onGenerate) {
-      onGenerate({ name: name.trim(), contact: contact.trim(), email: email.trim() });
+  const handleGenerate = async () => {
+    if (!isValid || saving) return;
+
+    const uid = auth.currentUser?.uid;
+    if (!uid) {
+      Alert.alert('Error', 'Not logged in. Please restart the app.');
+      return;
+    }
+
+    const e164Phone = `+91${rawPhone.slice(-10)}`;
+    setSaving(true);
+    try {
+      // Duplicate check
+      const already = await isPhoneAlreadyReferred(e164Phone);
+      if (already) {
+        Alert.alert('Already Referred', `${contact} has already been referred.`);
+        return;
+      }
+
+      const referralId = await createReferral({ referrerId: uid, referredPhone: e164Phone });
+      Alert.alert('Referral Sent! 🎉', `Your referral link has been created. Referral ID: ${referralId.slice(0, 8)}...`);
+      setName('');
+      setContact('');
+      setEmail('');
+    } catch (err: any) {
+      console.error('[ReferFriendScreen] error:', err);
+      Alert.alert('Error', err?.message ?? 'Failed to create referral.');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -90,14 +122,18 @@ export default function ReferFriendScreen({ onGenerate }: ReferFriendScreenProps
         {/* Generate Button */}
         <View style={styles.footer}>
           <TouchableOpacity
-            style={[styles.generateBtn, isValid && styles.generateBtnActive]}
+            style={[styles.generateBtn, isValid && !saving && styles.generateBtnActive]}
             onPress={handleGenerate}
-            activeOpacity={isValid ? 0.85 : 1}
-            disabled={!isValid}
+            activeOpacity={isValid && !saving ? 0.85 : 1}
+            disabled={!isValid || saving}
           >
-            <Text style={[styles.generateText, isValid && styles.generateTextActive]}>
-              Generate Referral Link
-            </Text>
+            {saving ? (
+              <ActivityIndicator color="#fff" size="small" />
+            ) : (
+              <Text style={[styles.generateText, isValid && styles.generateTextActive]}>
+                Generate Referral Link
+              </Text>
+            )}
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>

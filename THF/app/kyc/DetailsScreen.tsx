@@ -1,5 +1,15 @@
+/**
+ * app/kyc/DetailsScreen.tsx
+ *
+ * Collects basic user details after OTP login.
+ * On submit → saves to Firestore (users collection) + AsyncStorage cache,
+ * then navigates to the next KYC step.
+ */
+
 import React, { useState } from 'react';
 import {
+  ActivityIndicator,
+  Alert,
   FlatList,
   KeyboardAvoidingView,
   KeyboardTypeOptions,
@@ -14,9 +24,13 @@ import {
   View,
 } from 'react-native';
 import { SvgXml } from 'react-native-svg';
-
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { auth } from '@/src/services/firebaseConfig';
+import { createUserProfile, getUserProfile } from '@/src/services/userService';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const PROFILE_CACHE_KEY = 'user_profile_cache';
 
 const SELECTED_SVG = `<svg width="24" height="24" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
 <g clip-path="url(#clip0)">
@@ -31,13 +45,13 @@ const SELECTED_SVG = `<svg width="24" height="24" viewBox="0 0 18 18" fill="none
 </defs>
 </svg>`;
 
-
 const GENDERS = ['Male', 'Female', 'Other'];
 const CITIES = ['Delhi', 'Mumbai', 'Bangalore', 'Chennai', 'Hyderabad', 'Kolkata', 'Pune', 'Ahmedabad'];
 
 const isValidEmail = (e: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
 const isValidPhone = (p: string) => /^[0-9]{10}$/.test(p);
 
+// ── Floating Input ──────────────────────────────────────────────────────────
 interface FloatingInputProps {
   label: string;
   value: string;
@@ -45,9 +59,18 @@ interface FloatingInputProps {
   keyboardType?: KeyboardTypeOptions;
   multiline?: boolean;
   isValid?: boolean;
+  editable?: boolean;
 }
 
-function FloatingInput({ label, value, onChangeText, keyboardType = 'default', multiline = false, isValid }: FloatingInputProps) {
+function FloatingInput({
+  label,
+  value,
+  onChangeText,
+  keyboardType = 'default',
+  multiline = false,
+  isValid,
+  editable = true,
+}: FloatingInputProps) {
   const [focused, setFocused] = useState(false);
   const showValid = isValid && value.length > 0;
 
@@ -66,6 +89,7 @@ function FloatingInput({ label, value, onChangeText, keyboardType = 'default', m
           onBlur={() => setFocused(false)}
           textAlignVertical={multiline ? 'top' : 'center'}
           placeholderTextColor="#bbb"
+          editable={editable}
         />
         {showValid && (
           <SvgXml xml={SELECTED_SVG} width={24} height={24} style={{ marginLeft: 8 }} />
@@ -75,6 +99,7 @@ function FloatingInput({ label, value, onChangeText, keyboardType = 'default', m
   );
 }
 
+// ── Dropdown Field ──────────────────────────────────────────────────────────
 interface DropdownFieldProps {
   label: string;
   value: string;
@@ -127,6 +152,7 @@ function DropdownField({ label, value, options, onSelect }: DropdownFieldProps) 
   );
 }
 
+// ── Main Screen ─────────────────────────────────────────────────────────────
 export interface RegistrationDetails {
   name: string;
   email: string;
@@ -149,6 +175,7 @@ export default function DetailsScreen({ onBack, onRegister }: DetailsScreenProps
   const [gender, setGender] = useState('');
   const [city, setCity] = useState('');
   const [address, setAddress] = useState('');
+  const [saving, setSaving] = useState(false);
 
   const allFilled =
     name.trim().length > 1 &&
@@ -158,13 +185,60 @@ export default function DetailsScreen({ onBack, onRegister }: DetailsScreenProps
     city &&
     address.trim().length > 5;
 
-  const handleRegister = () => {
-    if (allFilled) {
-      if (onRegister) {
-        onRegister({ name, email, emergency, gender, city, address });
+  const handleRegister = async () => {
+    if (!allFilled || saving) return;
+
+    // Custom callback mode (e.g., used as a nested component)
+    if (onRegister) {
+      onRegister({ name, email, emergency, gender, city, address });
+      return;
+    }
+
+    const uid = auth.currentUser?.uid;
+    if (!uid) {
+      Alert.alert('Error', 'You are not logged in. Please restart the app.');
+      return;
+    }
+
+    setSaving(true);
+    try {
+      // ── Write to Firestore ──────────────────────────────────────────
+      // Check whether a profile already exists (e.g. user re-registers)
+      const existing = await getUserProfile(uid);
+      const phone = auth.currentUser?.phoneNumber ?? '';
+
+      const profileData = {
+        name: name.trim(),
+        email: email.trim(),
+        phone,
+        emergencyPhone: emergency.trim(),
+        gender: gender.toLowerCase() as 'male' | 'female' | 'other',
+        city,
+        address: address.trim(),
+        experience: [],   // filled on ExperienceScreen
+        language: 'en',
+      };
+
+      if (existing) {
+        // Already exists — partial update via userService
+        const { updateUserProfile } = await import('@/src/services/userService');
+        await updateUserProfile(uid, profileData);
       } else {
-        router.push('/kyc/UploadDocumentsScreen_1');
+        await createUserProfile(uid, profileData);
       }
+
+      // ── Write to AsyncStorage cache ─────────────────────────────────
+      const freshProfile = await getUserProfile(uid);
+      if (freshProfile) {
+        await AsyncStorage.setItem(PROFILE_CACHE_KEY, JSON.stringify(freshProfile));
+      }
+
+      router.push('/kyc/UploadDocumentsScreen_1');
+    } catch (err: any) {
+      console.error('[DetailsScreen] save error:', err);
+      Alert.alert('Error', err?.message ?? 'Failed to save details. Please try again.');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -176,13 +250,7 @@ export default function DetailsScreen({ onBack, onRegister }: DetailsScreenProps
         {/* Back */}
         <TouchableOpacity
           style={styles.backBtn}
-          onPress={() => {
-            if (onBack) {
-              onBack();
-            } else {
-              router.back();
-            }
-          }}
+          onPress={() => { if (onBack) onBack(); else router.back(); }}
           activeOpacity={0.7}
         >
           <Text style={styles.backArrow}>←</Text>
@@ -199,37 +267,14 @@ export default function DetailsScreen({ onBack, onRegister }: DetailsScreenProps
             To sign up to an account in the application, enter your details below.
           </Text>
 
-          <FloatingInput
-            label="Enter Name"
-            value={name}
-            onChangeText={setName}
-            isValid={name.trim().length > 1}
-          />
-          <FloatingInput
-            label="Enter Email"
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            isValid={isValidEmail(email)}
-          />
-          <FloatingInput
-            label="Emergency contact number"
-            value={emergency}
-            onChangeText={setEmergency}
-            keyboardType="phone-pad"
-            isValid={isValidPhone(emergency)}
-          />
+          <FloatingInput label="Enter Name" value={name} onChangeText={setName} isValid={name.trim().length > 1} editable={!saving} />
+          <FloatingInput label="Enter Email" value={email} onChangeText={setEmail} keyboardType="email-address" isValid={isValidEmail(email)} editable={!saving} />
+          <FloatingInput label="Emergency contact number" value={emergency} onChangeText={setEmergency} keyboardType="phone-pad" isValid={isValidPhone(emergency)} editable={!saving} />
 
           <DropdownField label="Select Gender" value={gender} options={GENDERS} onSelect={setGender} />
           <DropdownField label="Select City" value={city} options={CITIES} onSelect={setCity} />
 
-          <FloatingInput
-            label="Address"
-            value={address}
-            onChangeText={setAddress}
-            multiline
-            isValid={address.trim().length > 5}
-          />
+          <FloatingInput label="Address" value={address} onChangeText={setAddress} multiline isValid={address.trim().length > 5} editable={!saving} />
 
           <View style={{ height: 16 }} />
         </ScrollView>
@@ -237,14 +282,18 @@ export default function DetailsScreen({ onBack, onRegister }: DetailsScreenProps
         {/* Register Button */}
         <View style={styles.footer}>
           <TouchableOpacity
-            style={[styles.registerBtn, allFilled && styles.registerBtnActive]}
+            style={[styles.registerBtn, allFilled && !saving && styles.registerBtnActive]}
             onPress={handleRegister}
-            activeOpacity={allFilled ? 0.85 : 1}
-            disabled={!allFilled}
+            activeOpacity={allFilled && !saving ? 0.85 : 1}
+            disabled={!allFilled || saving}
           >
-            <Text style={[styles.registerText, allFilled && styles.registerTextActive]}>
-              Register
-            </Text>
+            {saving ? (
+              <ActivityIndicator color="#fff" size="small" />
+            ) : (
+              <Text style={[styles.registerText, allFilled && styles.registerTextActive]}>
+                Register
+              </Text>
+            )}
           </TouchableOpacity>
         </View>
 
@@ -287,11 +336,6 @@ const inputStyles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center' },
   input: { flex: 1, fontSize: 15, color: '#111', paddingVertical: 4 },
   multiline: { minHeight: 70, paddingTop: 4 },
-  checkCircle: {
-    width: 24, height: 24, borderRadius: 12,
-    backgroundColor: '#22a75a', alignItems: 'center', justifyContent: 'center', marginLeft: 8,
-  },
-  checkMark: { color: '#fff', fontSize: 13, fontWeight: '700' },
 });
 
 const dropStyles = StyleSheet.create({

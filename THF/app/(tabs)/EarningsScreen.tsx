@@ -1,18 +1,21 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
   ScrollView,
   StyleSheet,
-
+  ActivityIndicator,
   StatusBar,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Navbar from '../../components/Navbar';
+import { auth } from '@/src/services/firebaseConfig';
+import { getPartnerTransactions, type Transaction as FSTransaction } from '@/src/services/transactionService';
+import dayjs from 'dayjs';
 
-/* ── Types ── */
-interface Transaction {
+/* ── Local display type for TransactionRow component ── */
+interface DisplayTransaction {
   id: string;
   clientName: string;
   date: string;
@@ -29,13 +32,13 @@ interface EarningsScreenProps {
   bookings?: number;
   avgRatings?: number;
   completion?: number;
-  transactions?: Transaction[];
+  transactions?: DisplayTransaction[];
   onHelp?: () => void;
   onTabChange?: (tab: string) => void;
 }
 
 /* ── Transaction Row ── */
-function TransactionRow({ transaction }: { transaction: Transaction }) {
+function TransactionRow({ transaction }: { transaction: DisplayTransaction }) {
   return (
     <View style={txStyles.row}>
       <View style={txStyles.iconBox}>
@@ -54,35 +57,29 @@ function TransactionRow({ transaction }: { transaction: Transaction }) {
   );
 }
 
-/* ── Bottom Tab Bar ── */
-
-
-
 /* ── Default Data ── */
-const DEFAULT_TRANSACTIONS: Transaction[] = [
+const DEFAULT_TRANSACTIONS: DisplayTransaction[] = [
   { id: '1', clientName: 'John de', date: '22 Feb', guests: 10, type: 'Payout', amount: 0 },
   { id: '2', clientName: 'John de', date: '22 Feb', guests: 10, type: 'Payout', amount: 0 },
 ];
 
 /* ── Main Screen ── */
-export default function EarningsScreen({
-  month = 'February 2026',
-  totalEarned = 0,
-  comparisonPercent = 0,
-  comparisonMonth = 'January 2026',
-  bookings = 0,
-  avgRatings = 0,
-  completion = 0,
-  transactions = DEFAULT_TRANSACTIONS,
-  onHelp,
-  onTabChange,
-}: EarningsScreenProps) {
-  const [activeTab, setActiveTab] = useState('earnings');
+export default function EarningsScreen() {
+  const [transactions, setTransactions] = useState<FSTransaction[]>([]);
+  const [loading, setLoading] = useState(true);
+  const month = dayjs().format('MMMM YYYY');
 
-  const handleTabChange = (tab: string) => {
-    setActiveTab(tab);
-    onTabChange?.(tab);
-  };
+  useEffect(() => {
+    const uid = auth.currentUser?.uid;
+    if (!uid) { setLoading(false); return; }
+    getPartnerTransactions(uid)
+      .then(setTransactions)
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, []);
+
+  const totalEarned = transactions.reduce((s, t) => s + (t.amount ?? 0), 0);
+  const bookingsCount = transactions.length;
 
   const formatAmount = (amount: number) =>
     amount === 0 ? '00' : amount.toLocaleString('en-IN');
@@ -90,62 +87,57 @@ export default function EarningsScreen({
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#fff" />
-
-      {/* ── Top Nav ── */}
-      <Navbar onHelp={onHelp} />
-
-      <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Heading */}
+      <Navbar />
+      <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <Text style={styles.pageTitle}>My Earnings</Text>
         <Text style={styles.monthLabel}>{month}</Text>
 
         {/* ── Summary Card ── */}
         <View style={styles.summaryCard}>
-          <Text style={styles.totalLabel}>Total earned - Feb 2026</Text>
+          <Text style={styles.totalLabel}>Total earned - {month}</Text>
           <Text style={styles.totalAmount}>₹{formatAmount(totalEarned)}</Text>
-          <Text style={styles.comparison}>
-            {comparisonPercent}0% compared to {comparisonMonth}
-          </Text>
-
+          <Text style={styles.comparison}>{bookingsCount} transactions this month</Text>
           <View style={styles.divider} />
-
           <View style={styles.statsRow}>
             <View style={styles.statItem}>
-              <Text style={styles.statValue}>{bookings}</Text>
-              <Text style={styles.statLabel}>Bookings</Text>
+              <Text style={styles.statValue}>{bookingsCount}</Text>
+              <Text style={styles.statLabel}>Transactions</Text>
             </View>
             <View style={styles.statItem}>
-              <Text style={styles.statValue}>{avgRatings}</Text>
-              <Text style={styles.statLabel}>Avg. Ratings</Text>
-            </View>
-            <View style={styles.statItem}>
-              <Text style={styles.statValue}>{completion}%</Text>
-              <Text style={styles.statLabel}>Completion</Text>
+              <Text style={styles.statValue}>₹{formatAmount(totalEarned)}</Text>
+              <Text style={styles.statLabel}>Total Earned</Text>
             </View>
           </View>
         </View>
 
         {/* ── Recent Transactions ── */}
         <Text style={styles.sectionTitle}>Recent transactions</Text>
-
-        <View style={styles.transactionsList}>
-          {transactions.map((tx, index) => (
-            <View key={tx.id}>
-              <TransactionRow transaction={tx} />
-              {index < transactions.length - 1 && <View style={styles.txDivider} />}
-            </View>
-          ))}
-        </View>
+        {loading ? (
+          <ActivityIndicator color="#E8304A" style={{ marginTop: 16 }} />
+        ) : transactions.length === 0 ? (
+          <View style={styles.emptyBox}>
+            <Text style={styles.emptyText}>No transactions yet</Text>
+          </View>
+        ) : (
+          <View style={styles.transactionsList}>
+            {transactions.map((tx, index) => (
+              <View key={tx.transactionId}>
+                <TransactionRow transaction={{
+                  id: tx.transactionId,
+                  clientName: tx.bookingId,
+                  date: dayjs((tx.createdAt as any).toDate?.() ?? tx.createdAt).format('DD MMM'),
+                  guests: 0,
+                  type: tx.type,
+                  amount: tx.amount,
+                }} />
+                {index < transactions.length - 1 && <View style={styles.txDivider} />}
+              </View>
+            ))}
+          </View>
+        )}
 
         <View style={{ height: 16 }} />
       </ScrollView>
-
-      {/* ── Bottom Tab Bar ── */}
-    
     </SafeAreaView>
   );
 }
@@ -197,6 +189,20 @@ const styles = StyleSheet.create({
     elevation: 1,
   },
   txDivider: { height: 1, backgroundColor: '#f5f5f5', marginHorizontal: 16 },
+
+  /* Empty state */
+  emptyBox: {
+    backgroundColor: '#fff',
+    borderRadius: 14,
+    paddingVertical: 24,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 1,
+  },
+  emptyText: { fontSize: 14, color: '#999', fontWeight: '500' },
 });
 
 const txStyles = StyleSheet.create({

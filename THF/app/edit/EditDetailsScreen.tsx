@@ -1,53 +1,48 @@
-import React, { useState } from 'react';
+/**
+ * app/edit/EditDetailsScreen.tsx
+ *
+ * Edit partner profile.
+ * On mount: loads from AsyncStorage cache (instant) then refreshes from Firestore.
+ * On save: writes to Firestore then updates cache.
+ */
+
+import React, { useEffect, useState } from 'react';
 import {
-  View,
+  ActivityIndicator,
+  Alert,
+  FlatList,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  ScrollView,
-  StyleSheet,
-  StatusBar,
-  KeyboardAvoidingView,
-  Platform,
-  Modal,
-  FlatList,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { auth } from '@/src/services/firebaseConfig';
+import { getUserProfile, updateUserProfile } from '@/src/services/userService';
 
+const PROFILE_CACHE_KEY = 'user_profile_cache';
 const GENDERS = ['Male', 'Female', 'Other'];
 const CITIES = ['Delhi', 'Mumbai', 'Bangalore', 'Chennai', 'Hyderabad', 'Kolkata', 'Pune', 'Ahmedabad'];
 
-interface EditDetailsScreenProps {
-  initialData?: {
-    name?: string;
-    email?: string;
-    mobile?: string;
-    emergency?: string;
-    gender?: string;
-    city?: string;
-    address?: string;
-  };
-  onSave?: (data: {
-    name: string;
-    email: string;
-    mobile: string;
-    emergency: string;
-    gender: string;
-    city: string;
-    address: string;
-  }) => void;
-}
-
-/* ── Editable field with floating label + pencil icon ── */
+// ── Editable field ──────────────────────────────────────────────────────────
 interface EditFieldProps {
   label: string;
   value: string;
   onChangeText: (t: string) => void;
   keyboardType?: 'default' | 'email-address' | 'phone-pad';
   multiline?: boolean;
+  disabled?: boolean;
 }
 
-function EditField({ label, value, onChangeText, keyboardType = 'default', multiline = false }: EditFieldProps) {
+function EditField({ label, value, onChangeText, keyboardType = 'default', multiline = false, disabled }: EditFieldProps) {
   const [focused, setFocused] = useState(false);
   const [editable, setEditable] = useState(false);
 
@@ -64,7 +59,7 @@ function EditField({ label, value, onChangeText, keyboardType = 'default', multi
           style={[fieldStyles.input, multiline && fieldStyles.multiline]}
           value={value}
           onChangeText={onChangeText}
-          editable={editable}
+          editable={!disabled && (multiline || editable)}
           keyboardType={keyboardType}
           multiline={multiline}
           numberOfLines={multiline ? 3 : 1}
@@ -73,7 +68,7 @@ function EditField({ label, value, onChangeText, keyboardType = 'default', multi
           onBlur={() => { setFocused(false); setEditable(false); }}
           placeholderTextColor="#bbb"
         />
-        {!multiline && (
+        {!multiline && !disabled && (
           <TouchableOpacity onPress={handlePencil} style={fieldStyles.pencilBtn} activeOpacity={0.7}>
             <Text style={fieldStyles.pencilIcon}>✏️</Text>
           </TouchableOpacity>
@@ -83,26 +78,31 @@ function EditField({ label, value, onChangeText, keyboardType = 'default', multi
   );
 }
 
-/* ── Dropdown field ── */
+// ── Dropdown ────────────────────────────────────────────────────────────────
 interface DropdownFieldProps {
   label: string;
   value: string;
   options: string[];
   onSelect: (v: string) => void;
+  disabled?: boolean;
 }
 
-function DropdownField({ label, value, options, onSelect }: DropdownFieldProps) {
+function DropdownField({ label, value, options, onSelect, disabled }: DropdownFieldProps) {
   const [visible, setVisible] = useState(false);
 
   return (
     <>
-      <TouchableOpacity style={dropStyles.wrapper} onPress={() => setVisible(true)} activeOpacity={0.8}>
+      <TouchableOpacity
+        style={dropStyles.wrapper}
+        onPress={() => !disabled && setVisible(true)}
+        activeOpacity={disabled ? 1 : 0.8}
+      >
         <Text style={dropStyles.label}>{label}</Text>
         <View style={dropStyles.row}>
           <Text style={[dropStyles.value, !value && dropStyles.placeholder]}>
             {value || `Select ${label}`}
           </Text>
-          <Text style={dropStyles.chevron}>⌄</Text>
+          {!disabled && <Text style={dropStyles.chevron}>⌄</Text>}
         </View>
       </TouchableOpacity>
 
@@ -132,21 +132,107 @@ function DropdownField({ label, value, options, onSelect }: DropdownFieldProps) 
   );
 }
 
-/* ── Main Screen ── */
-export default function EditDetailsScreen({ initialData = {}, onSave }: EditDetailsScreenProps) {
-  const [name, setName] = useState(initialData.name ?? 'Vinod Singh');
-  const [email, setEmail] = useState(initialData.email ?? 'vinodesizgn@gmail.com');
-  const [mobile, setMobile] = useState(initialData.mobile ?? '9278204579');
-  const [emergency, setEmergency] = useState(initialData.emergency ?? '9278204579');
-  const [gender, setGender] = useState(initialData.gender ?? 'Male');
-  const [city, setCity] = useState(initialData.city ?? 'Delhi');
-  const [address, setAddress] = useState(
-    initialData.address ?? 'H-no. 87 kushak no. 2 village kadipur Delhi 110036'
-  );
+// ── Main Screen ─────────────────────────────────────────────────────────────
+export default function EditDetailsScreen() {
+  const router = useRouter();
 
-  const handleSave = () => {
-    if (onSave) onSave({ name, email, mobile, emergency, gender, city, address });
+  // Form state
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [mobile, setMobile] = useState('');
+  const [emergency, setEmergency] = useState('');
+  const [gender, setGender] = useState('');
+  const [city, setCity] = useState('');
+  const [address, setAddress] = useState('');
+
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  // ── Load profile: cache first, then Firestore ─────────────────────────
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      try {
+        // 1. Serve cached data immediately
+        const cached = await AsyncStorage.getItem(PROFILE_CACHE_KEY);
+        if (cached) {
+          const p = JSON.parse(cached);
+          if (!cancelled) populateForm(p);
+        }
+
+        // 2. Refresh from Firestore
+        const uid = auth.currentUser?.uid;
+        if (!uid) { setLoading(false); return; }
+        const fresh = await getUserProfile(uid);
+        if (fresh && !cancelled) {
+          populateForm(fresh);
+          await AsyncStorage.setItem(PROFILE_CACHE_KEY, JSON.stringify(fresh));
+        }
+      } catch (err) {
+        console.error('[EditDetailsScreen] load error:', err);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+    load();
+    return () => { cancelled = true; };
+  }, []);
+
+  function populateForm(p: any) {
+    setName(p.name ?? '');
+    setEmail(p.email ?? '');
+    setMobile(p.phone ?? '');
+    setEmergency(p.emergencyPhone ?? '');
+    setGender(p.gender ? p.gender.charAt(0).toUpperCase() + p.gender.slice(1) : '');
+    setCity(p.city ?? '');
+    setAddress(p.address ?? '');
+  }
+
+  // ── Save to Firestore + cache ─────────────────────────────────────────
+  const handleSave = async () => {
+    if (saving) return;
+    const uid = auth.currentUser?.uid;
+    if (!uid) {
+      Alert.alert('Error', 'Not logged in. Please restart the app.');
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const payload = {
+        name: name.trim(),
+        email: email.trim(),
+        phone: mobile.trim(),
+        emergencyPhone: emergency.trim(),
+        gender: gender.toLowerCase() as 'male' | 'female' | 'other',
+        city,
+        address: address.trim(),
+      };
+
+      await updateUserProfile(uid, payload);
+
+      // Refresh cache
+      const fresh = await getUserProfile(uid);
+      if (fresh) await AsyncStorage.setItem(PROFILE_CACHE_KEY, JSON.stringify(fresh));
+
+      Alert.alert('Saved', 'Your details have been updated.', [
+        { text: 'OK', onPress: () => router.back() },
+      ]);
+    } catch (err: any) {
+      console.error('[EditDetailsScreen] save error:', err);
+      Alert.alert('Error', err?.message ?? 'Failed to save. Please try again.');
+    } finally {
+      setSaving(false);
+    }
   };
+
+  if (loading) {
+    return (
+      <SafeAreaView style={[styles.container, { justifyContent:'center', alignItems:'center' }]}>
+        <ActivityIndicator color="#E8304A" size="large" />
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -161,23 +247,27 @@ export default function EditDetailsScreen({ initialData = {}, onSave }: EditDeta
         >
           <Text style={styles.heading}>Edit details</Text>
 
-          <EditField label="Enter Name" value={name} onChangeText={setName} />
-          <EditField label="Enter Email" value={email} onChangeText={setEmail} keyboardType="email-address" />
-          <EditField label="Enter mobile number" value={mobile} onChangeText={setMobile} keyboardType="phone-pad" />
-          <EditField label="Emergency contact number" value={emergency} onChangeText={setEmergency} keyboardType="phone-pad" />
+          <EditField label="Enter Name" value={name} onChangeText={setName} disabled={saving} />
+          <EditField label="Enter Email" value={email} onChangeText={setEmail} keyboardType="email-address" disabled={saving} />
+          <EditField label="Enter mobile number" value={mobile} onChangeText={setMobile} keyboardType="phone-pad" disabled={saving} />
+          <EditField label="Emergency contact number" value={emergency} onChangeText={setEmergency} keyboardType="phone-pad" disabled={saving} />
 
-          <DropdownField label="Select Gender" value={gender} options={GENDERS} onSelect={setGender} />
-          <DropdownField label="Select City" value={city} options={CITIES} onSelect={setCity} />
+          <DropdownField label="Select Gender" value={gender} options={GENDERS} onSelect={setGender} disabled={saving} />
+          <DropdownField label="Select City" value={city} options={CITIES} onSelect={setCity} disabled={saving} />
 
-          <EditField label="Address" value={address} onChangeText={setAddress} multiline />
+          <EditField label="Address" value={address} onChangeText={setAddress} multiline disabled={saving} />
 
           <View style={{ height: 16 }} />
         </ScrollView>
 
         {/* Save Button */}
         <View style={styles.footer}>
-          <TouchableOpacity style={styles.saveBtn} onPress={handleSave} activeOpacity={0.85}>
-            <Text style={styles.saveText}>Save and Update</Text>
+          <TouchableOpacity style={styles.saveBtn} onPress={handleSave} activeOpacity={0.85} disabled={saving}>
+            {saving ? (
+              <ActivityIndicator color="#fff" size="small" />
+            ) : (
+              <Text style={styles.saveText}>Save and Update</Text>
+            )}
           </TouchableOpacity>
         </View>
 
@@ -209,14 +299,8 @@ const styles = StyleSheet.create({
 
 const fieldStyles = StyleSheet.create({
   wrapper: {
-    borderWidth: 1.5,
-    borderColor: '#e0e0e0',
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingTop: 8,
-    paddingBottom: 4,
-    marginBottom: 12,
-    backgroundColor: '#fff',
+    borderWidth: 1.5, borderColor: '#e0e0e0', borderRadius: 10,
+    paddingHorizontal: 14, paddingTop: 8, paddingBottom: 4, marginBottom: 12, backgroundColor: '#fff',
   },
   wrapperFocused: { borderColor: '#E8304A' },
   label: { fontSize: 11, color: '#aaa', marginBottom: 2, fontWeight: '500', letterSpacing: 0.3 },
@@ -230,13 +314,8 @@ const fieldStyles = StyleSheet.create({
 
 const dropStyles = StyleSheet.create({
   wrapper: {
-    borderWidth: 1.5,
-    borderColor: '#e0e0e0',
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingTop: 8,
-    paddingBottom: 10,
-    marginBottom: 12,
+    borderWidth: 1.5, borderColor: '#e0e0e0', borderRadius: 10,
+    paddingHorizontal: 14, paddingTop: 8, paddingBottom: 10, marginBottom: 12,
   },
   label: { fontSize: 11, color: '#aaa', marginBottom: 4, fontWeight: '500', letterSpacing: 0.3 },
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
@@ -245,22 +324,14 @@ const dropStyles = StyleSheet.create({
   chevron: { fontSize: 18, color: '#666', marginLeft: 8 },
   overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.35)', justifyContent: 'flex-end' },
   sheet: {
-    backgroundColor: '#fff',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    paddingTop: 20,
-    paddingBottom: 40,
-    maxHeight: 360,
+    backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20,
+    paddingTop: 20, paddingBottom: 40, maxHeight: 360,
   },
   sheetTitle: { fontSize: 16, fontWeight: '700', color: '#111', paddingHorizontal: 20, marginBottom: 12 },
   option: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingVertical: 14, paddingHorizontal: 20,
+    borderBottomWidth: 1, borderBottomColor: '#f0f0f0',
   },
   optionSelected: { backgroundColor: '#fff8f8' },
   optionText: { fontSize: 15, color: '#444' },

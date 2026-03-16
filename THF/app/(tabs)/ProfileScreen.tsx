@@ -1,17 +1,18 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   View,
   Text,
-  Image,
   TouchableOpacity,
   ScrollView,
   StyleSheet,
-
+  ActivityIndicator,
   StatusBar,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import Navbar from '../../components/Navbar';
+import { useUserStore } from '@/src/hooks/useUserStore';
+import { auth } from '@/src/services/firebaseConfig';
 
 /* ── Types ── */
 interface ProfileScreenProps {
@@ -64,67 +65,45 @@ function MenuRow({
 
 
 /* ── Main Screen ── */
-export default function ProfileScreen({
-  chefName = 'Vinod Singh',
-  chefId = '1234',
-  specialty = 'Home Chef',
-  cuisine = 'North Indian',
-  city = 'Delhi',
-  isVerified = true,
-  profileImage,
-  bookings = 100,
-  earnings = '₹30k',
-  experience = 7,
-  onHelp,
-  onEditProfile,
-  onAccountDetail,
-  onBankDetails,
-  onReferFriend,
-  onChangeLanguage,
-}: ProfileScreenProps) {
+export default function ProfileScreen() {
   const router = useRouter();
+  const { profile, loading } = useUserStore();
+
+  const chefName = profile?.name ?? '';
+  const chefId = auth.currentUser?.uid?.slice(0, 6).toUpperCase() ?? '----';
+  const isVerified = profile?.kycStatus === 'approved';
+  const city = profile?.city ?? '';
+  const language = profile?.language ?? 'en';
+
+  if (loading) {
+    return (
+      <SafeAreaView style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator color="#E8304A" size="large" />
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#fff" />
-
-      {/* ── Top Nav ── */}
-      <Navbar onHelp={onHelp} />
-
-      <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
+      <Navbar />
+      <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <Text style={styles.pageTitle}>My profile</Text>
 
         {/* ── Profile Card ── */}
         <View style={styles.profileCard}>
-          {/* Avatar */}
           <View style={styles.avatarWrapper}>
-            {profileImage ? (
-              <Image source={profileImage} style={styles.avatar} />
-            ) : (
-              <View style={styles.avatarPlaceholder}>
-                <Text style={styles.avatarInitial}>{chefName.charAt(0)}</Text>
-              </View>
-            )}
+            <View style={styles.avatarPlaceholder}>
+              <Text style={styles.avatarInitial}>{chefName ? chefName.charAt(0).toUpperCase() : '?'}</Text>
+            </View>
           </View>
-
-          {/* Name + edit */}
           <View style={styles.nameRow}>
-            <Text style={styles.name}>{chefName}</Text>
-            <TouchableOpacity onPress={onEditProfile} activeOpacity={0.7} style={styles.editBtn}>
+            <Text style={styles.name}>{chefName || 'Partner'}</Text>
+            <TouchableOpacity onPress={() => router.push('/edit/EditDetailsScreen')} activeOpacity={0.7} style={styles.editBtn}>
               <Text style={styles.editIcon}>✏️</Text>
             </TouchableOpacity>
           </View>
-
-          {/* Specialty */}
-          <Text style={styles.specialty}>
-            {specialty} | {cuisine} | {city}
-          </Text>
-
-          {/* Badges */}
+          <Text style={styles.specialty}>Partner | {city || 'City not set'}</Text>
           <View style={styles.badgeRow}>
             {isVerified && (
               <View style={styles.verifiedBadge}>
@@ -137,42 +116,31 @@ export default function ProfileScreen({
           </View>
         </View>
 
-        {/* ── Stats Row ── */}
-        <View style={styles.statsRow}>
-          <View style={styles.statItem}>
-            <Text style={styles.statValue}>{bookings}</Text>
-            <Text style={styles.statLabel}>Bookings</Text>
-          </View>
-          <View style={styles.statDivider} />
-          <View style={styles.statItem}>
-            <Text style={styles.statValue}>{earnings}</Text>
-            <Text style={styles.statLabel}>Earnings</Text>
-          </View>
-          <View style={styles.statDivider} />
-          <View style={styles.statItem}>
-            <Text style={styles.statValue}>{experience} yrs.</Text>
-            <Text style={styles.statLabel}>Experience</Text>
-          </View>
+        {/* ── KYC Status Row ── */}
+        <View style={styles.kycCard}>
+          <Text style={styles.kycLabel}>KYC Status</Text>
+          <Text style={[
+            styles.kycValue,
+            profile?.kycStatus === 'approved' && { color: '#2e7d32' },
+            profile?.kycStatus === 'rejected' && { color: '#E8304A' },
+          ]}>
+            {(profile?.kycStatus ?? 'pending').toUpperCase()}
+          </Text>
         </View>
 
         {/* ── Menu Items ── */}
         <View style={styles.menuSection}>
-          <MenuRow label="Account detail" onPress={() => onAccountDetail ? onAccountDetail() : router.push('/edit/AccountDetailsScreen')} />
+          <MenuRow label="Account detail" onPress={() => router.push('/edit/AccountDetailsScreen')} />
           <View style={styles.menuDivider} />
-          <MenuRow label="Bank details" onPress={() => onBankDetails ? onBankDetails() : router.push('/edit/AccountDetailsScreen')} />
+          <MenuRow label="Bank details" onPress={() => router.push('/edit/AccountDetailsScreen')} />
           <View style={styles.menuDivider} />
-          <MenuRow
-            label="Refer a friend & Earn"
-            badge="Earn upto ₹5000"
-            onPress={() => onReferFriend ? onReferFriend() : router.push('/edit/ReferFriendScreen')}
-          />
+          <MenuRow label="Refer a friend & Earn" badge="Earn upto ₹5000" onPress={() => router.push('/edit/ReferFriendScreen')} />
           <View style={styles.menuDivider} />
-          <MenuRow label="Change Language" onPress={() => onChangeLanguage ? onChangeLanguage() : router.push('/edit/ChangeLanguageScreen')} />
+          <MenuRow label="Change Language" onPress={() => router.push('/edit/ChangeLanguageScreen')} />
         </View>
 
         <View style={{ height: 16 }} />
       </ScrollView>
-
     </SafeAreaView>
   );
 }
@@ -265,6 +233,25 @@ const styles = StyleSheet.create({
     elevation: 1,
   },
   menuDivider: { height: 1, backgroundColor: '#f5f5f5', marginHorizontal: 16 },
+
+  /* KYC Card */
+  kycCard: {
+    backgroundColor: '#fff',
+    borderRadius: 14,
+    paddingVertical: 14,
+    paddingHorizontal: 18,
+    marginBottom: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 1,
+  },
+  kycLabel: { fontSize: 14, color: '#555', fontWeight: '500' },
+  kycValue: { fontSize: 14, fontWeight: '700', color: '#B8860B' },
 });
 
 const menuStyles = StyleSheet.create({
