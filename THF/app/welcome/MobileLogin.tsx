@@ -46,7 +46,7 @@ export default function MobileLoginScreen({ onGetStarted }: MobileLoginScreenPro
 
       // Navigate to OTP screen with the verificationId & phone number
       router.push({
-        pathname: '/welcome/OTPScreen',
+        pathname: '/welcome/OTP',
         params: {
           verificationId,
           phoneNumber,

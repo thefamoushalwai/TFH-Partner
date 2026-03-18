@@ -1,6 +1,10 @@
+import { uploadKycImage } from '@/src/services/kycStorageService';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
+  Alert,
   Dimensions,
   Image,
   KeyboardAvoidingView,
@@ -17,27 +21,106 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 const { width } = Dimensions.get('window');
 
-const formatAadhar = (text: string): string => {
-  const digits = text.replace(/\D/g, '').slice(0, 12);
-  return digits.replace(/(\d{4})(?=\d)/g, '$1 ').trim();
+const formatPan = (text: string): string => {
+  return text.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 10);
 };
 
-interface AadharScreenProps {
+interface PanScreenProps {
   onBack?: () => void;
-  onUpload?: (aadharNumber: string) => void;
+  onUpload?: (panNumber: string) => void;
   onSkip?: () => void;
 }
 
-export default function AadharScreen({ onBack, onUpload, onSkip }: AadharScreenProps) {
+export default function PanScreen({ onBack, onUpload, onSkip }: PanScreenProps) {
   const router = useRouter();
-  const [aadhar, setAadhar] = useState('');
+  const [pan, setPan] = useState('');
   const [focused, setFocused] = useState(false);
+  const [imageUri, setImageUri] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
-  const rawDigits = aadhar.replace(/\s/g, '');
-  const isValid = rawDigits.length === 12;
+  const isValid = pan.length === 10;
 
   const handleChange = (text: string) => {
-    setAadhar(formatAadhar(text));
+    setPan(formatPan(text));
+  };
+
+  const processImage = async (result: ImagePicker.ImagePickerResult) => {
+    if (!result.canceled) {
+      const uri = result.assets[0].uri;
+      try {
+        setIsUploading(true);
+        setImageUri(uri);
+
+        const downloadUrl = await uploadKycImage(uri, 'pan');
+        await AsyncStorage.multiSet([
+          ['panPhoto', uri],
+          ['panPhotoUrl', downloadUrl],
+        ]);
+
+        if (onUpload) {
+          onUpload(pan);
+        } else {
+          router.push('/kyc/UploadDocuments_1');
+        }
+      } catch (error) {
+        console.error('Error uploading PAN:', error);
+        Alert.alert('Upload failed', 'Unable to upload PAN document. Please try again.');
+      } finally {
+        setIsUploading(false);
+      }
+    }
+  };
+
+  const handleCamera = async () => {
+    try {
+      const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
+      if (!permissionResult.granted) {
+        Alert.alert('Permission Required', 'Please allow camera access to upload a document.');
+        return;
+      }
+      const result = await ImagePicker.launchCameraAsync({
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 0.7,
+      });
+      await processImage(result);
+    } catch (error) {
+      console.error('Error capturing document:', error);
+      Alert.alert('Error', 'Failed to capture image');
+    }
+  };
+
+  const handleGallery = async () => {
+    try {
+      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!permissionResult.granted) {
+        Alert.alert('Permission Required', 'Please allow gallery access to choose a document.');
+        return;
+      }
+      const result = await ImagePicker.launchImageLibraryAsync({
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 0.7,
+      });
+      await processImage(result);
+    } catch (error) {
+      console.error('Error selecting document:', error);
+      Alert.alert('Error', 'Failed to select image');
+    }
+  };
+
+  const handleSelectOptions = () => {
+    if (!isValid) return;
+    Alert.alert(
+      'Upload Document',
+      'Choose an option',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Take Photo', onPress: handleCamera },
+        { text: 'Choose from Gallery', onPress: handleGallery },
+      ],
+      { cancelable: true }
+    );
   };
 
   return (
@@ -69,33 +152,39 @@ export default function AadharScreen({ onBack, onUpload, onSkip }: AadharScreenP
           </TouchableOpacity>
 
           {/* Heading */}
-          <Text style={styles.heading}>Enter your Aadhar details</Text>
+          <Text style={styles.heading}>Enter your Pan details</Text>
           <Text style={styles.subheading}>Upload your own documents for a faster process!</Text>
 
           <View style={styles.cardContainer}>
-            <Image
-              source={require('../../assets/THF/aadhar_card.png')}
-              style={styles.cardImage}
-              resizeMode="contain"
-            />
+            {imageUri ? (
+              <Image
+                source={{ uri: imageUri }}
+                style={styles.cardImage}
+                resizeMode="cover"
+              />
+            ) : (
+              <View style={styles.placeholderBox}>
+                <Text style={styles.placeholderText}>No image selected</Text>
+              </View>
+            )}
           </View>
 
-          {/* Aadhar Number Input */}
+          {/* Pan Number Input */}
           <View style={[styles.inputWrapper]}>
             <Text style={[styles.floatLabel]}>
-              Enter Aadhar number
+              Enter PAN number
             </Text>
             <View style={styles.inputRow}>
               <TextInput
                 style={styles.input}
-                value={aadhar}
+                value={pan}
                 onChangeText={handleChange}
-                keyboardType="number-pad"
-                placeholder="1234 1234 1234"
+                autoCapitalize="characters"
+                placeholder="ABCDE1234F"
                 placeholderTextColor="#bbb"
                 onFocus={() => setFocused(true)}
                 onBlur={() => setFocused(false)}
-                maxLength={14}
+                maxLength={10}
               />
               {isValid && (
                 <View style={styles.checkCircle}>
@@ -107,7 +196,7 @@ export default function AadharScreen({ onBack, onUpload, onSkip }: AadharScreenP
 
           {/* Auth note */}
           <Text style={styles.authNote}>
-            By clicking 'Continue' you give authorization to verify your Aadhar card.
+            By clicking 'Continue' you give authorization to verify your PAN card.
           </Text>
         </ScrollView>
 
@@ -115,20 +204,12 @@ export default function AadharScreen({ onBack, onUpload, onSkip }: AadharScreenP
         <View style={styles.footer}>
           <TouchableOpacity
             style={[styles.uploadBtn, isValid && styles.uploadBtnActive]}
-            onPress={() => {
-              if (isValid) {
-                if (onUpload) {
-                  onUpload(rawDigits);
-                } else {
-                  router.push('/kyc/SelfieScreen');
-                }
-              }
-            }}
+            onPress={handleSelectOptions}
             activeOpacity={isValid ? 0.85 : 1}
-            disabled={!isValid}
+            disabled={!isValid || isUploading}
           >
             <Text style={[styles.uploadText, isValid && styles.uploadTextActive]}>
-              Upload Document
+              {isUploading ? 'Uploading...' : 'Upload Document'}
             </Text>
           </TouchableOpacity>
 
@@ -138,7 +219,7 @@ export default function AadharScreen({ onBack, onUpload, onSkip }: AadharScreenP
               if (onSkip) {
                 onSkip();
               } else {
-                router.push('/(tabs)/DashboardScreen');
+                router.push('/(tabs)/Dashboard');
               }
             }}
             activeOpacity={0.7}
@@ -175,6 +256,22 @@ const styles = StyleSheet.create({
   cardImage: {
     width: width,
     height: (width) * 0.6,
+  },
+  placeholderBox: {
+    width: width - 80,
+    height: (width) * 0.4,
+    borderWidth: 2,
+    borderStyle: 'dashed',
+    borderColor: '#ddd',
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f9f9f9',
+  },
+  placeholderText: {
+    color: '#888',
+    fontSize: 14,
+    fontWeight: '500',
   },
 
   /* Input */

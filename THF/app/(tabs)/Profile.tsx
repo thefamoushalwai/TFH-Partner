@@ -99,7 +99,7 @@ export default function ProfileScreen() {
           </View>
           <View style={styles.nameRow}>
             <Text style={styles.name}>{chefName || 'Partner'}</Text>
-            <TouchableOpacity onPress={() => router.push('/edit/EditDetailsScreen')} activeOpacity={0.7} style={styles.editBtn}>
+            <TouchableOpacity onPress={() => router.push('/edit/EditDetails')} activeOpacity={0.7} style={styles.editBtn}>
               <Text style={styles.editIcon}>✏️</Text>
             </TouchableOpacity>
           </View>
@@ -130,13 +130,13 @@ export default function ProfileScreen() {
 
         {/* ── Menu Items ── */}
         <View style={styles.menuSection}>
-          <MenuRow label="Account detail" onPress={() => router.push('/edit/AccountDetailsScreen')} />
+          <MenuRow label="Account detail" onPress={() => router.push('/edit/AccountDetails')} />
           <View style={styles.menuDivider} />
-          <MenuRow label="Bank details" onPress={() => router.push('/edit/AccountDetailsScreen')} />
+          <MenuRow label="Bank details" onPress={() => router.push('/edit/AccountDetails')} />
           <View style={styles.menuDivider} />
-          <MenuRow label="Refer a friend & Earn" badge="Earn upto ₹5000" onPress={() => router.push('/edit/ReferFriendScreen')} />
+          <MenuRow label="Refer a friend & Earn" badge="Earn upto ₹5000" onPress={() => router.push('/edit/ReferFriend')} />
           <View style={styles.menuDivider} />
-          <MenuRow label="Change Language" onPress={() => router.push('/edit/ChangeLanguageScreen')} />
+          <MenuRow label="Change Language" onPress={() => router.push('/edit/ChangeLanguage')} />
         </View>
 
         <View style={{ height: 16 }} />

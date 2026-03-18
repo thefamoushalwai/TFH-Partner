@@ -114,7 +114,7 @@ export default function OTPScreen({ onVerify, onBack }: OTPScreenProps) {
       const user = await verifyOtp(verificationId, otpCode);
       console.log('Firebase user signed in:', user.uid);
       // Navigate to the next screen after successful verification
-      router.replace('/kyc/ExperienceScreen');
+      router.replace('/kyc/Experience');
     } catch (error: any) {
       console.error('OTP verify error:', error);
 

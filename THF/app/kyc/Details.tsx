@@ -233,7 +233,7 @@ export default function DetailsScreen({ onBack, onRegister }: DetailsScreenProps
         await AsyncStorage.setItem(PROFILE_CACHE_KEY, JSON.stringify(freshProfile));
       }
 
-      router.push('/kyc/UploadDocumentsScreen_1');
+      router.push('/kyc/UploadDocuments_1');
     } catch (err: any) {
       console.error('[DetailsScreen] save error:', err);
       Alert.alert('Error', err?.message ?? 'Failed to save details. Please try again.');

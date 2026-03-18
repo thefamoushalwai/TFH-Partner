@@ -82,7 +82,7 @@ export default function ExperienceScreen({ onBack, onContinue }: ExperienceScree
       const fresh = await getUserProfile(uid);
       if (fresh) await AsyncStorage.setItem(PROFILE_CACHE_KEY, JSON.stringify(fresh));
 
-      router.push('/kyc/DetailsScreen');
+      router.push('/kyc/Details');
     } catch (err: any) {
       console.error('[ExperienceScreen] save error:', err);
       Alert.alert('Error', err?.message ?? 'Failed to save. Please try again.');

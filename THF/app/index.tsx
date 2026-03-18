@@ -35,7 +35,7 @@ export default function SplashScreen() {
     ]).start();
 
     const timer = setTimeout(() => {
-      router.replace('/welcome/LanguageSelectScreen');
+      router.replace('/welcome/LanguageSelect');
     }, 3000);
     return () => clearTimeout(timer);
   }, []);

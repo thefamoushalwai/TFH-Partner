@@ -30,7 +30,7 @@ export default function LanguageSelectScreen({ onContinue }: LanguageSelectScree
     if (onContinue) {
       onContinue(selected);
     } else {
-      router.push('/welcome/MobileLoginScreen');
+      router.push('/welcome/MobileLogin');
     }
   };
 

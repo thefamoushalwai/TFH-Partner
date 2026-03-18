@@ -1,15 +1,17 @@
-import React, { useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useRouter } from 'expo-router';
+import React, { useEffect, useState } from 'react';
 import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  StatusBar,
   KeyboardAvoidingView,
   Platform,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import Svg, { Path } from 'react-native-svg';
 
 interface DocumentItem {
   id: string;
@@ -27,6 +29,8 @@ interface UploadDocumentsScreenProps {
 
 const DEFAULT_DOCS: DocumentItem[] = [
   { id: 'selfie', label: 'Upload profile picture (Selfie)', uploaded: false },
+  { id: 'aadhar', label: 'Upload Aadhar card front & back', uploaded: false },
+  { id: 'pan', label: 'Upload PAN number', uploaded: false },
 ];
 
 export default function UploadDocumentsScreen({
@@ -39,14 +43,40 @@ export default function UploadDocumentsScreen({
   const router = useRouter();
   const [docs, setDocs] = useState<DocumentItem[]>(initialDocs);
 
+  useEffect(() => {
+    const syncUploadedStatus = async () => {
+      try {
+        const values = await AsyncStorage.multiGet([
+          'profilePhotoUrl',
+          'aadharPhotoUrl',
+          'aadharPhotoBackUrl',
+          'panPhotoUrl',
+        ]);
+
+        const uploadedMap = {
+          selfie: Boolean(values[0][1]),
+          aadhar: Boolean(values[1][1]) && Boolean(values[2][1]), // Both front & back required
+          pan: Boolean(values[3][1]),
+        };
+
+        setDocs((prev) =>
+          prev.map((doc) => ({
+            ...doc,
+            uploaded: uploadedMap[doc.id as keyof typeof uploadedMap],
+          }))
+        );
+      } catch (error) {
+        console.error('Failed to sync uploaded document status:', error);
+      }
+    };
+
+    syncUploadedStatus();
+  }, []);
+
   const allUploaded = docs.every((d) => d.uploaded);
 
   const handleDocPress = (doc: DocumentItem) => {
     onDocumentPress?.(doc);
-    // Toggle for demo — replace with real camera/picker logic
-    setDocs((prev) =>
-      prev.map((d) => (d.id === doc.id ? { ...d, uploaded: !d.uploaded } : d))
-    );
   };
 
   return (
@@ -75,12 +105,37 @@ export default function UploadDocumentsScreen({
                 style={styles.docRow}
                 onPress={() => {
                   handleDocPress(doc);
-                  router.push('/kyc/SelfieScreen');
+                  switch (doc.id) {
+                    case 'selfie':
+                      router.push('/kyc/Selfie');
+                      break;
+                    case 'aadhar':
+                      router.push('/kyc/Aadhar');
+                      break;
+                    case 'pan':
+                      router.push('/kyc/Pan');
+                      break;
+                  }
                 }}
                 activeOpacity={0.7}
               >
                 <Text style={styles.docLabel}>{doc.label}</Text>
-                <Text style={styles.chevron}>›</Text>
+                {doc.uploaded ? (
+                  <View style={styles.statusIcon}>
+                    <Svg width={22} height={22} viewBox="0 0 24 24" fill="none">
+                      <Path
+                        d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"
+                        fill="#16A34A"
+                      />
+                      <Path
+                        d="m10.25 15.35-2.9-2.9a1 1 0 1 1 1.42-1.42l2.2 2.2 4.18-4.18a1 1 0 0 1 1.41 1.42l-4.88 4.88a1 1 0 0 1-1.43 0z"
+                        fill="#FFFFFF"
+                      />
+                    </Svg>
+                  </View>
+                ) : (
+                  <Text style={styles.chevron}>›</Text>
+                )}
               </TouchableOpacity>
             ))}
           </View>
@@ -132,6 +187,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   docLabel: { fontSize: 15, color: '#333', fontWeight: '400', flex: 1 },
+  statusIcon: { width: 22, height: 22, alignItems: 'center', justifyContent: 'center' },
   chevron: { fontSize: 22, color: '#aaa' },
 
   footer: { paddingHorizontal: 20, paddingBottom: 36, paddingTop: 12, gap: 14 },
