@@ -3,6 +3,7 @@ import { clearUserCache, useUserStore } from '@/src/hooks/useUserStore';
 import { auth } from '@/src/services/firebaseConfig';
 import { clearSession } from '@/src/services/sessionStorage';
 import { useRouter } from 'expo-router';
+import { Image } from 'expo-image';
 import React from 'react';
 import {
   ActivityIndicator,
@@ -13,6 +14,7 @@ import {
   Text,
   TouchableOpacity,
   View,
+  RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Navbar from '../../components/Navbar';
@@ -70,7 +72,14 @@ function MenuRow({
 /* ── Main Screen ── */
 export default function ProfileScreen() {
   const router = useRouter();
-  const { profile, loading } = useUserStore();
+  const { profile, loading, refresh } = useUserStore();
+  const [refreshing, setRefreshing] = React.useState(false);
+
+  const onRefresh = React.useCallback(async () => {
+    setRefreshing(true);
+    if (refresh) await refresh();
+    setRefreshing(false);
+  }, [refresh]);
 
   const chefName = profile?.name ?? '';
   const chefId = auth.currentUser?.uid?.slice(0, 6).toUpperCase() ?? '----';
@@ -98,7 +107,7 @@ export default function ProfileScreen() {
     ]);
   };
 
-  if (loading) {
+  if (loading && !profile) {
     return (
       <SafeAreaView style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
         <ActivityIndicator color="#E8304A" size="large" />
@@ -110,21 +119,31 @@ export default function ProfileScreen() {
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#fff" />
       <Navbar />
-      <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        style={styles.scroll} 
+        contentContainerStyle={styles.scrollContent} 
+        showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#E8304A" />}
+      >
         <Text style={styles.pageTitle}>My profile</Text>
 
         {/* ── Profile Card ── */}
         <View style={styles.profileCard}>
           <View style={styles.avatarWrapper}>
-            <View style={styles.avatarPlaceholder}>
-              <Text style={styles.avatarInitial}>{chefName ? chefName.charAt(0).toUpperCase() : '?'}</Text>
-            </View>
+            {profile?.kycDocuments?.selfieUrl ? (
+              <Image 
+                source={{ uri: profile.kycDocuments.selfieUrl }} 
+                style={styles.avatar} 
+                contentFit="cover" 
+              />
+            ) : (
+              <View style={styles.avatarPlaceholder}>
+                <Text style={styles.avatarInitial}>{chefName ? chefName.charAt(0).toUpperCase() : '?'}</Text>
+              </View>
+            )}
           </View>
           <View style={styles.nameRow}>
             <Text style={styles.name}>{chefName || 'Partner'}</Text>
-            <TouchableOpacity onPress={() => router.push('/edit/EditDetails')} activeOpacity={0.7} style={styles.editBtn}>
-              <Text style={styles.editIcon}>✏️</Text>
-            </TouchableOpacity>
           </View>
           <Text style={styles.specialty}>Partner | {city || 'City not set'}</Text>
           <View style={styles.badgeRow}>

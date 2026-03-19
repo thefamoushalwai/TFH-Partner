@@ -37,10 +37,17 @@ export interface UserProfile {
   gender: 'male' | 'female' | 'other';
   city: string;
   address: string;
-  /** List of experience tags, e.g. ["Wedding", "Corporate"] */
+  /** List of experience tags, e.g. ["Hotel", "Houses"] */
   experience: string[];
   language: string;
-  kycStatus: 'pending' | 'approved' | 'rejected';
+  kycStatus: 'unsubmitted' | 'pending' | 'pending_verification' | 'approved' | 'verified' | 'rejected';
+  kycDocuments?: {
+    selfieUrl: string;
+    panUrl: string;
+    aadharFrontUrl: string;
+    aadharBackUrl: string;
+  };
+  kycSubmittedAt?: string;
   createdAt: Timestamp;
 }
 

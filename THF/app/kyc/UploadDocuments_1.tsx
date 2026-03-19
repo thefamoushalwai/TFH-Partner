@@ -2,6 +2,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
+  ActivityIndicator,
+  Alert,
   KeyboardAvoidingView,
   Platform,
   StatusBar,
@@ -12,6 +14,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
+import { linkKycToUser } from '@/src/services/kycStorageService';
 
 interface DocumentItem {
   id: string;
@@ -42,6 +45,7 @@ export default function UploadDocumentsScreen({
 }: UploadDocumentsScreenProps) {
   const router = useRouter();
   const [docs, setDocs] = useState<DocumentItem[]>(initialDocs);
+  const [isLinking, setIsLinking] = useState(false);
 
   useEffect(() => {
     const syncUploadedStatus = async () => {
@@ -145,21 +149,48 @@ export default function UploadDocumentsScreen({
         <View style={styles.footer}>
           <TouchableOpacity
             style={[styles.continueBtn, allUploaded && styles.continueBtnActive]}
-            onPress={() => {
+            onPress={async () => {
               if (allUploaded) {
                 if (onContinue) {
                   onContinue(docs);
                 } else {
-                  router.push('/(tabs)/Dashboard');
+                  setIsLinking(true);
+                  try {
+                    const values = await AsyncStorage.multiGet([
+                      'profilePhotoUrl',
+                      'aadharPhotoUrl',
+                      'aadharPhotoBackUrl',
+                      'panPhotoUrl',
+                    ]);
+                    
+                    const kycData = {
+                      selfieUrl: values[0][1] || '',
+                      aadharFrontUrl: values[1][1] || '',
+                      aadharBackUrl: values[2][1] || '',
+                      panUrl: values[3][1] || ''
+                    };
+                    
+                    await linkKycToUser(kycData);
+                    router.push('/(tabs)/Dashboard');
+                  } catch (error) {
+                    console.error('Failed to link KYC documents:', error);
+                    Alert.alert('Error', 'Failed to link documents. Please try again.');
+                  } finally {
+                    setIsLinking(false);
+                  }
                 }
               }
             }}
             activeOpacity={allUploaded ? 0.85 : 1}
-            disabled={!allUploaded}
+            disabled={!allUploaded || isLinking}
           >
-            <Text style={[styles.continueText, allUploaded && styles.continueTextActive]}>
-              Continue
-            </Text>
+            {isLinking ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={[styles.continueText, allUploaded && styles.continueTextActive]}>
+                Continue
+              </Text>
+            )}
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.skipBtn} onPress={onSkip} activeOpacity={0.7}>

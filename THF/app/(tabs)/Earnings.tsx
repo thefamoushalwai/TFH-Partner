@@ -7,6 +7,7 @@ import {
   StyleSheet,
   ActivityIndicator,
   StatusBar,
+  RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Navbar from '../../components/Navbar';
@@ -67,16 +68,29 @@ const DEFAULT_TRANSACTIONS: DisplayTransaction[] = [
 export default function EarningsScreen() {
   const [transactions, setTransactions] = useState<FSTransaction[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const month = dayjs().format('MMMM YYYY');
 
-  useEffect(() => {
+  const fetchTransactions = React.useCallback(async () => {
     const uid = auth.currentUser?.uid;
-    if (!uid) { setLoading(false); return; }
-    getPartnerTransactions(uid)
-      .then(setTransactions)
-      .catch(console.error)
-      .finally(() => setLoading(false));
+    if (!uid) return;
+    try {
+      const data = await getPartnerTransactions(uid);
+      setTransactions(data);
+    } catch (error) {
+      console.error(error);
+    }
   }, []);
+
+  const onRefresh = React.useCallback(async () => {
+    setRefreshing(true);
+    await fetchTransactions();
+    setRefreshing(false);
+  }, [fetchTransactions]);
+
+  useEffect(() => {
+    fetchTransactions().finally(() => setLoading(false));
+  }, [fetchTransactions]);
 
   const totalEarned = transactions.reduce((s, t) => s + (t.amount ?? 0), 0);
   const bookingsCount = transactions.length;
@@ -88,7 +102,12 @@ export default function EarningsScreen() {
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#fff" />
       <Navbar />
-      <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        style={styles.scroll} 
+        contentContainerStyle={styles.scrollContent} 
+        showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#E8304A" />}
+      >
         <Text style={styles.pageTitle}>My Earnings</Text>
         <Text style={styles.monthLabel}>{month}</Text>
 
@@ -112,7 +131,7 @@ export default function EarningsScreen() {
 
         {/* ── Recent Transactions ── */}
         <Text style={styles.sectionTitle}>Recent transactions</Text>
-        {loading ? (
+        {loading && !refreshing ? (
           <ActivityIndicator color="#E8304A" style={{ marginTop: 16 }} />
         ) : transactions.length === 0 ? (
           <View style={styles.emptyBox}>

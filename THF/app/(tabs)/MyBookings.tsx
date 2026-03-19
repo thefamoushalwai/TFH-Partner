@@ -7,6 +7,7 @@ import {
   StyleSheet,
   StatusBar,
   ActivityIndicator,
+  RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Navbar from '../../components/Navbar';
@@ -102,32 +103,6 @@ function BookingCard({
   );
 }
 
-/* ── Bottom Tab Bar ── */
-const TABS = [
-  { id: 'home', label: 'Home', icon: '🏠' },
-  { id: 'bookings', label: 'My Bookings', icon: '📅' },
-  { id: 'earnings', label: 'Earnings', icon: '💰' },
-  { id: 'profile', label: 'Profile', icon: '👤' },
-];
-
-function TabBar({ activeTab, onTabChange }: { activeTab: string; onTabChange?: (tab: string) => void }) {
-  return (
-    <View style={tabStyles.container}>
-      {TABS.map((tab) => (
-        <TouchableOpacity
-          key={tab.id}
-          style={tabStyles.tab}
-          onPress={() => onTabChange?.(tab.id)}
-          activeOpacity={0.7}
-        >
-          <Text style={[tabStyles.icon, activeTab === tab.id && tabStyles.iconActive]}>{tab.icon}</Text>
-          <Text style={[tabStyles.label, activeTab === tab.id && tabStyles.labelActive]}>{tab.label}</Text>
-        </TouchableOpacity>
-      ))}
-    </View>
-  );
-}
-
 /* ── Default Data ── */
 const DEFAULT_NEXT_UP: NextUpBooking = {
   label: 'Next up - in 2 hours',
@@ -150,17 +125,30 @@ export default function MyBookingsScreen() {
   const [fsBookings, setFsBookings] = useState<FSBooking[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState<FilterTab>('All');
+  const [refreshing, setRefreshing] = useState(false);
 
   const dateLabel = dayjs().format('DD MMM YYYY | hh:mm a');
 
-  useEffect(() => {
+  const fetchBookings = React.useCallback(async () => {
     const uid = auth.currentUser?.uid;
-    if (!uid) { setLoading(false); return; }
-    getPartnerBookings(uid)
-      .then(setFsBookings)
-      .catch(console.error)
-      .finally(() => setLoading(false));
+    if (!uid) return;
+    try {
+      const data = await getPartnerBookings(uid);
+      setFsBookings(data);
+    } catch (error) {
+      console.error(error);
+    }
   }, []);
+
+  const onRefresh = React.useCallback(async () => {
+    setRefreshing(true);
+    await fetchBookings();
+    setRefreshing(false);
+  }, [fetchBookings]);
+
+  useEffect(() => {
+    fetchBookings().finally(() => setLoading(false));
+  }, [fetchBookings]);
 
   // Map Firestore bookings to the local display Booking shape
   const mappedBookings: Booking[] = fsBookings.map((b) => {
@@ -204,7 +192,12 @@ export default function MyBookingsScreen() {
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#fff" />
       <Navbar />
-      <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        style={styles.scroll} 
+        contentContainerStyle={styles.scrollContent} 
+        showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#E8304A" />}
+      >
         <Text style={styles.pageTitle}>My Bookings</Text>
         <Text style={styles.dateLabel}>{dateLabel}</Text>
 
@@ -240,7 +233,7 @@ export default function MyBookingsScreen() {
         </View>
 
         {/* ── Booking List ── */}
-        {loading ? (
+        {loading && !refreshing ? (
           <ActivityIndicator color="#E8304A" style={{ marginTop: 20 }} />
         ) : filteredBookings.length === 0 ? (
           <View style={styles.emptyCard}>
@@ -307,7 +300,7 @@ const styles = StyleSheet.create({
   },
   filterTab: {
     paddingVertical: 8,
-    paddingHorizontal: 18,
+    paddingHorizontal: 14,
     borderRadius: 24,
     borderWidth: 1.5,
     borderColor: '#e0e0e0',
@@ -317,7 +310,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#E8304A',
     borderColor: '#E8304A',
   },
-  filterTabText: { fontSize: 14, color: '#555', fontWeight: '500' },
+  filterTabText: { fontSize: 12, color: '#555', fontWeight: '500' },
   filterTabTextActive: { color: '#fff', fontWeight: '600' },
 
   /* List */

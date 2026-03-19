@@ -1,5 +1,6 @@
-import { auth, storage } from '@/src/services/firebaseConfig';
+import { auth, storage, db } from '@/src/services/firebaseConfig';
 import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
+import { doc, setDoc } from 'firebase/firestore';
 
 type KycDocumentType = 'selfie' | 'aadhar-front' | 'aadhar-back' | 'pan';
 
@@ -29,4 +30,25 @@ export const uploadKycImage = async (
   });
 
   return getDownloadURL(storageRef);
+};
+
+export interface KycDocumentUrls {
+  selfieUrl: string;
+  aadharFrontUrl: string;
+  aadharBackUrl: string;
+  panUrl: string;
+}
+
+export const linkKycToUser = async (kycData: KycDocumentUrls): Promise<void> => {
+  const uid = auth.currentUser?.uid;
+  if (!uid) {
+    throw new Error('User not authenticated');
+  }
+
+  const userDocRef = doc(db, 'users', uid);
+  await setDoc(userDocRef, {
+    kycDocuments: kycData,
+    kycStatus: 'pending_verification',
+    kycSubmittedAt: new Date().toISOString()
+  }, { merge: true });
 };

@@ -177,6 +177,29 @@ export default function DetailsScreen({ onBack, onRegister }: DetailsScreenProps
   const [address, setAddress] = useState('');
   const [saving, setSaving] = useState(false);
 
+  React.useEffect(() => {
+    const loadProfile = async () => {
+      const uid = auth.currentUser?.uid;
+      if (!uid) return;
+      try {
+        const existing = await getUserProfile(uid);
+        if (existing) {
+          if (existing.name) setName(existing.name);
+          if (existing.email) setEmail(existing.email);
+          if (existing.emergencyPhone) setEmergency(existing.emergencyPhone);
+          if (existing.gender) {
+            setGender(existing.gender.charAt(0).toUpperCase() + existing.gender.slice(1));
+          }
+          if (existing.city) setCity(existing.city);
+          if (existing.address) setAddress(existing.address);
+        }
+      } catch (e) {
+        console.error("Failed to load existing profile", e);
+      }
+    };
+    loadProfile();
+  }, []);
+
   const allFilled =
     name.trim().length > 1 &&
     isValidEmail(email) &&
@@ -207,7 +230,7 @@ export default function DetailsScreen({ onBack, onRegister }: DetailsScreenProps
       const existing = await getUserProfile(uid);
       const phone = auth.currentUser?.phoneNumber ?? '';
 
-      const profileData = {
+      const profileData: any = {
         name: name.trim(),
         email: email.trim(),
         phone,
@@ -215,9 +238,12 @@ export default function DetailsScreen({ onBack, onRegister }: DetailsScreenProps
         gender: gender.toLowerCase() as 'male' | 'female' | 'other',
         city,
         address: address.trim(),
-        experience: [],   // filled on ExperienceScreen
         language: 'en',
       };
+
+      if (!existing || !existing.experience) {
+        profileData.experience = [];
+      }
 
       if (existing) {
         // Already exists — partial update via userService
