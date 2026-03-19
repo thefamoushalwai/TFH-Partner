@@ -26,11 +26,14 @@ export default function LanguageSelectScreen({ onContinue }: LanguageSelectScree
   const router = useRouter();
   const [selected, setSelected] = useState('en');
 
-  const handleContinue = () => {
+  const handleContinue = (mode: 'login' | 'signup') => {
     if (onContinue) {
       onContinue(selected);
     } else {
-      router.push('/welcome/MobileLogin');
+      router.push({
+        pathname: '/welcome/MobileLogin',
+        params: { mode },
+      });
     }
   };
 
@@ -85,13 +88,21 @@ export default function LanguageSelectScreen({ onContinue }: LanguageSelectScree
           ))}
         </View>
 
-        {/* Continue Button */}
+        {/* Auth Buttons */}
         <TouchableOpacity
           style={styles.continueButton}
-          onPress={handleContinue}
+          onPress={() => handleContinue('signup')}
           activeOpacity={0.85}
         >
-          <Text style={styles.continueText}>Continue</Text>
+          <Text style={styles.continueText}>Sign up</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.loginButton}
+          onPress={() => handleContinue('login')}
+          activeOpacity={0.85}
+        >
+          <Text style={styles.loginText}>Login</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -205,6 +216,20 @@ const styles = StyleSheet.create({
   },
   continueText: {
     color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+    letterSpacing: 0.3,
+  },
+  loginButton: {
+    borderRadius: 12,
+    paddingVertical: 16,
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: '#E8304A',
+    marginTop: 12,
+  },
+  loginText: {
+    color: '#E8304A',
     fontSize: 16,
     fontWeight: '600',
     letterSpacing: 0.3,

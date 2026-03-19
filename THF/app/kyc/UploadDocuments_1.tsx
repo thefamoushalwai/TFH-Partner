@@ -145,7 +145,15 @@ export default function UploadDocumentsScreen({
         <View style={styles.footer}>
           <TouchableOpacity
             style={[styles.continueBtn, allUploaded && styles.continueBtnActive]}
-            onPress={() => allUploaded && onContinue?.(docs)}
+            onPress={() => {
+              if (allUploaded) {
+                if (onContinue) {
+                  onContinue(docs);
+                } else {
+                  router.push('/(tabs)/Dashboard');
+                }
+              }
+            }}
             activeOpacity={allUploaded ? 0.85 : 1}
             disabled={!allUploaded}
           >

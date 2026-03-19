@@ -18,6 +18,8 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { sendOtp, verifyOtp } from '@/lib/auth';
+import { saveSession } from '@/src/services/sessionStorage';
+import { getUserProfile } from '@/src/services/userService';
 
 const OTP_LENGTH = 6;
 const RESEND_SECONDS = 30;
@@ -27,12 +29,29 @@ interface OTPScreenProps {
   onBack?: () => void;
 }
 
+const hasCompletedProfile = (profile: Awaited<ReturnType<typeof getUserProfile>>): boolean => {
+  if (!profile) return false;
+
+  return Boolean(
+    profile.name?.trim() &&
+      profile.email?.trim() &&
+      profile.phone?.trim() &&
+      profile.emergencyPhone?.trim() &&
+      profile.gender?.trim() &&
+      profile.city?.trim() &&
+      profile.address?.trim() &&
+      Array.isArray(profile.experience) &&
+      profile.experience.length > 0,
+  );
+};
+
 export default function OTPScreen({ onVerify, onBack }: OTPScreenProps) {
   const router = useRouter();
-  const params = useLocalSearchParams<{ verificationId?: string; phoneNumber?: string }>();
+  const params = useLocalSearchParams<{ verificationId?: string; phoneNumber?: string; mode?: 'signup' | 'login' }>();
 
   const [verificationId, setVerificationId] = useState(params.verificationId ?? '');
   const phoneNumber = params.phoneNumber ?? '+91 9205394233';
+  const mode = params.mode === 'signup' ? 'signup' : 'login';
 
   const [otp, setOtp] = useState(Array(OTP_LENGTH).fill(''));
   const [focusedIndex, setFocusedIndex] = useState(0);
@@ -112,9 +131,24 @@ export default function OTPScreen({ onVerify, onBack }: OTPScreenProps) {
     setLoading(true);
     try {
       const user = await verifyOtp(verificationId, otpCode);
+      await saveSession({ uid: user.uid, phoneNumber });
       console.log('Firebase user signed in:', user.uid);
-      // Navigate to the next screen after successful verification
-      router.replace('/kyc/Experience');
+
+      // OTP is only for signup; next step is to set password.
+      if (mode === 'signup') {
+        router.replace({
+          pathname: '/welcome/password',
+          params: {
+            phoneNumber,
+          },
+        });
+        return;
+      }
+
+      // Safety fallback (should not hit with current flow).
+      const existingProfile = await getUserProfile(user.uid);
+      if (hasCompletedProfile(existingProfile)) router.replace('/(tabs)/Dashboard');
+      else router.replace('/kyc/Experience');
     } catch (error: any) {
       console.error('OTP verify error:', error);
 

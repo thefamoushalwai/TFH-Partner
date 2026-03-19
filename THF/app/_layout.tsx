@@ -7,6 +7,7 @@ export default function RootLayout() {
       <Stack.Screen name="welcome/LanguageSelect" />
       <Stack.Screen name="welcome/MobileLogin" />
       <Stack.Screen name="welcome/OTP" />
+      <Stack.Screen name="welcome/password" />
       <Stack.Screen name="kyc/Details" />
       <Stack.Screen name="kyc/Experience" />
       <Stack.Screen name="kyc/Aadhar" />

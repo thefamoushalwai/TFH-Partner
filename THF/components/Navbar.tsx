@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { Image } from 'expo-image';
 
 interface NavbarProps {
   onHelp?: () => void;
@@ -8,19 +9,10 @@ interface NavbarProps {
 export default function Navbar({ onHelp }: NavbarProps) {
   return (
     <View style={styles.navbar}>
-      <View style={styles.logoRow}>
-        <View style={styles.logoBox}>
-          <Text style={styles.logoText}>TFH</Text>
-        </View>
-        <View>
-          <Text style={styles.brandLine1}>The</Text>
-          <Text style={styles.brandLine2}>Famous</Text>
-          <Text style={styles.brandLine2}>Halwai</Text>
-        </View>
-      </View>
+      <Image source={require('../assets/THF/tfh-logo.svg')} style={{ width: 100.5, height: 36 }} />
       <TouchableOpacity style={styles.helpBtn} onPress={onHelp} activeOpacity={0.8}>
-        <Text style={styles.helpIcon}>📞</Text>
-        <Text style={styles.helpText}>Help</Text>
+      <Text style={styles.helpIcon}>📞</Text>
+      <Text style={styles.helpText}>Help</Text>
       </TouchableOpacity>
     </View>
   );

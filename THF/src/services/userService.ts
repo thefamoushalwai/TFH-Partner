@@ -9,13 +9,17 @@
  */
 
 import {
+  collection,
   doc,
   getDoc,
-  setDoc,
-  updateDoc,
+  getDocs,
+  limit,
+  query,
   serverTimestamp,
-  type Timestamp,
+  setDoc,
+  where,
   type PartialWithFieldValue,
+  type Timestamp
 } from 'firebase/firestore';
 import { db } from './firebaseConfig';
 
@@ -85,6 +89,25 @@ export async function getUserProfile(userId: string): Promise<UserProfile | null
     return { userId: snap.id, ...snap.data() } as UserProfile;
   } catch (error) {
     console.error('[userService] getUserProfile error:', error);
+    throw error;
+  }
+}
+
+/**
+ * Find user profile by phone number (E.164), e.g. +919205394233.
+ * Returns the first matching profile or null.
+ */
+export async function getUserProfileByPhone(phone: string): Promise<UserProfile | null> {
+  try {
+    const usersRef = collection(db, 'users');
+    const q = query(usersRef, where('phone', '==', phone), limit(1));
+    const snap = await getDocs(q);
+    if (snap.empty) return null;
+
+    const docSnap = snap.docs[0];
+    return { userId: docSnap.id, ...docSnap.data() } as UserProfile;
+  } catch (error) {
+    console.error('[userService] getUserProfileByPhone error:', error);
     throw error;
   }
 }

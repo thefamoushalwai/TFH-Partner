@@ -13,10 +13,12 @@ import {
   View,
 } from 'react-native';
 
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { sendOtp } from '@/lib/auth';
+import { loginWithPhonePassword, sendOtp } from '@/lib/auth';
+import { saveSession } from '@/src/services/sessionStorage';
+import { getUserProfile } from '@/src/services/userService';
 
 const { height } = Dimensions.get('window');
 
@@ -26,13 +28,34 @@ interface MobileLoginScreenProps {
 
 export default function MobileLoginScreen({ onGetStarted }: MobileLoginScreenProps) {
   const router = useRouter();
+  const params = useLocalSearchParams<{ mode?: 'login' | 'signup' }>();
+
+  const mode = params.mode === 'login' ? 'login' : 'signup';
   const [mobile, setMobile] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const isValid = mobile.trim().length >= 10;
+  const isValidMobile = mobile.trim().length >= 10;
+  const isValidPassword = password.trim().length >= 8;
+  const canContinue = mode === 'login' ? isValidMobile && isValidPassword : isValidMobile;
+
+  const hasCompletedProfile = (profile: Awaited<ReturnType<typeof getUserProfile>>): boolean => {
+    if (!profile) return false;
+    return Boolean(
+      profile.name?.trim() &&
+      profile.email?.trim() &&
+      profile.phone?.trim() &&
+      profile.emergencyPhone?.trim() &&
+      profile.gender?.trim() &&
+      profile.city?.trim() &&
+      profile.address?.trim() &&
+      Array.isArray(profile.experience) &&
+      profile.experience.length > 0,
+    );
+  };
 
   const handleGetStarted = async () => {
-    if (!isValid) return;
+    if (!canContinue) return;
 
     if (onGetStarted) {
       onGetStarted(mobile.trim());
@@ -42,21 +65,35 @@ export default function MobileLoginScreen({ onGetStarted }: MobileLoginScreenPro
     setLoading(true);
     try {
       const phoneNumber = `+91${mobile.trim()}`;
-      const verificationId = await sendOtp(phoneNumber);
+      if (mode === 'signup') {
+        const verificationId = await sendOtp(phoneNumber);
 
-      // Navigate to OTP screen with the verificationId & phone number
-      router.push({
-        pathname: '/welcome/OTP',
-        params: {
-          verificationId,
-          phoneNumber,
-        },
-      });
+        // Signup flow uses OTP verification.
+        router.push({
+          pathname: '/welcome/OTP',
+          params: {
+            verificationId,
+            phoneNumber,
+            mode: 'signup',
+          },
+        });
+      } else {
+        const result = await loginWithPhonePassword(phoneNumber, password.trim());
+        await saveSession({ uid: result.uid, phoneNumber: result.phoneNumber });
+        const existingProfile = await getUserProfile(result.uid);
+
+        if (hasCompletedProfile(existingProfile)) {
+          router.replace('/(tabs)/Dashboard');
+        } else {
+          router.replace('/kyc/Experience');
+        }
+      }
     } catch (error: any) {
-      console.error('OTP send error:', error);
+      console.error('Auth error:', error);
       Alert.alert(
         'Error',
-        error?.message || 'Failed to send OTP. Please try again.',
+        error?.message ||
+          'Authentication failed. If you are logging in on a new device, complete signup OTP once to link this device, then login with password.',
       );
     } finally {
       setLoading(false);
@@ -76,7 +113,9 @@ export default function MobileLoginScreen({ onGetStarted }: MobileLoginScreenPro
 
         {/* Bottom Content */}
         <View style={styles.bottomSheet}>
-          <Text style={styles.title}>Please enter mobile number</Text>
+          <Text style={styles.title}>
+            {mode === 'login' ? 'Login with mobile and password' : 'Sign up with mobile number'}
+          </Text>
 
           {/* Mobile Input */}
           <View style={styles.inputWrapper}>
@@ -94,20 +133,51 @@ export default function MobileLoginScreen({ onGetStarted }: MobileLoginScreenPro
             />
           </View>
 
+          {mode === 'login' && (
+            <View style={styles.inputWrapper}>
+              <TextInput
+                style={styles.input}
+                placeholder="Enter your password"
+                placeholderTextColor="#b0b0b0"
+                secureTextEntry
+                value={password}
+                onChangeText={setPassword}
+                returnKeyType="done"
+                onSubmitEditing={handleGetStarted}
+                editable={!loading}
+              />
+            </View>
+          )}
+
           {/* Get Started Button */}
           <TouchableOpacity
-            style={[styles.button, isValid && !loading ? styles.buttonActive : styles.buttonDisabled]}
+            style={[styles.button, canContinue && !loading ? styles.buttonActive : styles.buttonDisabled]}
             onPress={handleGetStarted}
-            activeOpacity={isValid && !loading ? 0.85 : 1}
-            disabled={!isValid || loading}
+            activeOpacity={canContinue && !loading ? 0.85 : 1}
+            disabled={!canContinue || loading}
           >
             {loading ? (
               <ActivityIndicator color="#fff" size="small" />
             ) : (
-              <Text style={[styles.buttonText, isValid ? styles.buttonTextActive : styles.buttonTextDisabled]}>
-                Get Started
+              <Text style={[styles.buttonText, canContinue ? styles.buttonTextActive : styles.buttonTextDisabled]}>
+                {mode === 'login' ? 'Login' : 'Get Started'}
               </Text>
             )}
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() =>
+              router.replace({
+                pathname: '/welcome/MobileLogin',
+                params: { mode: mode === 'login' ? 'signup' : 'login' },
+              })
+            }
+            disabled={loading}
+            style={styles.switchModeBtn}
+          >
+            <Text style={styles.switchModeText}>
+              {mode === 'login' ? "Don't have an account? Sign up" : 'Already have an account? Login'}
+            </Text>
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
@@ -194,5 +264,14 @@ const styles = StyleSheet.create({
   },
   buttonTextDisabled: {
     color: '#aaa',
+  },
+  switchModeBtn: {
+    marginTop: 16,
+    alignItems: 'center',
+  },
+  switchModeText: {
+    color: '#E8304A',
+    fontSize: 14,
+    fontWeight: '500',
   },
 });

@@ -1,21 +1,23 @@
-import React, { useEffect, useState } from 'react';
-import {
-  View,
-  Text,
-  Image,
-  TouchableOpacity,
-  ScrollView,
-  StyleSheet,
-  ActivityIndicator,
-  StatusBar,
-  Dimensions,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import Navbar from '../../components/Navbar';
 import { useUserStore } from '@/src/hooks/useUserStore';
 import { getPartnerBookings, type Booking as FirestoreBooking } from '@/src/services/bookingService';
 import { auth } from '@/src/services/firebaseConfig';
 import dayjs from 'dayjs';
+import { Image } from 'expo-image';
+import React, { useEffect, useState } from 'react';
+import {
+  ActivityIndicator,
+  Dimensions,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import Svg, { Path } from 'react-native-svg';
+import Navbar from '../../components/Navbar';
 const { width } = Dimensions.get('window');
 
 /* ── Types ── */
@@ -46,13 +48,26 @@ interface DashboardScreenProps {
 }
 
 /* ── Summary Card ── */
+
+const BookingIcon = ({  }) => (
+  <Image source={require('@/assets/THF/simple-line-icons_calender.svg')} style={{ width: 18, height: 18 }} />
+);
+
+const WalletIcon = ({  }) => (
+  <Image source={require('@/assets/THF/Group 1171283276.svg')} style={{ width: 18, height: 18 }} />
+);
+
+const KycIcon = ({  }) => (
+  <Image source={require('@/assets/THF/Star 1.svg')} style={{ width: 18, height: 18 }} />
+);
+
 function SummaryCard({
   icon,
   label,
   value,
   iconBg,
 }: {
-  icon: string;
+  icon: React.ReactNode;
   label: string;
   value: string;
   iconBg: string;
@@ -60,7 +75,7 @@ function SummaryCard({
   return (
     <View style={summaryStyles.card}>
       <View style={[summaryStyles.iconBox, { backgroundColor: iconBg }]}>
-        <Text style={summaryStyles.icon}>{icon}</Text>
+        {icon}
       </View>
       <Text style={summaryStyles.label}>{label}</Text>
       <Text style={summaryStyles.value}>{value}</Text>
@@ -193,9 +208,9 @@ export default function DashboardScreen() {
         {/* ── Today's Summary ── */}
         <Text style={styles.sectionTitle}>Today's Summary</Text>
         <View style={styles.summaryRow}>
-          <SummaryCard icon="📋" label="Bookings" value={String(completedCount)} iconBg="#FFF0F0" />
-          <SummaryCard icon="💰" label="Earned" value={`₹${totalEarned}`} iconBg="#FFF5E0" />
-          <SummaryCard icon="⭐" label="KYC" value={profile?.kycStatus ?? 'pending'} iconBg="#FFFBE0" />
+          <SummaryCard icon={<BookingIcon />} label="Bookings" value={String(completedCount)} iconBg="#FFF0F0" />
+          <SummaryCard icon={<WalletIcon  />} label="Earned" value={`₹${totalEarned}`} iconBg="#FFF5E0" />
+          <SummaryCard icon={<KycIcon  />} label="KYC" value={profile?.kycStatus ?? 'pending'} iconBg="#FFFBE0" />
         </View>
 
         {/* ── Today's Bookings ── */}

@@ -1,18 +1,21 @@
+import { signOut } from '@/lib/auth';
+import { clearUserCache, useUserStore } from '@/src/hooks/useUserStore';
+import { auth } from '@/src/services/firebaseConfig';
+import { clearSession } from '@/src/services/sessionStorage';
+import { useRouter } from 'expo-router';
 import React from 'react';
 import {
-  View,
+  ActivityIndicator,
+  Alert,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
   Text,
   TouchableOpacity,
-  ScrollView,
-  StyleSheet,
-  ActivityIndicator,
-  StatusBar,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
 import Navbar from '../../components/Navbar';
-import { useUserStore } from '@/src/hooks/useUserStore';
-import { auth } from '@/src/services/firebaseConfig';
 
 /* ── Types ── */
 interface ProfileScreenProps {
@@ -74,6 +77,26 @@ export default function ProfileScreen() {
   const isVerified = profile?.kycStatus === 'approved';
   const city = profile?.city ?? '';
   const language = profile?.language ?? 'en';
+
+  const handleLogout = () => {
+    Alert.alert('Logout', 'Are you sure you want to logout?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Logout',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await signOut();
+            await clearUserCache();
+            await clearSession();
+            router.replace('/welcome/LanguageSelect');
+          } catch (error) {
+            Alert.alert('Error', 'Failed to logout. Please try again.');
+          }
+        },
+      },
+    ]);
+  };
 
   if (loading) {
     return (
@@ -138,6 +161,10 @@ export default function ProfileScreen() {
           <View style={styles.menuDivider} />
           <MenuRow label="Change Language" onPress={() => router.push('/edit/ChangeLanguage')} />
         </View>
+
+        <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout} activeOpacity={0.85}>
+          <Text style={styles.logoutText}>Logout</Text>
+        </TouchableOpacity>
 
         <View style={{ height: 16 }} />
       </ScrollView>
@@ -252,6 +279,20 @@ const styles = StyleSheet.create({
   },
   kycLabel: { fontSize: 14, color: '#555', fontWeight: '500' },
   kycValue: { fontSize: 14, fontWeight: '700', color: '#B8860B' },
+  logoutBtn: {
+    marginTop: 14,
+    backgroundColor: '#fff',
+    borderRadius: 14,
+    paddingVertical: 14,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#F3D4D9',
+  },
+  logoutText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#E8304A',
+  },
 });
 
 const menuStyles = StyleSheet.create({
