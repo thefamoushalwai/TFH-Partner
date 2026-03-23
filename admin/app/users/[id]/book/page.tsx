@@ -1,7 +1,7 @@
 "use client";
 
 import { createBookingForChef } from "@/app/actions/booking";
-import { ArrowLeft, Calendar, MapPin, Users, DollarSign, User, Tag } from "lucide-react";
+import { ArrowLeft, Calendar, MapPin, Users, DollarSign, User, Tag, Phone } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
 import { useState } from "react";
@@ -21,6 +21,7 @@ export default function CreateBookingPage() {
     const formData = new FormData(e.currentTarget);
     const data = {
       clientName: formData.get("clientName") as string,
+      phone: formData.get("phone") as string,
       eventType: formData.get("eventType") as string,
       date: new Date(formData.get("date") as string),
       location: formData.get("location") as string,
@@ -67,6 +68,19 @@ export default function CreateBookingPage() {
               required
               name="clientName"
               placeholder="e.g. John Doe"
+              className="w-full px-4 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-zinc-700 flex items-center">
+              <Phone className="w-4 h-4 mr-2 text-zinc-400" /> Phone Number
+            </label>
+            <input
+              required
+              type="tel"
+              name="phone"
+              placeholder="e.g. +91 9876543210"
               className="w-full px-4 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all"
             />
           </div>

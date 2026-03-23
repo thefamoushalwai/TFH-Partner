@@ -27,6 +27,7 @@ import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { auth } from '@/src/services/firebaseConfig';
 import { getUserProfile, updateUserProfile } from '@/src/services/userService';
+import { Image } from 'expo-image';
 
 const PROFILE_CACHE_KEY = 'user_profile_cache';
 const GENDERS = ['Male', 'Female', 'Other'];
@@ -70,7 +71,7 @@ function EditField({ label, value, onChangeText, keyboardType = 'default', multi
         />
         {!multiline && !disabled && (
           <TouchableOpacity onPress={handlePencil} style={fieldStyles.pencilBtn} activeOpacity={0.7}>
-            <Text style={fieldStyles.pencilIcon}>✏️</Text>
+            <Image source={require('@/assets/THF/edit.svg')} style={fieldStyles.pencilIcon} />
           </TouchableOpacity>
         )}
       </View>
@@ -102,7 +103,7 @@ function DropdownField({ label, value, options, onSelect, disabled }: DropdownFi
           <Text style={[dropStyles.value, !value && dropStyles.placeholder]}>
             {value || `Select ${label}`}
           </Text>
-          {!disabled && <Text style={dropStyles.chevron}>⌄</Text>}
+          {!disabled && <Image source={require('@/assets/THF/Right Chevron.svg')} style={dropStyles.chevron} />}
         </View>
       </TouchableOpacity>
 
@@ -240,11 +241,19 @@ export default function EditDetailsScreen() {
       <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
 
         <ScrollView
-          style={styles.scroll}
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
         >
+          {/* Back btn */}
+          <TouchableOpacity
+            style={styles.backBtn}
+            onPress={() => router.back()}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.backArrow}>←</Text>
+          </TouchableOpacity>
+
+          {/* Header */}
           <Text style={styles.heading}>Edit details</Text>
 
           <EditField label="Enter Name" value={name} onChangeText={setName} disabled={saving} />
@@ -279,9 +288,12 @@ export default function EditDetailsScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   flex: { flex: 1 },
-  scroll: { flex: 1 },
-  scrollContent: { paddingHorizontal: 20, paddingTop: 24, paddingBottom: 8 },
-  heading: { fontSize: 20, fontWeight: '700', color: '#111', marginBottom: 20 },
+  scrollContent: { paddingHorizontal: 20, paddingBottom: 32 },
+  
+  backBtn: { paddingTop: 16, paddingBottom: 4, alignSelf: 'flex-start' },
+  backArrow: { fontSize: 22, color: '#3b5bdb', fontWeight: '500' },
+
+  heading: { fontSize: 24, fontWeight: '700', color: '#111', marginTop: 12, marginBottom: 4 },
   footer: { paddingHorizontal: 20, paddingBottom: 36, paddingTop: 10, backgroundColor: '#fff' },
   saveBtn: {
     backgroundColor: '#E8304A',
@@ -300,28 +312,36 @@ const styles = StyleSheet.create({
 const fieldStyles = StyleSheet.create({
   wrapper: {
     borderWidth: 1.5, borderColor: '#e0e0e0', borderRadius: 10,
-    paddingHorizontal: 14, paddingTop: 8, paddingBottom: 4, marginBottom: 12, backgroundColor: '#fff',
+    paddingHorizontal: 14, paddingVertical: 12, marginBottom: 16, marginTop: 8, backgroundColor: '#fff',
+    position: 'relative',
   },
   wrapperFocused: { borderColor: '#E8304A' },
-  label: { fontSize: 11, color: '#aaa', marginBottom: 2, fontWeight: '500', letterSpacing: 0.3 },
+  label: { 
+    position: 'absolute', top: -8, left: 12, backgroundColor: '#fff', paddingHorizontal: 4,
+    fontSize: 12, color: '#aaa', fontWeight: '500', letterSpacing: 0.3, zIndex: 1 
+  },
   labelFocused: { color: '#E8304A' },
   row: { flexDirection: 'row', alignItems: 'center' },
-  input: { flex: 1, fontSize: 15, color: '#111', paddingVertical: 4 },
+  input: { flex: 1, fontSize: 15, color: '#111', paddingVertical: 0 },
   multiline: { minHeight: 70, paddingTop: 4 },
   pencilBtn: { padding: 4 },
-  pencilIcon: { fontSize: 15 },
+  pencilIcon: { width: 20, height: 20 },
 });
 
 const dropStyles = StyleSheet.create({
   wrapper: {
     borderWidth: 1.5, borderColor: '#e0e0e0', borderRadius: 10,
-    paddingHorizontal: 14, paddingTop: 8, paddingBottom: 10, marginBottom: 12,
+    paddingHorizontal: 14, paddingVertical: 12, marginBottom: 16, marginTop: 8, backgroundColor: '#fff',
+    position: 'relative',
   },
-  label: { fontSize: 11, color: '#aaa', marginBottom: 4, fontWeight: '500', letterSpacing: 0.3 },
+  label: { 
+    position: 'absolute', top: -8, left: 12, backgroundColor: '#fff', paddingHorizontal: 4,
+    fontSize: 12, color: '#aaa', fontWeight: '500', letterSpacing: 0.3, zIndex: 1 
+  },
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   value: { fontSize: 15, color: '#111', flex: 1 },
   placeholder: { color: '#bbb' },
-  chevron: { fontSize: 18, color: '#666', marginLeft: 8 },
+  chevron: { width: 20, height: 20, marginLeft: 8 },
   overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.35)', justifyContent: 'flex-end' },
   sheet: {
     backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20,

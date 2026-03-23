@@ -268,8 +268,13 @@ export default function AadharScreen({ onBack, onUpload, onSkip }: AadharScreenP
           </View>
 
           {/* Aadhar Number Input */}
-          <View style={[styles.inputWrapper]}>
-            <Text style={[styles.floatLabel]}>
+          <View style={[styles.inputWrapper, focused && styles.inputWrapperFocused]}>
+            <Text
+              style={[
+                styles.floatingLabel,
+                (focused || aadhar.length > 0) && styles.floatingLabelFocused,
+              ]}
+            >
               Enter Aadhar number
             </Text>
             <View style={styles.inputRow}>
@@ -278,8 +283,6 @@ export default function AadharScreen({ onBack, onUpload, onSkip }: AadharScreenP
                 value={aadhar}
                 onChangeText={handleChange}
                 keyboardType="number-pad"
-                placeholder="1234 1234 1234"
-                placeholderTextColor="#bbb"
                 onFocus={() => setFocused(true)}
                 onBlur={() => setFocused(false)}
                 maxLength={14}
@@ -406,16 +409,33 @@ const styles = StyleSheet.create({
     borderColor: '#e0e0e0',
     borderRadius: 10,
     paddingHorizontal: 14,
-    paddingTop: 8,
-    paddingBottom: 6,
     marginBottom: 16,
     backgroundColor: '#fff',
+    position: 'relative',
+    height: 56,
+    justifyContent: 'center',
   },
-
-  floatLabel: { fontSize: 11, color: '#aaa', fontWeight: '500', letterSpacing: 0.3, marginBottom: 2 },
-  floatLabelFocused: { color: '#E8304A' },
+  inputWrapperFocused: {
+    borderColor: '#E8304A',
+  },
+  floatingLabel: {
+    position: 'absolute',
+    left: 14,
+    top: 18,
+    fontSize: 16,
+    color: '#aaa',
+    zIndex: 1,
+    backgroundColor: '#fff',
+  },
+  floatingLabelFocused: {
+    top: -10,
+    fontSize: 12,
+    color: '#E8304A',
+    fontWeight: '500',
+    paddingHorizontal: 4,
+  },
   inputRow: { flexDirection: 'row', alignItems: 'center' },
-  input: { flex: 1, fontSize: 16, color: '#111', paddingVertical: 4, letterSpacing: 1 },
+  input: { flex: 1, fontSize: 16, color: '#111', paddingVertical: 0, height: 24, letterSpacing: 1 },
   checkCircle: {
     width: 24, height: 24, borderRadius: 12,
     backgroundColor: '#22a75a', alignItems: 'center', justifyContent: 'center',

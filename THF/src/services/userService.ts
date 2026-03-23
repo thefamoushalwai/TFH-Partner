@@ -49,6 +49,12 @@ export interface UserProfile {
   };
   kycSubmittedAt?: string;
   createdAt: Timestamp;
+  bankDetails?: {
+    accountNumber: string;
+    ifsc: string;
+    bankName: string;
+    upiId?: string;
+  };
 }
 
 export interface KycDocument {

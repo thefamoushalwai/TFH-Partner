@@ -2,6 +2,7 @@ import { signOut } from '@/lib/auth';
 import { clearUserCache, useUserStore } from '@/src/hooks/useUserStore';
 import { auth } from '@/src/services/firebaseConfig';
 import { clearSession } from '@/src/services/sessionStorage';
+import { getPartnerBookings } from '@/src/services/bookingService';
 import { useRouter } from 'expo-router';
 import { Image } from 'expo-image';
 import React from 'react';
@@ -74,12 +75,33 @@ export default function ProfileScreen() {
   const router = useRouter();
   const { profile, loading, refresh } = useUserStore();
   const [refreshing, setRefreshing] = React.useState(false);
+  const [stats, setStats] = React.useState({ bookings: 0, earnings: 0 });
 
   const onRefresh = React.useCallback(async () => {
     setRefreshing(true);
     if (refresh) await refresh();
     setRefreshing(false);
   }, [refresh]);
+
+  React.useEffect(() => {
+    async function loadStats() {
+      if (profile?.userId) {
+        try {
+          const bookings = await getPartnerBookings(profile.userId);
+          const completedBookings = bookings.filter((b: any) => b.status === 'completed');
+          const totalEarnings = completedBookings.reduce((sum: number, b: any) => sum + (Number(b.amount) || 0), 0);
+          
+          setStats({
+            bookings: bookings.length,
+            earnings: totalEarnings,
+          });
+        } catch (error) {
+          console.error("Failed to load stats:", error);
+        }
+      }
+    }
+    loadStats();
+  }, [profile?.userId, refreshing]);
 
   const chefName = profile?.name ?? '';
   const chefId = auth.currentUser?.uid?.slice(0, 6).toUpperCase() ?? '----';
@@ -159,22 +181,29 @@ export default function ProfileScreen() {
         </View>
 
         {/* ── KYC Status Row ── */}
-        <View style={styles.kycCard}>
-          <Text style={styles.kycLabel}>KYC Status</Text>
-          <Text style={[
-            styles.kycValue,
-            profile?.kycStatus === 'approved' && { color: '#2e7d32' },
-            profile?.kycStatus === 'rejected' && { color: '#E8304A' },
-          ]}>
-            {(profile?.kycStatus ?? 'pending').toUpperCase()}
-          </Text>
+        {/* ── Stats Section ── */}
+        <View style={styles.threeStatsRow}>
+          <View style={styles.threeStatCard}>
+            <Text style={styles.threeStatValue}>{stats.bookings}</Text>
+            <Text style={styles.threeStatLabel}>Bookings</Text>
+          </View>
+          <View style={styles.threeStatCard}>
+            <Text style={styles.threeStatValue}>
+              {stats.earnings >= 1000 ? `₹${(stats.earnings / 1000).toFixed(1)}k` : `₹${stats.earnings}`}
+            </Text>
+            <Text style={styles.threeStatLabel}>Earnings</Text>
+          </View>
+          <View style={styles.threeStatCard}>
+            <Text style={styles.threeStatValue}>{profile?.experience?.length || 0}</Text>
+            <Text style={styles.threeStatLabel}>Exp. Tags</Text>
+          </View>
         </View>
 
         {/* ── Menu Items ── */}
         <View style={styles.menuSection}>
           <MenuRow label="Account detail" onPress={() => router.push('/edit/AccountDetails')} />
           <View style={styles.menuDivider} />
-          <MenuRow label="Bank details" onPress={() => router.push('/edit/AccountDetails')} />
+          <MenuRow label="Bank details" onPress={() => router.push('/edit/EditDetails')} />
           <View style={styles.menuDivider} />
           <MenuRow label="Refer a friend & Earn" badge="Earn upto ₹5000" onPress={() => router.push('/edit/ReferFriend')} />
           <View style={styles.menuDivider} />
@@ -267,6 +296,34 @@ const styles = StyleSheet.create({
   statLabel: { fontSize: 12, color: '#999' },
   statDivider: { width: 1, backgroundColor: '#f0f0f0', marginVertical: 4 },
 
+  /* 3-Card Stats */
+  threeStatsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 10,
+    marginBottom: 16,
+  },
+  threeStatCard: {
+    flex: 1,
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#e2e4e7',
+    paddingVertical: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  threeStatValue: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#1a1f36',
+    marginBottom: 4,
+  },
+  threeStatLabel: {
+    fontSize: 11,
+    color: '#8792a2',
+  },
+
   /* Menu Section */
   menuSection: {
     backgroundColor: '#fff',
@@ -281,21 +338,7 @@ const styles = StyleSheet.create({
   menuDivider: { height: 1, backgroundColor: '#f5f5f5', marginHorizontal: 16 },
 
   /* KYC Card */
-  kycCard: {
-    backgroundColor: '#fff',
-    borderRadius: 14,
-    paddingVertical: 14,
-    paddingHorizontal: 18,
-    marginBottom: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 1,
-  },
+
   kycLabel: { fontSize: 14, color: '#555', fontWeight: '500' },
   kycValue: { fontSize: 14, fontWeight: '700', color: '#B8860B' },
   logoutBtn: {
@@ -334,18 +377,4 @@ const menuStyles = StyleSheet.create({
   chevron: { fontSize: 20, color: '#ccc', fontWeight: '300' },
 });
 
-const tabStyles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    backgroundColor: '#fff',
-    borderTopWidth: 1,
-    borderTopColor: '#f0f0f0',
-    paddingBottom: 8,
-    paddingTop: 8,
-  },
-  tab: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 4 },
-  icon: { fontSize: 20, marginBottom: 3, opacity: 0.4 },
-  iconActive: { opacity: 1 },
-  label: { fontSize: 11, color: '#aaa', fontWeight: '500' },
-  labelActive: { color: '#E8304A', fontWeight: '600' },
-});
+

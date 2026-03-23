@@ -353,23 +353,30 @@ const styles = StyleSheet.create({
 const inputStyles = StyleSheet.create({
   wrapper: {
     borderWidth: 1.5, borderColor: '#e0e0e0', borderRadius: 10,
-    paddingHorizontal: 14, paddingTop: 8, paddingBottom: 4, marginBottom: 14,
-    backgroundColor: '#fff',
+    paddingHorizontal: 14, paddingVertical: 12, marginBottom: 16, marginTop: 8,
+    backgroundColor: '#fff', position: 'relative',
   },
   wrapperFocused: { borderColor: '#3b5bdb' },
-  label: { fontSize: 11, color: '#aaa', marginBottom: 2, fontWeight: '500', letterSpacing: 0.3 },
+  label: { 
+    position: 'absolute', top: -8, left: 12, backgroundColor: '#fff', paddingHorizontal: 4,
+    fontSize: 12, color: '#aaa', fontWeight: '500', letterSpacing: 0.3, zIndex: 1 
+  },
   labelFocused: { color: '#3b5bdb' },
   row: { flexDirection: 'row', alignItems: 'center' },
-  input: { flex: 1, fontSize: 15, color: '#111', paddingVertical: 4 },
+  input: { flex: 1, fontSize: 15, color: '#111', paddingVertical: 0 },
   multiline: { minHeight: 70, paddingTop: 4 },
 });
 
 const dropStyles = StyleSheet.create({
   wrapper: {
     borderWidth: 1.5, borderColor: '#e0e0e0', borderRadius: 10,
-    paddingHorizontal: 14, paddingTop: 8, paddingBottom: 10, marginBottom: 14,
+    paddingHorizontal: 14, paddingVertical: 12, marginBottom: 16, marginTop: 8,
+    backgroundColor: '#fff', position: 'relative',
   },
-  label: { fontSize: 11, color: '#aaa', marginBottom: 4, fontWeight: '500', letterSpacing: 0.3 },
+  label: { 
+    position: 'absolute', top: -8, left: 12, backgroundColor: '#fff', paddingHorizontal: 4,
+    fontSize: 12, color: '#aaa', fontWeight: '500', letterSpacing: 0.3, zIndex: 1 
+  },
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   value: { fontSize: 15, color: '#111', flex: 1 },
   placeholder: { color: '#bbb' },

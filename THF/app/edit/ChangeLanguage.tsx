@@ -1,12 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
   StyleSheet,
   StatusBar,
+  ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
+import { auth } from '@/src/services/firebaseConfig';
+import { getUserProfile, updateUserProfile } from '@/src/services/userService';
 
 const LANGUAGES = [
   { id: 'en', label: 'English' },
@@ -23,14 +28,75 @@ export default function ChangeLanguageScreen({
   onSave,
 }: ChangeLanguageScreenProps) {
   const [selected, setSelected] = useState<string>(initialLanguage);
+  const router = useRouter();
 
-  const handleSave = () => {
-    if (onSave) onSave(selected);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const uid = auth.currentUser?.uid;
+        if (!uid) {
+          setLoading(false);
+          return;
+        }
+        const profile = await getUserProfile(uid);
+        if (profile?.language) {
+          setSelected(profile.language);
+        }
+      } catch (err) {
+        console.error('Error loading language:', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
+  }, []);
+
+  const handleSave = async () => {
+    if (saving) return;
+
+    const uid = auth.currentUser?.uid;
+    if (!uid) {
+      Alert.alert('Error', 'Not logged in. Please restart the app.');
+      return;
+    }
+
+    setSaving(true);
+    try {
+      await updateUserProfile(uid, { language: selected });
+      if (onSave) onSave(selected);
+      Alert.alert('Saved', 'Your preferred language has been updated.', [
+        { text: 'OK', onPress: () => router.back() }
+      ]);
+    } catch (err: any) {
+      console.error('[ChangeLanguageScreen] error:', err);
+      Alert.alert('Error', err?.message ?? 'Failed to update language.');
+    } finally {
+      setSaving(false);
+    }
   };
+
+  if (loading) {
+    return (
+      <SafeAreaView style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator color="#E8304A" size="large" />
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#f5f5f5" />
+
+       <TouchableOpacity
+                  style={styles.backBtn}
+                  onPress={() => router.back()}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.backArrow}>←</Text>
+                </TouchableOpacity>
 
       {/* Content */}
       <View style={styles.content}>
@@ -57,8 +123,12 @@ export default function ChangeLanguageScreen({
 
       {/* Save & Update Button */}
       <View style={styles.footer}>
-        <TouchableOpacity style={styles.saveBtn} onPress={handleSave} activeOpacity={0.85}>
-          <Text style={styles.saveText}>Save & Update</Text>
+        <TouchableOpacity style={styles.saveBtn} onPress={handleSave} activeOpacity={0.85} disabled={saving}>
+          {saving ? (
+            <ActivityIndicator color="#fff" size="small" />
+          ) : (
+            <Text style={styles.saveText}>Save & Update</Text>
+          )}
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -124,6 +194,9 @@ const styles = StyleSheet.create({
     borderRadius: 5.5,
     backgroundColor: '#E8304A',
   },
+
+   backBtn: { paddingTop: 16, paddingBottom: 4, paddingLeft: 20, alignSelf: 'flex-start' },
+   backArrow: { fontSize: 22, color: '#3b5bdb', fontWeight: '500' },
 
   /* Footer */
   footer: {

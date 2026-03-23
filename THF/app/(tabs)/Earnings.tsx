@@ -247,18 +247,3 @@ const txStyles = StyleSheet.create({
   amount: { fontSize: 15, fontWeight: '700', color: '#22a75a' },
 });
 
-const tabStyles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    backgroundColor: '#fff',
-    borderTopWidth: 1,
-    borderTopColor: '#f0f0f0',
-    paddingBottom: 8,
-    paddingTop: 8,
-  },
-  tab: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 4 },
-  icon: { fontSize: 20, marginBottom: 3, opacity: 0.4 },
-  iconActive: { opacity: 1 },
-  label: { fontSize: 11, color: '#aaa', fontWeight: '500' },
-  labelActive: { color: '#E8304A', fontWeight: '600' },
-});

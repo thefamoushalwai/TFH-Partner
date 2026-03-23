@@ -6,6 +6,7 @@ export async function createBookingForChef(
   partnerId: string,
   data: {
     clientName: string;
+    phone: string;
     eventType: string;
     date: Date;
     location: string;
@@ -17,6 +18,7 @@ export async function createBookingForChef(
     const bookingRef = await adminDb.collection("bookings").add({
       partnerId,
       clientName: data.clientName,
+      phone: data.phone,
       eventType: data.eventType,
       date: data.date,
       location: data.location,

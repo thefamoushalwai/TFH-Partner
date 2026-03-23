@@ -8,6 +8,8 @@ import {
   StatusBar,
   ActivityIndicator,
   RefreshControl,
+  Linking,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Navbar from '../../components/Navbar';
@@ -38,6 +40,7 @@ interface NextUpBooking {
   locationNote: string;
   guests: number;
   cuisine: string;
+  phone?: string;
 }
 
 interface MyBookingsScreenProps {
@@ -103,20 +106,8 @@ function BookingCard({
   );
 }
 
-/* ── Default Data ── */
-const DEFAULT_NEXT_UP: NextUpBooking = {
-  label: 'Next up - in 2 hours',
-  title: 'John de ka Birthday Brunch',
-  time: '00PM',
-  locationNote: 'not assigned',
-  guests: 0,
-  cuisine: 'North Indian + Cake',
-};
 
-const DEFAULT_BOOKINGS: Booking[] = [
-  { id: '1', day: '26', month: 'Feb', title: 'Booking - John de', time: '7:00 PM', guests: 8, location: 'Lajpat Nagar', amount: 0, status: 'Today' },
-  { id: '2', day: '26', month: 'Feb', title: 'Booking - John de', time: '7:00 PM', guests: 8, location: 'Lajpat Nagar', amount: 0, status: 'Active' },
-];
+
 
 const FILTER_TABS: FilterTab[] = ['All', 'Today', 'Upcoming', 'Completed'];
 
@@ -174,7 +165,7 @@ export default function MyBookingsScreen() {
 
   // Next up: earliest today/upcoming non-completed booking
   const nextUpBooking = mappedBookings.find(b => b.status === 'Today' || b.status === 'Active');
-  const nextUp: NextUpBooking = nextUpBooking
+  const nextUp: NextUpBooking | undefined = nextUpBooking
     ? {
         label: nextUpBooking.status === 'Active' ? 'Active booking' : 'Next up today',
         title: nextUpBooking.title,
@@ -182,8 +173,9 @@ export default function MyBookingsScreen() {
         locationNote: nextUpBooking.location,
         guests: nextUpBooking.guests,
         cuisine: fsBookings.find(b => b.bookingId === nextUpBooking.id)?.eventType ?? '',
+        phone: fsBookings.find(b => b.bookingId === nextUpBooking.id)?.phone,
       }
-    : DEFAULT_NEXT_UP;
+    : undefined;
 
   const filteredBookings =
     activeFilter === 'All' ? mappedBookings : mappedBookings.filter(b => b.status === activeFilter);
@@ -202,21 +194,41 @@ export default function MyBookingsScreen() {
         <Text style={styles.dateLabel}>{dateLabel}</Text>
 
         {/* ── Next Up Card ── */}
-        <View style={styles.nextUpCard}>
-          <Text style={styles.nextUpLabel}>{nextUp.label}</Text>
-          <Text style={styles.nextUpTitle}>{nextUp.title}</Text>
-          <Text style={styles.nextUpMeta}>Time: {nextUp.time}</Text>
-          <Text style={styles.nextUpMeta}>Location: {nextUp.locationNote}</Text>
-          <Text style={styles.nextUpMeta}>{nextUp.guests} guests | {nextUp.cuisine}</Text>
-          <View style={styles.nextUpActions}>
-            <TouchableOpacity style={styles.navBtn} activeOpacity={0.8}>
-              <Text style={styles.navBtnText}>Navigate location</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.callBtn} activeOpacity={0.8}>
-              <Text style={styles.callBtnText}>Call Client</Text>
-            </TouchableOpacity>
+        {nextUp && (
+          <View style={styles.nextUpCard}>
+            <Text style={styles.nextUpLabel}>{nextUp.label}</Text>
+            <Text style={styles.nextUpTitle}>{nextUp.title}</Text>
+            <Text style={styles.nextUpMeta}>Time: {nextUp.time}</Text>
+            <Text style={styles.nextUpMeta}>Location: {nextUp.locationNote}</Text>
+            <Text style={styles.nextUpMeta}>{nextUp.guests} guests | {nextUp.cuisine}</Text>
+            <View style={styles.nextUpActions}>
+              <TouchableOpacity 
+                style={styles.navBtn} 
+                activeOpacity={0.8}
+                onPress={() => {
+                  if (nextUp.locationNote && nextUp.locationNote !== 'not assigned') {
+                    Linking.openURL(`https://maps.google.com/?q=${encodeURIComponent(nextUp.locationNote)}`);
+                  }
+                }}
+              >
+                <Text style={styles.navBtnText}>Navigate location</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={styles.callBtn} 
+                activeOpacity={0.8}
+                onPress={() => {
+                  if (nextUp.phone) {
+                    Linking.openURL(`tel:${nextUp.phone}`);
+                  } else {
+                    Alert.alert('Unavailable', 'Phone number not provided');
+                  }
+                }}
+              >
+                <Text style={styles.callBtnText}>Call Client</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
+        )}
 
         {/* ── Filter Tabs ── */}
         <View style={styles.filterRow}>
@@ -281,15 +293,15 @@ const styles = StyleSheet.create({
   nextUpMeta: { fontSize: 13, color: '#555', marginBottom: 4 },
   nextUpActions: { flexDirection: 'row', gap: 10, marginTop: 16 },
   navBtn: {
-    flex: 1, borderWidth: 1.5, borderColor: '#ddd', borderRadius: 8,
-    paddingVertical: 10, alignItems: 'center',
+    borderRadius: 8, paddingHorizontal: 16,
+    paddingVertical: 10, alignItems: 'center', backgroundColor: '#4591E8'
   },
-  navBtnText: { fontSize: 13, color: '#555', fontWeight: '500' },
+  navBtnText: { fontSize: 13, color: '#fff', fontWeight: '500' },
   callBtn: {
-    flex: 1, borderWidth: 1.5, borderColor: '#ddd', borderRadius: 8,
-    paddingVertical: 10, alignItems: 'center',
+     borderRadius: 8, paddingHorizontal: 16,
+    paddingVertical: 10, alignItems: 'center',backgroundColor: '#31B76B' 
   },
-  callBtnText: { fontSize: 13, color: '#555', fontWeight: '500' },
+  callBtnText: { fontSize: 13, color: '#fff', fontWeight: '500' },
 
   /* Filter Tabs */
   filterRow: {

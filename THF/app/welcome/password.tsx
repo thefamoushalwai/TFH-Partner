@@ -4,6 +4,7 @@ import { saveSession } from '@/src/services/sessionStorage';
 import { getUserProfile } from '@/src/services/userService';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useState } from 'react';
+import Svg, { Path } from 'react-native-svg';
 import {
   ActivityIndicator,
   Alert,
@@ -16,48 +17,24 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
-// Simple SVG-like icons using Text (for portability without extra deps)
-
-
-const CheckCircleIcon = ({ checked }: { checked: boolean }) => (
-  <View
-    style={[
-      styles.checkIcon,
-      checked ? styles.checkIconActive : styles.checkIconInactive,
-    ]}
-  >
-    {checked && <Text style={styles.checkMark}>✓</Text>}
-  </View>
+const EyeIcon = ({ stroke = "#6B7280" }) => (
+  <Svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+    <Path d="M12 16.01C14.2091 16.01 16 14.2191 16 12.01C16 9.80087 14.2091 8.01001 12 8.01001C9.79086 8.01001 8 9.80087 8 12.01C8 14.2191 9.79086 16.01 12 16.01Z" stroke={stroke} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+    <Path d="M2 11.98C8.09 1.31996 15.91 1.32996 22 11.98" stroke={stroke} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+    <Path d="M22 12.01C15.91 22.67 8.09 22.66 2 12.01" stroke={stroke} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+  </Svg>
 );
 
-interface PasswordRule {
-  label: string;
-  test: (pw: string) => boolean;
-}
-
-const PASSWORD_RULES: PasswordRule[] = [
-  { label: 'At least 8 characters', test: (pw) => pw.length >= 8 },
-  {
-    label: 'Upper & lowercase characters',
-    test: (pw) => /[A-Z]/.test(pw) && /[a-z]/.test(pw),
-  },
-  { label: 'At least one number', test: (pw) => /[0-9]/.test(pw) },
-];
-
-const getStrengthWidth = (password: string): number => {
-  const passed = PASSWORD_RULES.filter((r) => r.test(password)).length;
-  return (passed / PASSWORD_RULES.length) * 100;
-};
-
-const getStrengthColor = (password: string): string => {
-  const passed = PASSWORD_RULES.filter((r) => r.test(password)).length;
-  if (passed === 0) return '#EF4444';
-  if (passed === 1) return '#EF4444';
-  if (passed === 2) return '#F59E0B';
-  return '#22C55E';
-};
-
+const EyeOffIcon = ({ stroke = "#6B7280" }) => (
+  <Svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+    <Path d="M14.83 9.17999C14.2706 8.61995 13.5576 8.23846 12.7813 8.08386C12.0049 7.92926 11.2002 8.00851 10.4689 8.31152C9.73758 8.61453 9.11264 9.12769 8.67316 9.78607C8.23367 10.4444 7.99938 11.2184 8 12.01C7.99916 13.0663 8.41619 14.08 9.16004 14.83" stroke={stroke} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+    <Path d="M12 16.01C13.0609 16.01 14.0783 15.5886 14.8284 14.8384C15.5786 14.0883 16 13.0709 16 12.01" stroke={stroke} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+    <Path d="M17.61 6.39004L6.38 17.62C4.6208 15.9966 3.14099 14.0944 2 11.99C6.71 3.76002 12.44 1.89004 17.61 6.39004Z" stroke={stroke} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+    <Path d="M20.9994 3L17.6094 6.39" stroke={stroke} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+    <Path d="M6.38 17.62L3 21" stroke={stroke} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+    <Path d="M19.5695 8.42999C20.4801 9.55186 21.2931 10.7496 21.9995 12.01C17.9995 19.01 13.2695 21.4 8.76953 19.23" stroke={stroke} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+  </Svg>
+);
 export default function CreatePasswordScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ phoneNumber?: string }>();
@@ -68,13 +45,11 @@ export default function CreatePasswordScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [focusedPassword, setFocusedPassword] = useState(false);
+  const [focusedConfirm, setFocusedConfirm] = useState(false);
 
-  const allRulesPassed = PASSWORD_RULES.every((r) => r.test(password));
   const passwordsMatch = password === confirmPassword && confirmPassword.length > 0;
-  const canContinue = allRulesPassed && passwordsMatch;
-
-  const strengthWidth = password.length > 0 ? getStrengthWidth(password) : 0;
-  const strengthColor = getStrengthColor(password);
+  const canContinue = passwordsMatch;
 
   const hasCompletedProfile = (profile: Awaited<ReturnType<typeof getUserProfile>>): boolean => {
     if (!profile) return false;
@@ -133,14 +108,22 @@ export default function CreatePasswordScreen() {
         <Text style={styles.title}>Create Password</Text>
 
         {/* Password Field */}
-        <View style={styles.inputWrapper}>
+        <View style={[styles.inputWrapper, focusedPassword && styles.inputWrapperFocused]}>
+          <Text
+            style={[
+              styles.floatingLabel,
+              (focusedPassword || password.length > 0) && styles.floatingLabelFocused,
+            ]}
+          >
+            Enter Password
+          </Text>
           <TextInput
             style={styles.input}
-            placeholder="Enter Password"
-            placeholderTextColor="#9CA3AF"
             secureTextEntry={!showPassword}
             value={password}
             onChangeText={setPassword}
+            onFocus={() => setFocusedPassword(true)}
+            onBlur={() => setFocusedPassword(false)}
             autoCapitalize="none"
             autoCorrect={false}
           />
@@ -149,51 +132,29 @@ export default function CreatePasswordScreen() {
             style={styles.eyeButton}
             hitSlop={8}
           >
-            <Text style={styles.eyeIcon}>{showPassword ? '🙈' : '👁️'}</Text>
+            {showPassword ? <EyeOffIcon stroke="#aaa" /> : <EyeIcon stroke="#aaa" />}
           </Pressable>
         </View>
 
-        {/* Strength Bar */}
-        <View style={styles.strengthBarContainer}>
-          <View
-            style={[
-              styles.strengthBarFill,
-              {
-                width: `${strengthWidth}%` as any,
-                backgroundColor: strengthColor,
-              },
-            ]}
-          />
-        </View>
 
-        {/* Password Rules */}
-        <Text style={styles.rulesTitle}>Your password must have:</Text>
-        {PASSWORD_RULES.map((rule) => {
-          const passed = rule.test(password);
-          return (
-            <View key={rule.label} style={styles.ruleRow}>
-              <CheckCircleIcon checked={passed} />
-              <Text
-                style={[
-                  styles.ruleText,
-                  passed ? styles.ruleTextActive : styles.ruleTextInactive,
-                ]}
-              >
-                {rule.label}
-              </Text>
-            </View>
-          );
-        })}
 
         {/* Confirm Password Field */}
-        <View style={[styles.inputWrapper, styles.inputWrapperMarginTop]}>
+        <View style={[styles.inputWrapper, styles.inputWrapperMarginTop, focusedConfirm && styles.inputWrapperFocused]}>
+          <Text
+            style={[
+              styles.floatingLabel,
+              (focusedConfirm || confirmPassword.length > 0) && styles.floatingLabelFocused,
+            ]}
+          >
+            Confirm Password
+          </Text>
           <TextInput
             style={styles.input}
-            placeholder="Confirm Password"
-            placeholderTextColor="#9CA3AF"
             secureTextEntry={!showConfirm}
             value={confirmPassword}
             onChangeText={setConfirmPassword}
+            onFocus={() => setFocusedConfirm(true)}
+            onBlur={() => setFocusedConfirm(false)}
             autoCapitalize="none"
             autoCorrect={false}
           />
@@ -202,7 +163,7 @@ export default function CreatePasswordScreen() {
             style={styles.eyeButton}
             hitSlop={8}
           >
-            <Text style={styles.eyeIcon}>{showConfirm ? '🙈' : '👁️'}</Text>
+            {showConfirm ? <EyeOffIcon stroke="#aaa" /> : <EyeIcon stroke="#aaa" />}
           </Pressable>
         </View>
 
@@ -277,21 +238,43 @@ const styles = StyleSheet.create({
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderWidth: 1.5,
+    borderColor: '#e0e0e0',
     borderRadius: 10,
     paddingHorizontal: 14,
-    height: 52,
-    backgroundColor: '#FAFAFA',
+    height: 56,
+    backgroundColor: '#fff',
+    position: 'relative',
+    justifyContent: 'center',
+  },
+  inputWrapperFocused: {
+    borderColor: '#E8304A',
   },
   inputWrapperMarginTop: {
     marginTop: 20,
   },
+  floatingLabel: {
+    position: 'absolute',
+    left: 14,
+    top: 18,
+    fontSize: 16,
+    color: '#aaa',
+    zIndex: 1,
+    backgroundColor: '#fff',
+  },
+  floatingLabelFocused: {
+    top: -10,
+    fontSize: 12,
+    color: '#E8304A',
+    fontWeight: '500',
+    paddingHorizontal: 4,
+  },
   input: {
     flex: 1,
-    fontSize: 15,
+    fontSize: 16,
     color: '#111827',
     paddingVertical: 0,
+    height: 24,
   },
   eyeButton: {
     padding: 4,
@@ -301,65 +284,7 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
 
-  // Strength bar
-  strengthBarContainer: {
-    height: 3,
-    backgroundColor: '#E5E7EB',
-    borderRadius: 4,
-    marginTop: 8,
-    marginBottom: 14,
-    overflow: 'hidden',
-  },
-  strengthBarFill: {
-    height: '100%',
-    borderRadius: 4,
-  },
 
-  // Rules
-  rulesTitle: {
-    fontSize: 13,
-    color: '#374151',
-    fontWeight: '500',
-    marginBottom: 8,
-  },
-  ruleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 6,
-  },
-  checkIcon: {
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    borderWidth: 1.5,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 8,
-  },
-  checkIconActive: {
-    backgroundColor: '#22C55E',
-    borderColor: '#22C55E',
-  },
-  checkIconInactive: {
-    backgroundColor: 'transparent',
-    borderColor: '#D1D5DB',
-  },
-  checkMark: {
-    color: '#FFFFFF',
-    fontSize: 10,
-    fontWeight: '700',
-    lineHeight: 14,
-  },
-  ruleText: {
-    fontSize: 13,
-  },
-  ruleTextActive: {
-    color: '#16A34A',
-    fontWeight: '500',
-  },
-  ruleTextInactive: {
-    color: '#6B7280',
-  },
 
   // Mismatch
   mismatchText: {

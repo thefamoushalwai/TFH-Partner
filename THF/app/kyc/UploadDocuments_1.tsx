@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import { useRouter, useFocusEffect } from 'expo-router';
+import React, { useState, useCallback } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -47,35 +47,40 @@ export default function UploadDocumentsScreen({
   const [docs, setDocs] = useState<DocumentItem[]>(initialDocs);
   const [isLinking, setIsLinking] = useState(false);
 
-  useEffect(() => {
-    const syncUploadedStatus = async () => {
-      try {
-        const values = await AsyncStorage.multiGet([
-          'profilePhotoUrl',
-          'aadharPhotoUrl',
-          'aadharPhotoBackUrl',
-          'panPhotoUrl',
-        ]);
+  useFocusEffect(
+    useCallback(() => {
+      const syncUploadedStatus = async () => {
+        try {
+          const values = await AsyncStorage.multiGet([
+            'profilePhotoUrl',
+            'aadharPhotoUrl',
+            'aadharPhotoBackUrl',
+            'panPhotoUrl',
+          ]);
 
-        const uploadedMap = {
-          selfie: Boolean(values[0][1]),
-          aadhar: Boolean(values[1][1]) && Boolean(values[2][1]), // Both front & back required
-          pan: Boolean(values[3][1]),
-        };
+          const isValid = (val: string | null) => 
+            typeof val === 'string' && val.trim() !== '' && val !== 'null' && val !== 'undefined' && val !== 'false';
 
-        setDocs((prev) =>
-          prev.map((doc) => ({
-            ...doc,
-            uploaded: uploadedMap[doc.id as keyof typeof uploadedMap],
-          }))
-        );
-      } catch (error) {
-        console.error('Failed to sync uploaded document status:', error);
-      }
-    };
+          const uploadedMap = {
+            selfie: isValid(values[0][1]),
+            aadhar: isValid(values[1][1]) && isValid(values[2][1]), // Both front & back required
+            pan: isValid(values[3][1]),
+          };
 
-    syncUploadedStatus();
-  }, []);
+          setDocs((prev) =>
+            prev.map((doc) => ({
+              ...doc,
+              uploaded: uploadedMap[doc.id as keyof typeof uploadedMap],
+            }))
+          );
+        } catch (error) {
+          console.error('Failed to sync uploaded document status:', error);
+        }
+      };
+
+      syncUploadedStatus();
+    }, [])
+  );
 
   const allUploaded = docs.every((d) => d.uploaded);
 
@@ -92,7 +97,17 @@ export default function UploadDocumentsScreen({
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         {/* Back */}
-        <TouchableOpacity style={styles.backBtn} onPress={onBack} activeOpacity={0.7}>
+        <TouchableOpacity 
+          style={styles.backBtn} 
+          onPress={() => {
+            if (onBack) {
+              onBack();
+            } else {
+              router.back();
+            }
+          }} 
+          activeOpacity={0.7}
+        >
           <Text style={styles.backArrow}>←</Text>
         </TouchableOpacity>
 

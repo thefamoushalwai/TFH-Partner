@@ -18,10 +18,12 @@ import {
   where,
   orderBy,
   serverTimestamp,
+  runTransaction,
+  onSnapshot,
   type Timestamp,
   type PartialWithFieldValue,
 } from 'firebase/firestore';
-import { db } from './firebaseConfig';
+import { db, auth } from './firebaseConfig';
 
 // ---------------------------------------------------------------------------
 // TypeScript Interface
@@ -33,6 +35,7 @@ export interface Booking {
   /** Firebase Auth UID of the partner */
   partnerId: string;
   clientName: string;
+  phone?: string;
   eventType: string;
   /** Date/time of the event */
   date: Timestamp;
@@ -40,7 +43,7 @@ export interface Booking {
   guests: number;
   /** Booking fee in INR */
   amount: number;
-  status: 'pending' | 'accepted' | 'active' | 'completed' | 'cancelled';
+  status: 'broadcasted' | 'pending' | 'accepted' | 'active' | 'completed' | 'cancelled';
 }
 
 // ---------------------------------------------------------------------------
@@ -116,6 +119,53 @@ export async function updateBookingStatus(
     await updateDoc(ref, { status, ...(extra ?? {}) });
   } catch (error) {
     console.error('[bookingService] updateBookingStatus error:', error);
+    throw error;
+  }
+}
+
+/**
+ * Listen to broadcasted bookings (status: 'broadcasted')
+ */
+export function listenToBroadcastedBookings(callback: (bookings: Booking[]) => void): () => void {
+  console.log('[bookingService] Setting up broadcast listener, uid:', auth.currentUser?.uid);
+  
+  const q = query(collection(db, 'bookings'), where('status', '==', 'broadcasted'));
+  return onSnapshot(q, (snap) => {
+    const bookings = snap.docs.map((d) => ({
+      bookingId: d.id,
+      ...d.data(),
+    })) as Booking[];
+    console.log('[bookingService] Broadcast bookings received:', bookings.length);
+    callback(bookings);
+  }, (error) => {
+    console.error('[bookingService] broadcast listener error:', error.code, error.message);
+    // Log the error for debugging
+    if (error.code === 'permission-denied') {
+      console.warn('[bookingService] Permission denied - check Firestore rules in Firebase Console');
+    }
+  });
+}
+
+/**
+ * Try to accept a broadcasted booking via transaction to ensure only one partner succeeds.
+ * @throws Error if already accepted by someone else.
+ */
+export async function acceptBroadcastedBooking(bookingId: string, partnerId: string): Promise<void> {
+  try {
+    const ref = doc(db, 'bookings', bookingId);
+    await runTransaction(db, async (transaction) => {
+      const sfDoc = await transaction.get(ref);
+      if (!sfDoc.exists()) {
+        throw new Error("Booking does not exist!");
+      }
+      const data = sfDoc.data() as Booking;
+      if (data.status !== "broadcasted") {
+        throw new Error("This booking has already been claimed.");
+      }
+      transaction.update(ref, { status: "active", partnerId });
+    });
+  } catch (error) {
+    console.error('[bookingService] acceptBroadcastedBooking error:', error);
     throw error;
   }
 }

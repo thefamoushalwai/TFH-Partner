@@ -1,5 +1,5 @@
 import { useUserStore } from '@/src/hooks/useUserStore';
-import { getPartnerBookings, type Booking as FirestoreBooking } from '@/src/services/bookingService';
+import { getPartnerBookings, type Booking as FirestoreBooking, listenToBroadcastedBookings, acceptBroadcastedBooking } from '@/src/services/bookingService';
 import { auth } from '@/src/services/firebaseConfig';
 import dayjs from 'dayjs';
 import { Image } from 'expo-image';
@@ -15,8 +15,13 @@ import {
   RefreshControl,
   TouchableOpacity,
   View,
+  Linking,
+  Alert,
+  Modal,
+  Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 
 import Navbar from '../../components/Navbar';
 const { width } = Dimensions.get('window');
@@ -31,6 +36,7 @@ interface Booking {
   occasion: string;
   guests: number;
   location: string;
+  phone?: string;
 }
 
 interface DashboardScreenProps {
@@ -128,7 +134,8 @@ function BookingCard({
               <Text style={bookingStyles.locationBtnText}>Location</Text>
             </TouchableOpacity>
             <TouchableOpacity style={bookingStyles.callBtn} onPress={onCallClient} activeOpacity={0.8}>
-              <Text style={bookingStyles.callBtnText}>📞 Call Client</Text>
+              <Ionicons name="call-outline" size={16} color="#fff" style={{ marginRight: 6 }} />
+              <Text style={bookingStyles.callBtnText}> Call Client</Text>
             </TouchableOpacity>
           </View>
         </>
@@ -139,6 +146,72 @@ function BookingCard({
 
 
 
+/* ── Broadcasted Booking Card ── */
+function BroadcastedBookingCard({
+  booking,
+  onAccept,
+  isAccepting,
+}: {
+  booking: FirestoreBooking & { bookingId?: string };
+  onAccept: () => void;
+  isAccepting: boolean;
+}) {
+  const bTime = dayjs((booking.date as any).toDate?.() ?? booking.date);
+  const slideAnim = React.useRef(new Animated.Value(100)).current; // slide up from 100px
+
+  React.useEffect(() => {
+    Animated.spring(slideAnim, {
+      toValue: 0,
+      damping: 15,
+      stiffness: 200,
+      useNativeDriver: true,
+    }).start();
+  }, [slideAnim]);
+
+  return (
+    <Animated.View style={[bookingStyles.card, { transform: [{ translateY: slideAnim }] }]}>
+      <View style={bookingStyles.row}>
+        {/* Time */}
+        <View style={bookingStyles.timeBox}>
+          <Text style={bookingStyles.timeNum}>{bTime.isValid() ? bTime.format('hh') : '--'}</Text>
+          <Text style={bookingStyles.timePeriod}>{bTime.isValid() ? bTime.format('a') : '--'}</Text>
+        </View>
+
+        {/* Info */}
+        <View style={bookingStyles.info}>
+          <Text style={[bookingStyles.nextUp, { color: '#E8304A', fontWeight: 'bold' }]}>NEW BOOKING AVAILABLE!</Text>
+          <Text style={bookingStyles.clientName}>{booking.clientName}</Text>
+          <Text style={bookingStyles.meta}>
+            {bTime.isValid() ? bTime.format('MMM DD, YYYY') : ''} | {booking.eventType} | {booking.guests} guests
+          </Text>
+          <Text style={bookingStyles.meta} numberOfLines={1}>
+            {booking.location}
+          </Text>
+          <Text style={{ marginTop: 4, fontWeight: 'bold', color: '#111', fontSize: 13 }}>
+            Amount: ₹{booking.amount}
+          </Text>
+        </View>
+      </View>
+
+      <View style={bookingStyles.divider} />
+      <View style={bookingStyles.actions}>
+        <TouchableOpacity 
+          style={[bookingStyles.locationBtn, { backgroundColor: '#31B76B' }]} 
+          onPress={onAccept} 
+          disabled={isAccepting}
+          activeOpacity={0.8}
+        >
+          {isAccepting ? (
+            <ActivityIndicator color="#fff" size="small" />
+          ) : (
+            <Text style={bookingStyles.locationBtnText}>Accept Booking</Text>
+          )}
+        </TouchableOpacity>
+      </View>
+    </Animated.View>
+  );
+}
+
 /* ── Main Screen ── */
 export default function DashboardScreen() {
   const router = useRouter();
@@ -146,6 +219,39 @@ export default function DashboardScreen() {
   const [bookings, setBookings] = useState<FirestoreBooking[]>([]);
   const [bookingsLoading, setBookingsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
+
+  const [broadcastedBookings, setBroadcastedBookings] = useState<(FirestoreBooking & { bookingId?: string })[]>([]);
+  const [acceptingBookingId, setAcceptingBookingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!auth.currentUser?.uid) return;
+
+    const unsubscribe = listenToBroadcastedBookings((bBookings) => {
+      setBroadcastedBookings(bBookings);
+    });
+    return () => unsubscribe();
+  }, [profile]);
+
+  const handleAcceptBroadcastedBooking = async (bookingId: string) => {
+    const uid = auth.currentUser?.uid;
+    if (!uid) {
+      Alert.alert('Error', 'Not authenticated');
+      return;
+    }
+    setAcceptingBookingId(bookingId);
+    try {
+      if (bookingId) {
+        await acceptBroadcastedBooking(bookingId, uid);
+        Alert.alert('Success', 'Booking accepted successfully!');
+        await fetchDashboardData();
+      }
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Failed to accept booking. It might have been claimed by someone else.');
+    } finally {
+      setAcceptingBookingId(null);
+    }
+  };
 
   const fetchDashboardData = useCallback(async () => {
     const uid = auth.currentUser?.uid;
@@ -180,11 +286,9 @@ export default function DashboardScreen() {
     return bDate === todayStr && (b.status === 'active' || b.status === 'accepted' || b.status === 'pending');
   });
 
-  // Stats: total completed bookings & earnings
-  const completedCount = bookings.filter(b => b.status === 'completed').length;
-  const totalEarned = bookings
-    .filter(b => b.status === 'completed')
-    .reduce((sum, b) => sum + (b.amount ?? 0), 0);
+  // Stats: total bookings & earnings
+  const totalBookingsCount = bookings.length;
+  const totalEarned = bookings.reduce((sum, b) => sum + (b.amount ?? 0), 0);
 
   if (profileLoading && !profile) {
     return (
@@ -208,7 +312,7 @@ export default function DashboardScreen() {
         {/* ── Welcome Card ── */}
         <View style={styles.welcomeCard}>
           <View style={styles.welcomeLeft}>
-            <Text style={styles.welcomeHi}>Welcome</Text>
+            <Text style={styles.welcomeHi}>Welcome!</Text>
             <Text style={styles.welcomeName}>{chefName || 'Partner'}</Text>
             <View style={styles.badgeRow}>
               {isVerified && (
@@ -236,12 +340,26 @@ export default function DashboardScreen() {
           </View>
         </View>
 
+        {/* ── Broadcasted Bookings ── */}
+        {isVerified && broadcastedBookings.length > 0 && (
+          <View style={{ marginBottom: 16 }}>
+             {broadcastedBookings.map((b) => (
+                <BroadcastedBookingCard 
+                  key={b.bookingId} 
+                  booking={b} 
+                  onAccept={() => b.bookingId && handleAcceptBroadcastedBooking(b.bookingId)}
+                  isAccepting={acceptingBookingId === b.bookingId}
+                />
+             ))}
+          </View>
+        )}
+
         {/* ── Today's Summary ── */}
         <Text style={styles.sectionTitle}>Today's Summary</Text>
         <View style={styles.summaryRow}>
-          <SummaryCard icon={<BookingIcon />} label="Bookings" value={String(completedCount)} iconBg="#ffffff" />
+          <SummaryCard icon={<BookingIcon />} label="Bookings" value={String(totalBookingsCount)} iconBg="#ffffff" />
           <SummaryCard icon={<WalletIcon />} label="Earned" value={`₹${totalEarned}`} iconBg="#ffffff" />
-          <SummaryCard icon={<KycIcon />} label="Ratings" value={'0'} iconBg="#ffffff" />
+          <SummaryCard icon={<KycIcon />} label="Ratings" value={'4.8'} iconBg="#ffffff" />
         </View>
 
         <Text style={styles.sectionTitle}>Today's Bookings</Text>
@@ -284,17 +402,207 @@ export default function DashboardScreen() {
                 occasion: booking.eventType,
                 guests: booking.guests,
                 location: booking.location,
+                phone: booking.phone,
               }}
               showActions={index === 0}
+              onViewDetail={() => {
+                setSelectedBooking({
+                  id: booking.bookingId,
+                  time: dayjs((booking.date as any).toDate?.() ?? booking.date).format('hh'),
+                  period: dayjs((booking.date as any).toDate?.() ?? booking.date).format('a'),
+                  nextUpLabel: index === 0 ? 'Next up' : 'Upcoming',
+                  clientName: booking.clientName,
+                  occasion: booking.eventType,
+                  guests: booking.guests,
+                  location: booking.location,
+                  phone: booking.phone,
+                });
+              }}
+              onCallClient={() => {
+                if (booking.phone) {
+                  Linking.openURL(`tel:${booking.phone}`);
+                } else {
+                  Alert.alert('Unavailable', 'Phone number not provided for this booking');
+                }
+              }}
+              onLocation={() => {
+                if (booking.location) {
+                  Linking.openURL(`https://maps.google.com/?q=${encodeURIComponent(booking.location)}`);
+                }
+              }}
             />
           ))
         )}
 
         <View style={{ height: 16 }} />
       </ScrollView>
+
+      {/* ── Booking Detail Modal ── */}
+      <Modal
+        visible={!!selectedBooking}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setSelectedBooking(null)}
+      >
+        <View style={modalStyles.overlay}>
+          <View style={modalStyles.modalContainer}>
+            <View style={modalStyles.headerRow}>
+              <Text style={modalStyles.nextUpText}>{selectedBooking?.nextUpLabel} - in 2 hours</Text>
+              <TouchableOpacity style={modalStyles.closeButton} onPress={() => setSelectedBooking(null)} activeOpacity={0.8}>
+                <Ionicons name="close" size={16} color="#fff" />
+              </TouchableOpacity>
+            </View>
+            <Text style={modalStyles.title}>
+              {selectedBooking?.clientName} {selectedBooking?.occasion}
+            </Text>
+            <Text style={modalStyles.detailText}>
+              Time: {selectedBooking?.time} - {selectedBooking?.period}
+            </Text>
+            <Text style={modalStyles.detailText}>
+              Location: {selectedBooking?.location}
+            </Text>
+            <Text style={modalStyles.detailText}>
+              {selectedBooking?.guests} guests | North Indian + Cake
+            </Text>
+            
+            <View style={modalStyles.mapPlaceholder}>
+              <Text style={modalStyles.mapText}>Map Preview</Text>
+              <Text style={modalStyles.mapSubText}>{selectedBooking?.location}</Text>
+            </View>
+            
+            <View style={modalStyles.actionRow}>
+              <TouchableOpacity 
+                style={modalStyles.actionButtonBlue}
+                activeOpacity={0.8}
+                onPress={() => {
+                  if (selectedBooking?.location) {
+                    Linking.openURL(`https://maps.google.com/?q=${encodeURIComponent(selectedBooking.location)}`);
+                  }
+                }}
+              >
+                <Text style={modalStyles.actionButtonText}>Get Direction</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={modalStyles.actionButtonGreen}
+                activeOpacity={0.8}
+                onPress={() => {
+                  if (selectedBooking?.phone) {
+                    Linking.openURL(`tel:${selectedBooking.phone}`);
+                  } else {
+                    Alert.alert('Unavailable', 'Phone number not provided');
+                  }
+                }}
+              >
+                <Ionicons name="call-outline" size={16} color="#fff" style={{ marginRight: 6 }} />
+                <Text style={modalStyles.actionButtonText}>Call Client</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
     </SafeAreaView>
   );
 }
+
+const modalStyles = StyleSheet.create({
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'flex-end',
+  },
+  modalContainer: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 24,
+    paddingBottom: 40,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 5,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  nextUpText: {
+    fontSize: 13,
+    color: '#6b7280',
+    fontWeight: '500',
+  },
+  closeButton: {
+    backgroundColor: '#9ca3af',
+    borderRadius: 14,
+    width: 28,
+    height: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  title: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#1f2937',
+    marginBottom: 12,
+    lineHeight: 28,
+  },
+  detailText: {
+    fontSize: 14,
+    color: '#4b5563',
+    marginBottom: 6,
+    lineHeight: 20,
+  },
+  mapPlaceholder: {
+    height: 120,
+    backgroundColor: '#e5e7eb',
+    borderRadius: 8,
+    marginTop: 16,
+    marginBottom: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+  },
+  mapText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#6b7280',
+  },
+  mapSubText: {
+    fontSize: 12,
+    color: '#9ca3af',
+    marginTop: 4,
+  },
+  actionRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  actionButtonBlue: {
+    flex: 1,
+    backgroundColor: '#4591E8',
+    borderRadius: 8,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  actionButtonGreen: {
+    flex: 1,
+    backgroundColor: '#31B76B',
+    borderRadius: 8,
+    paddingVertical: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  actionButtonText: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: '600',
+  },
+});
 
 /* ── Styles ── */
 const styles = StyleSheet.create({
@@ -484,12 +792,12 @@ const bookingStyles = StyleSheet.create({
     borderColor: '#ddd',
     borderRadius: 8,
     paddingVertical: 9,
-    paddingHorizontal: 14,
+    paddingHorizontal: 10,
   },
   viewBtnText: { fontSize: 13, color: '#333', fontWeight: '500' },
   locationBtn: {
     flex: 1,
-    backgroundColor: '#E8304A',
+    backgroundColor: '#4591E8',
     borderRadius: 8,
     paddingVertical: 9,
     alignItems: 'center',
@@ -501,6 +809,9 @@ const bookingStyles = StyleSheet.create({
     borderRadius: 8,
     paddingVertical: 9,
     alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
+   
   },
   callBtnText: { fontSize: 13, color: '#fff', fontWeight: '600' },
 });

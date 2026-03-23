@@ -118,7 +118,7 @@ const styles = StyleSheet.create({
   /* ── Hero Image ── */
   imageContainer: {
     width: '100%',
-    height: height * 0.65,
+    height: height * 0.55,
     overflow: 'hidden',
   },
   heroImage: {

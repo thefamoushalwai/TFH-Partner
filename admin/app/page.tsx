@@ -2,6 +2,7 @@ import { getDashboardStats } from "@/app/actions/dashboard";
 import { Users, ShieldCheck, FileText, AlertCircle } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import CreateBookingModal from "@/components/CreateBookingModal";
 
 export default async function DashboardPage() {
   const result = await getDashboardStats();
@@ -28,11 +29,14 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-8 animate-in fade-in zoom-in-95 duration-500">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight text-zinc-900">Dashboard</h1>
-        <p className="text-zinc-500 mt-1">
-          Overview of your application stats directly from Firestore.
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight text-zinc-900">Dashboard</h1>
+          <p className="text-zinc-500 mt-1">
+            Overview of your application stats directly from Firestore.
+          </p>
+        </div>
+        <CreateBookingModal />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

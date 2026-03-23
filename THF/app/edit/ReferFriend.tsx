@@ -14,12 +14,14 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { auth } from '@/src/services/firebaseConfig';
 import { createReferral, isPhoneAlreadyReferred } from '@/src/services/referralService';
+import { useRouter } from 'expo-router';
 
 interface ReferFriendScreenProps {
   onGenerate?: (data: { name: string; contact: string; email: string }) => void;
 }
 
 export default function ReferFriendScreen() {
+  const router = useRouter();
   const [name, setName] = useState('');
   const [contact, setContact] = useState('');
   const [email, setEmail] = useState('');
@@ -61,11 +63,6 @@ export default function ReferFriendScreen() {
     }
   };
 
-  const inputStyle = (field: string) => [
-    styles.input,
-    focusedField === field && styles.inputFocused,
-  ];
-
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#fff" />
@@ -75,48 +72,60 @@ export default function ReferFriendScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         <View style={styles.content}>
+          {/* Back btn */}
+          <TouchableOpacity
+            style={styles.backBtn}
+            onPress={() => router.back()}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.backArrow}>←</Text>
+          </TouchableOpacity>
+
           <Text style={styles.heading}>Refer a friend</Text>
 
           {/* Friend Name */}
-          <TextInput
-            style={inputStyle('name')}
-            placeholder="Enter friend name"
-            placeholderTextColor="#b0b0b0"
-            value={name}
-            onChangeText={setName}
-            onFocus={() => setFocusedField('name')}
-            onBlur={() => setFocusedField(null)}
-            returnKeyType="next"
-          />
+          <View style={[styles.inputWrapper, focusedField === 'name' && styles.inputWrapperFocused]}>
+            <Text style={[styles.floatingLabel, focusedField === 'name' && styles.floatingLabelFocused]}>Friend name</Text>
+            <TextInput
+              style={styles.input}
+              value={name}
+              onChangeText={setName}
+              onFocus={() => setFocusedField('name')}
+              onBlur={() => setFocusedField(null)}
+              returnKeyType="next"
+            />
+          </View>
 
           {/* Contact Number */}
-          <TextInput
-            style={inputStyle('contact')}
-            placeholder="Contact number"
-            placeholderTextColor="#b0b0b0"
-            value={contact}
-            onChangeText={setContact}
-            onFocus={() => setFocusedField('contact')}
-            onBlur={() => setFocusedField(null)}
-            keyboardType="phone-pad"
-            maxLength={15}
-            returnKeyType="next"
-          />
+          <View style={[styles.inputWrapper, focusedField === 'contact' && styles.inputWrapperFocused]}>
+            <Text style={[styles.floatingLabel, focusedField === 'contact' && styles.floatingLabelFocused]}>Contact number</Text>
+            <TextInput
+              style={styles.input}
+              value={contact}
+              onChangeText={setContact}
+              onFocus={() => setFocusedField('contact')}
+              onBlur={() => setFocusedField(null)}
+              keyboardType="phone-pad"
+              maxLength={15}
+              returnKeyType="next"
+            />
+          </View>
 
           {/* Email (optional) */}
-          <TextInput
-            style={inputStyle('email')}
-            placeholder="Email id (optional)"
-            placeholderTextColor="#b0b0b0"
-            value={email}
-            onChangeText={setEmail}
-            onFocus={() => setFocusedField('email')}
-            onBlur={() => setFocusedField(null)}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            returnKeyType="done"
-            onSubmitEditing={handleGenerate}
-          />
+          <View style={[styles.inputWrapper, focusedField === 'email' && styles.inputWrapperFocused]}>
+            <Text style={[styles.floatingLabel, focusedField === 'email' && styles.floatingLabelFocused]}>Email id (optional)</Text>
+            <TextInput
+              style={styles.input}
+              value={email}
+              onChangeText={setEmail}
+              onFocus={() => setFocusedField('email')}
+              onBlur={() => setFocusedField(null)}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              returnKeyType="done"
+              onSubmitEditing={handleGenerate}
+            />
+          </View>
         </View>
 
         {/* Generate Button */}
@@ -144,34 +153,47 @@ export default function ReferFriendScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   flex: { flex: 1 },
+  content: { paddingHorizontal: 20, paddingTop: 12 },
 
-  content: {
-    flex: 1,
-    paddingHorizontal: 20,
-    paddingTop: 24,
-  },
+  backBtn: { paddingTop: 4, paddingBottom: 4, alignSelf: 'flex-start' },
+  backArrow: { fontSize: 22, color: '#3b5bdb', fontWeight: '500' },
 
-  heading: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#111',
-    marginBottom: 20,
-  },
+  heading: { fontSize: 24, fontWeight: '700', color: '#111', marginTop: 12, marginBottom: 24 },
 
   /* Inputs */
-  input: {
+  inputWrapper: {
     borderWidth: 1.5,
     borderColor: '#e0e0e0',
     borderRadius: 10,
-    paddingVertical: 15,
     paddingHorizontal: 16,
+    paddingVertical: 12,
+    marginBottom: 16,
+    marginTop: 8,
+    backgroundColor: '#fff',
+    position: 'relative',
+  },
+  inputWrapperFocused: {
+    borderColor: '#E8304A',
+  },
+  floatingLabel: {
+    position: 'absolute',
+    top: -8,
+    left: 12,
+    backgroundColor: '#fff',
+    paddingHorizontal: 4,
+    fontSize: 12,
+    color: '#aaa',
+    fontWeight: '500',
+    letterSpacing: 0.3,
+    zIndex: 1,
+  },
+  floatingLabelFocused: {
+    color: '#E8304A',
+  },
+  input: {
     fontSize: 15,
     color: '#111',
-    backgroundColor: '#fff',
-    marginBottom: 12,
-  },
-  inputFocused: {
-    borderColor: '#E8304A',
+    paddingVertical: 0,
   },
 
   /* Footer */
