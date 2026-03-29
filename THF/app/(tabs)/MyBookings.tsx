@@ -1,3 +1,4 @@
+import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
   View,
@@ -37,6 +38,7 @@ interface Booking {
 }
 
 interface NextUpBooking {
+  id: string;
   label: string;
   title: string;
   time: string;
@@ -116,6 +118,7 @@ const FILTER_TABS: FilterTab[] = ['All', 'Today', 'Upcoming', 'Completed'];
 
 /* ── Main Screen ── */
 export default function MyBookingsScreen() {
+  const router = useRouter();
   const [fsBookings, setFsBookings] = useState<FSBooking[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState<FilterTab>('All');
@@ -125,39 +128,29 @@ export default function MyBookingsScreen() {
   // OTP and Timer State
   const [showOtpModal, setShowOtpModal] = useState(false);
   const [otpText, setOtpText] = useState('');
-  const [isTimerRunning, setIsTimerRunning] = useState(false);
-  const [isPaused, setIsPaused] = useState(false);
-  const [timerSeconds, setTimerSeconds] = useState(0);
 
-  // Timer Effect
-  useEffect(() => {
-    let interval: ReturnType<typeof setInterval>;
-    if (isTimerRunning && !isPaused) {
-      interval = setInterval(() => {
-        setTimerSeconds(prev => prev + 1);
-      }, 1000);
-    }
-    return () => clearInterval(interval);
-  }, [isTimerRunning, isPaused]);
 
   const verifyOtp = () => {
     if (otpText.length >= 4) {
       setShowOtpModal(false);
-      setIsTimerRunning(true);
-      setIsPaused(false);
-      setTimerSeconds(0);
+      // Navigate to the Job Timer screen instead of starting an internal timer
+      router.push({
+        pathname: '/edit/JobTimer' as any,
+        params: {
+          bookingId: nextUp?.id || '',
+          title: nextUp?.title || '',
+          time: nextUp?.time || '',
+          location: nextUp?.locationNote || '',
+          guests: nextUp?.guests?.toString() || '0',
+          cuisine: nextUp?.cuisine || '',
+        }
+      });
       setOtpText('');
     } else {
       Alert.alert(t('invalidOtp'), t('invalidOtpMsg'));
     }
   };
 
-  const formatTime = (totalSeconds: number) => {
-    const h = Math.floor(totalSeconds / 3600).toString().padStart(2, '0');
-    const m = Math.floor((totalSeconds % 3600) / 60).toString().padStart(2, '0');
-    const s = (totalSeconds % 60).toString().padStart(2, '0');
-    return `${h}:${m}:${s}`;
-  };
 
   const dateLabel = dayjs().format('DD MMM YYYY | hh:mm a');
 
@@ -208,6 +201,7 @@ export default function MyBookingsScreen() {
   const nextUpBooking = mappedBookings.find(b => b.status === 'Today' || b.status === 'Active');
   const nextUp: NextUpBooking | undefined = nextUpBooking
     ? {
+        id: nextUpBooking.id,
         label: nextUpBooking.status === 'Active' ? t('activeBooking') : t('nextUpToday'),
         title: nextUpBooking.title,
         time: nextUpBooking.time,
@@ -243,92 +237,42 @@ export default function MyBookingsScreen() {
             <Text style={styles.nextUpMeta}>{t('locationLabel')}: {nextUp.locationNote}</Text>
             <Text style={styles.nextUpMeta}>{nextUp.guests} guests | {nextUp.cuisine}</Text>
 
-            {/* Timer or Actions */}
-            {isTimerRunning || isPaused ? (
-               <View style={styles.timerContainer}>
-                 <View style={styles.timerRow}>
-                   <View style={styles.timerCol}>
-                     <Text style={styles.timerVal}>{formatTime(timerSeconds).split(':')[0]}</Text>
-                     <Text style={styles.timerUnit}>{t('hours')}</Text>
-                   </View>
-                   <Text style={styles.timerColon}>:</Text>
-                   <View style={styles.timerCol}>
-                     <Text style={styles.timerVal}>{formatTime(timerSeconds).split(':')[1]}</Text>
-                     <Text style={styles.timerUnit}>{t('minutes')}</Text>
-                   </View>
-                   <Text style={styles.timerColon}>:</Text>
-                   <View style={styles.timerCol}>
-                     <Text style={styles.timerVal}>{formatTime(timerSeconds).split(':')[2]}</Text>
-                     <Text style={styles.timerUnit}>{t('seconds')}</Text>
-                   </View>
-                 </View>
-                 <View style={styles.timerActions}>
-                   <TouchableOpacity 
-                     style={styles.cancelBtn} 
-                     activeOpacity={0.8}
-                     onPress={() => {
-                        setIsTimerRunning(false);
-                        setIsPaused(false);
-                        setTimerSeconds(0);
-                        setShowOtpModal(false);
-                     }}
-                   >
-                     <Text style={styles.cancelBtnText}>{t('cancel')}</Text>
-                   </TouchableOpacity>
-                   <TouchableOpacity 
-                     style={styles.pauseBtn} 
-                     activeOpacity={0.8}
-                     onPress={() => {
-                        setIsPaused(!isPaused);
-                        if (isPaused) {
-                           setIsTimerRunning(true);
-                        } else {
-                           setIsTimerRunning(false);
-                        }
-                     }}
-                   >
-                     <Text style={styles.pauseBtnText}>{isPaused ? t('resume') : t('pause')}</Text>
-                   </TouchableOpacity>
-                 </View>
-               </View>
-            ) : (
-              <View style={styles.nextUpActions}>
-                <TouchableOpacity 
-                  style={[styles.navBtn, { flex: 1, backgroundColor: '#EA243F' }]} 
-                  activeOpacity={0.8}
-                  onPress={() => setShowOtpModal(true)}
-                >
-                  <Text style={[styles.navBtnText, { color: '#fff' }]}>{t('reachedLocation')}</Text>
-                </TouchableOpacity>
+             <View style={styles.nextUpActions}>
+               <TouchableOpacity 
+                 style={[styles.navBtn, { flex: 1, backgroundColor: '#EA243F' }]} 
+                 activeOpacity={0.8}
+                 onPress={() => setShowOtpModal(true)}
+               >
+                 <Text style={[styles.navBtnText, { color: '#fff' }]}>{t('reachedLocation')}</Text>
+               </TouchableOpacity>
 
-                <View style={{ flexDirection: 'row', gap: 10, justifyContent: 'space-between' }}>
-                <TouchableOpacity 
-                  style={[styles.navBtn, { flex: 1 }]} 
-                  activeOpacity={0.8}
-                  onPress={() => {
-                    if (nextUp.locationNote && nextUp.locationNote !== 'not assigned') {
-                      Linking.openURL(`https://maps.google.com/?q=${encodeURIComponent(nextUp.locationNote)}`);
-                    }
-                  }}
-                >
-                  <Text style={styles.navBtnText}>{t('navigateLocation')}</Text>
-                </TouchableOpacity>
-                <TouchableOpacity 
-                  style={[styles.callBtn, { flex: 1 }]} 
-                  activeOpacity={0.8}
-                  onPress={() => {
-                    if (nextUp.phone) {
-                      Linking.openURL(`tel:${nextUp.phone}`);
-                    } else {
-                      Alert.alert(t('unavailable'), t('phoneNotProvided2'));
-                    }
-                  }}
-                >
-                  <Text style={styles.callBtnText}>{t('callClient')}</Text>
-                </TouchableOpacity>
-                </View>
-              </View>
-            )}
+               <View style={{ flexDirection: 'row', gap: 10, justifyContent: 'space-between' }}>
+               <TouchableOpacity 
+                 style={[styles.navBtn, { flex: 1 }]} 
+                 activeOpacity={0.8}
+                 onPress={() => {
+                   if (nextUp.locationNote && nextUp.locationNote !== 'not assigned') {
+                     Linking.openURL(`https://maps.google.com/?q=${encodeURIComponent(nextUp.locationNote)}`);
+                   }
+                 }}
+               >
+                 <Text style={styles.navBtnText}>{t('navigateLocation')}</Text>
+               </TouchableOpacity>
+               <TouchableOpacity 
+                 style={[styles.callBtn, { flex: 1 }]} 
+                 activeOpacity={0.8}
+                 onPress={() => {
+                   if (nextUp.phone) {
+                     Linking.openURL(`tel:${nextUp.phone}`);
+                   } else {
+                     Alert.alert(t('unavailable'), t('phoneNotProvided2'));
+                   }
+                 }}
+               >
+                 <Text style={styles.callBtnText}>{t('callClient')}</Text>
+               </TouchableOpacity>
+               </View>
+             </View>
           </View>
         )}
 
@@ -410,11 +354,8 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 18,
     marginBottom: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 6,
-    elevation: 2,
+    borderWidth: 1,
+    borderColor: '#d3dbe2',
   },
   nextUpLabel: { fontSize: 12, color: '#888', marginBottom: 6 },
   nextUpTitle: { fontSize: 20, fontWeight: '700', color: '#111', marginBottom: 10, lineHeight: 26 },
@@ -462,26 +403,10 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     padding: 24,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 1,
+   
   },
   emptyText: { fontSize: 14, color: '#999', fontWeight: '500' },
 
-  /* Timer UI */
-  timerContainer: { backgroundColor: '#fff', alignItems: 'center', marginTop: 12 },
-  timerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 24 },
-  timerCol: { alignItems: 'center', marginHorizontal: 8 },
-  timerVal: { fontSize: 52, fontWeight: '800', color: '#31343E' },
-  timerUnit: { fontSize: 11, color: '#9FA4B4', fontWeight: '500', marginTop: 4 },
-  timerColon: { fontSize: 32, fontWeight: '700', color: '#9FA4B4', paddingBottom: 22, marginHorizontal: 4 },
-  timerActions: { flexDirection: 'row', gap: 16, width: '100%', justifyContent: 'center' },
-  cancelBtn: { backgroundColor: '#EAEDF1', paddingVertical: 12, paddingHorizontal: 36, borderRadius: 8 },
-  cancelBtnText: { color: '#31343E', fontWeight: '500', fontSize: 15 },
-  pauseBtn: { backgroundColor: '#EE2A45', paddingVertical: 12, paddingHorizontal: 36, borderRadius: 8 },
-  pauseBtnText: { color: '#fff', fontWeight: '500', fontSize: 15 },
 
   /* OTP Modal UI */
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
@@ -500,11 +425,9 @@ const cardStyles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 1,
+    borderWidth: 1,
+    borderColor: '#d3dbe2',
+   
   },
   dateBox: {
     width: 44,
@@ -512,6 +435,8 @@ const cardStyles = StyleSheet.create({
     backgroundColor: '#f8f8f8',
     borderRadius: 8,
     paddingVertical: 8,
+    borderWidth: 1,
+    borderColor: '#d3dbe2',
   },
   dateDay: { fontSize: 20, fontWeight: '700', color: '#111', lineHeight: 24 },
   dateMonth: { fontSize: 11, color: '#888', fontWeight: '500' },

@@ -128,7 +128,7 @@ export default function SplashScreen() {
         <Image
           source={require('../assets/THF/top - Copy.svg')}
           style={styles.heroImage}
-          resizeMode="cover"
+          contentFit="cover"
         />
       </View>
 
@@ -143,7 +143,7 @@ export default function SplashScreen() {
         <Image
           source={require('../assets/THF/Layer_1.svg')}
           style={styles.logoImage}
-          resizeMode="contain"
+          contentFit="contain"
         />
         <Text style={styles.tagline}>
           Welcome to TFH partner app,{'\n'}complete your detail & join our family

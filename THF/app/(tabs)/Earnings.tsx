@@ -9,12 +9,14 @@ import {
   StatusBar,
   RefreshControl,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Navbar from '../../components/Navbar';
 import { auth } from '@/src/services/firebaseConfig';
-import { getPartnerTransactions, type Transaction as FSTransaction } from '@/src/services/transactionService';
+import { getPartnerBookings, type Booking } from '@/src/services/bookingService';
 import dayjs from 'dayjs';
 import { useLanguage } from '@/src/hooks/useLanguage';
+
 
 /* ── Local display type for TransactionRow component ── */
 interface DisplayTransaction {
@@ -26,61 +28,81 @@ interface DisplayTransaction {
   amount: number;
 }
 
-interface EarningsScreenProps {
-  month?: string;
-  totalEarned?: number;
-  comparisonPercent?: number;
-  comparisonMonth?: string;
-  bookings?: number;
-  avgRatings?: number;
-  completion?: number;
-  transactions?: DisplayTransaction[];
-  onHelp?: () => void;
-  onTabChange?: (tab: string) => void;
-}
-
 /* ── Transaction Row ── */
 function TransactionRow({ transaction }: { transaction: DisplayTransaction }) {
+  const isNegative = transaction.amount < 0;
+  
   return (
     <View style={txStyles.row}>
       <View style={txStyles.iconBox}>
-        <Text style={txStyles.icon}>✓</Text>
+        <Image source={require('@/assets/THF/Check.svg')} style={{ width: 28, height: 28 }} />
       </View>
       <View style={txStyles.info}>
-        <Text style={txStyles.name}>Booking - {transaction.clientName}</Text>
+        <Text style={txStyles.name}>{transaction.type === 'fee' ? 'Platform Fee' : `Booking - ${transaction.clientName}`}</Text>
         <Text style={txStyles.meta}>
-          {transaction.date} | {transaction.guests} guests | {transaction.type}
+          {transaction.date} | {transaction.guests ? `${transaction.guests} guests | ` : ''}{transaction.type === 'fee' ? '10% deducted' : 'Payout'}
         </Text>
       </View>
-      <Text style={txStyles.amount}>
-        +₹{transaction.amount < 10 ? `0${transaction.amount}` : transaction.amount}
+      <Text style={[txStyles.amount, isNegative && txStyles.amountNegative]}>
+        {isNegative ? '-' : '+'}₹{Math.abs(transaction.amount)}
       </Text>
     </View>
   );
 }
 
-/* ── Default Data ── */
-const DEFAULT_TRANSACTIONS: DisplayTransaction[] = [
-  { id: '1', clientName: 'John de', date: '22 Feb', guests: 10, type: 'Payout', amount: 0 },
-  { id: '2', clientName: 'John de', date: '22 Feb', guests: 10, type: 'Payout', amount: 0 },
-];
-
 /* ── Main Screen ── */
 export default function EarningsScreen() {
-  const [transactions, setTransactions] = useState<FSTransaction[]>([]);
+  const [transactions, setTransactions] = useState<DisplayTransaction[]>([]);
+  const [totalEarned, setTotalEarned] = useState(0);
+  const [completionRate, setCompletionRate] = useState('0%');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const month = dayjs().format('MMMM YYYY');
+  const prevMonth = dayjs().subtract(1, 'month').format('MMMM YYYY');
   const { t } = useLanguage();
 
   const fetchTransactions = React.useCallback(async () => {
     const uid = auth.currentUser?.uid;
     if (!uid) return;
     try {
-      const data = await getPartnerTransactions(uid);
-      setTransactions(data);
+      // Fetch all bookings for the partner
+      const bookingsData = await getPartnerBookings(uid);
+      
+      let sum = 0;
+      const displayTx: DisplayTransaction[] = [];
+      
+      // Filter and process ONLY completed bookings for earnings
+      const completedBookings = bookingsData.filter(b => b.status === 'completed');
+      
+      completedBookings.forEach(booking => {
+        const amount = booking.amount || 0;
+        sum += amount;
+        
+        displayTx.push({
+          id: booking.bookingId,
+          clientName: booking.clientName,
+          date: dayjs((booking.date as any)?.toDate?.() ?? booking.date).format('DD MMM'),
+          guests: booking.guests || 0,
+          type: 'Payout',
+          amount: amount,
+        });
+
+      
+      });
+
+      // Calculate completion rate based on all bookings
+      if (bookingsData.length > 0) {
+        const count = completedBookings.length;
+        const rate = Math.round((count / bookingsData.length) * 100);
+        setCompletionRate(`${rate}%`);
+      } else {
+        setCompletionRate('0%');
+      }
+
+      setTotalEarned(sum);
+      setTransactions(displayTx);
     } catch (error) {
-      console.error(error);
+      console.error('[Earnings] fetch error:', error);
     }
   }, []);
 
@@ -94,15 +116,17 @@ export default function EarningsScreen() {
     fetchTransactions().finally(() => setLoading(false));
   }, [fetchTransactions]);
 
-  const totalEarned = transactions.reduce((s, t) => s + (t.amount ?? 0), 0);
-  const bookingsCount = transactions.length;
-
   const formatAmount = (amount: number) =>
-    amount === 0 ? '00' : amount.toLocaleString('en-IN');
+    amount === 0 ? '0' : amount.toLocaleString('en-IN');
+    
+  const bookingsCount = transactions.length; 
+  const avgRatings = '4.9';
+  const comparisonPercent = '22%';
+
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+      <StatusBar barStyle="dark-content" backgroundColor="#f5f5f7" />
       <Navbar />
       <ScrollView 
         style={styles.scroll} 
@@ -117,16 +141,25 @@ export default function EarningsScreen() {
         <View style={styles.summaryCard}>
           <Text style={styles.totalLabel}>{t('totalEarned')} - {month}</Text>
           <Text style={styles.totalAmount}>₹{formatAmount(totalEarned)}</Text>
-          <Text style={styles.comparison}>{bookingsCount} {t('transactionsThisMonth')}</Text>
+          <Text style={styles.comparison}>{comparisonPercent} compared to {prevMonth}</Text>
+          
           <View style={styles.divider} />
+          
           <View style={styles.statsRow}>
             <View style={styles.statItem}>
               <Text style={styles.statValue}>{bookingsCount}</Text>
-              <Text style={styles.statLabel}>{t('transactions')}</Text>
+              <Text style={styles.statLabel}>Bookings</Text>
             </View>
             <View style={styles.statItem}>
-              <Text style={styles.statValue}>₹{formatAmount(totalEarned)}</Text>
-              <Text style={styles.statLabel}>{t('totalEarnedLabel')}</Text>
+              <Text style={styles.statValue}>{avgRatings}</Text>
+              <Text style={styles.statLabel}>Avg. Ratings</Text>
+            </View>
+            <View style={styles.statItem}>
+              <Text style={styles.statValue}>{completionRate}</Text>
+              <Text style={styles.statLabel}>Completion</Text>
+            </View>
+            <View style={styles.void}>
+             
             </View>
           </View>
         </View>
@@ -141,23 +174,13 @@ export default function EarningsScreen() {
           </View>
         ) : (
           <View style={styles.transactionsList}>
-            {transactions.map((tx, index) => (
-              <View key={tx.transactionId}>
-                <TransactionRow transaction={{
-                  id: tx.transactionId,
-                  clientName: tx.bookingId,
-                  date: dayjs((tx.createdAt as any).toDate?.() ?? tx.createdAt).format('DD MMM'),
-                  guests: 0,
-                  type: tx.type,
-                  amount: tx.amount,
-                }} />
-                {index < transactions.length - 1 && <View style={styles.txDivider} />}
-              </View>
+            {transactions.map((tx) => (
+              <TransactionRow key={tx.id} transaction={tx} />
             ))}
           </View>
         )}
 
-        <View style={{ height: 16 }} />
+        <View style={{ height: 24 }} />
       </ScrollView>
     </SafeAreaView>
   );
@@ -165,87 +188,76 @@ export default function EarningsScreen() {
 
 /* ── Styles ── */
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f5f5f7' },
+  container: { flex: 1, backgroundColor: '#FAFAFA' },
   scroll: { flex: 1 },
   scrollContent: { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 8 },
 
-
-
-  pageTitle: { fontSize: 22, fontWeight: '700', color: '#111', marginBottom: 4 },
-  monthLabel: { fontSize: 14, color: '#888', marginBottom: 16 },
+  pageTitle: { fontSize: 20, fontWeight: '700', color: '#1A1C1E', marginBottom: 6 },
+  monthLabel: { fontSize: 14, color: '#6C7278', marginBottom: 20 },
 
   /* Summary Card */
   summaryCard: {
     backgroundColor: '#fff',
     borderRadius: 16,
     padding: 20,
-    marginBottom: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 6,
-    elevation: 2,
+    marginBottom: 28,
+    borderWidth: 1,
+    borderColor: '#d3dbe2',
   },
-  totalLabel: { fontSize: 13, color: '#888', marginBottom: 6 },
-  totalAmount: { fontSize: 40, fontWeight: '800', color: '#111', marginBottom: 6 },
-  comparison: { fontSize: 13, color: '#888', marginBottom: 16 },
-  divider: { height: 1, backgroundColor: '#f0f0f0', marginBottom: 16 },
-  statsRow: { flexDirection: 'row' },
-  statItem: { flex: 1, alignItems: 'flex-start' },
-  statValue: { fontSize: 18, fontWeight: '700', color: '#22a75a', marginBottom: 3 },
-  statLabel: { fontSize: 12, color: '#999' },
+  totalLabel: { fontSize: 13, color: '#6C7278', marginBottom: 0, fontWeight: '500' },
+  totalAmount: { fontSize: 36, fontWeight: '800', color: '#1A1C1E', marginBottom: 0 },
+  comparison: { fontSize: 13, color: '#6C7278', marginBottom: 15 },
+  divider: { height: 1, backgroundColor: '#d3dbe2', marginBottom: 10 },
+  statsRow: { flexDirection: 'row', justifyContent: 'space-between' },
+  statItem: { alignItems: 'flex-start', width: '25%' },
+  statValue: { fontSize: 24, fontWeight: '900',color: '#22A75D', marginBottom: 1 },
+  statLabel: { fontSize: 11, color: '#889098' },
+  void: { width: '10%' },
 
   /* Section */
-  sectionTitle: { fontSize: 18, fontWeight: '700', color: '#111', marginBottom: 14 },
+  sectionTitle: { fontSize: 18, fontWeight: '700', color: '#1A1C1E', marginBottom: 16 },
 
-  /* Transactions */
+  /* Transactions list container */
   transactionsList: {
-    backgroundColor: '#fff',
-    borderRadius: 14,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 1,
+    gap: 12, // Spacing between each transaction card
   },
-  txDivider: { height: 1, backgroundColor: '#f5f5f5', marginHorizontal: 16 },
 
   /* Empty state */
   emptyBox: {
     backgroundColor: '#fff',
-    borderRadius: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#EFEFEF',
     paddingVertical: 24,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 1,
   },
-  emptyText: { fontSize: 14, color: '#999', fontWeight: '500' },
+  emptyText: { fontSize: 14, color: '#889098', fontWeight: '500' },
 });
 
 const txStyles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 14,
+    paddingVertical: 16,
     paddingHorizontal: 16,
-    gap: 12,
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#d3dbe2',
   },
   iconBox: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: '#F0F0F0',
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
+    marginRight: 12,
   },
-  icon: { fontSize: 14, color: '#888' },
   info: { flex: 1 },
-  name: { fontSize: 14, fontWeight: '600', color: '#222', marginBottom: 3 },
-  meta: { fontSize: 12, color: '#999' },
-  amount: { fontSize: 15, fontWeight: '700', color: '#22a75a' },
+  name: { fontSize: 14, fontWeight: '600', color: '#1A1C1E', marginBottom: 4 },
+  meta: { fontSize: 12, color: '#889098' },
+  amount: { fontSize: 15, fontWeight: '700', color: '#22A75D' },
+  amountNegative: { color: '#E8304A' },
 });
+
 

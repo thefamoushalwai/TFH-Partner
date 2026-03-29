@@ -31,7 +31,7 @@ const firebaseConfig = {
   projectId: 'tfh-partner-app',
   storageBucket: 'tfh-partner-app.firebasestorage.app',
   messagingSenderId: '632168932860',
-  appId: '1:632168932860:android:aed5011264e6fb30417e79',
+  appId: '1:632168932860:android:4fdbfd531e961b95417e79',
 };
 
 // ---------------------------------------------------------------------------

@@ -6,7 +6,6 @@ import React, { useState } from 'react';
 import {
   Alert,
   Dimensions,
-  Image,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -17,6 +16,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLanguage } from '@/src/hooks/useLanguage';
 
@@ -162,7 +162,7 @@ export default function PanScreen({ onBack, onUpload, onSkip }: PanScreenProps) 
                 <Image
                   source={{ uri: imageUri }}
                   style={styles.cardImage}
-                  resizeMode="cover"
+                  contentFit="cover"
                 />
               ) : (
                 <View style={styles.placeholderBox}>

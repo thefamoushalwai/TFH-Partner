@@ -204,17 +204,17 @@ function BroadcastedBookingCard({
 
       <View style={bookingStyles.divider} />
       <View style={bookingStyles.actions}>
-        <TouchableOpacity 
-          style={[bookingStyles.locationBtn, { backgroundColor: '#F5F5F5', borderWidth: 1, borderColor: '#DDD' }]} 
+        <TouchableOpacity
+          style={[bookingStyles.locationBtn, { backgroundColor: '#F5F5F5', borderWidth: 1, borderColor: '#DDD' }]}
           onPress={onIgnore}
           activeOpacity={0.8}
         >
           <Text style={[bookingStyles.locationBtnText, { color: '#666' }]}>{t('ignore')}</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity 
-          style={[bookingStyles.locationBtn, { backgroundColor: '#31B76B' }]} 
-          onPress={onAccept} 
+        <TouchableOpacity
+          style={[bookingStyles.locationBtn, { backgroundColor: '#31B76B' }]}
+          onPress={onAccept}
           disabled={isAccepting}
           activeOpacity={0.8}
         >
@@ -347,6 +347,17 @@ export default function DashboardScreen() {
   const totalBookingsCount = bookings.length;
   const totalEarned = bookings.reduce((sum, b) => sum + (b.amount ?? 0), 0);
 
+  // Today's completed bookings earnings
+  const todayStr_long = dayjs().format('YYYY-MM-DD');
+  const todayEarned = bookings.reduce((sum, b) => {
+    const bDate = b.date ? dayjs((b.date as any).toDate?.() ?? b.date).format('YYYY-MM-DD') : null;
+    if (bDate === todayStr_long && b.status === 'completed') {
+      return sum + (b.amount ?? 0);
+    }
+    return sum;
+  }, 0);
+
+
   if (profileLoading && !profile) {
     return (
       <SafeAreaView style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
@@ -400,26 +411,26 @@ export default function DashboardScreen() {
         {/* ── Broadcasted Bookings ── */}
         {isVerified && broadcastedBookings.filter(b => b.bookingId && !ignoredBookingIds.includes(b.bookingId)).length > 0 && (
           <View style={{ marginBottom: 16 }}>
-             {broadcastedBookings
+            {broadcastedBookings
               .filter(b => b.bookingId && !ignoredBookingIds.includes(b.bookingId))
               .map((b) => (
-                <BroadcastedBookingCard 
-                  key={b.bookingId} 
-                  booking={b} 
+                <BroadcastedBookingCard
+                  key={b.bookingId}
+                  booking={b}
                   onAccept={() => b.bookingId && handleAcceptBroadcastedBooking(b.bookingId)}
                   isAccepting={acceptingBookingId === b.bookingId}
                   onIgnore={() => b.bookingId && handleIgnoreBroadcastedBooking(b.bookingId)}
                   t={t}
                 />
-             ))}
+              ))}
           </View>
         )}
 
         {/* ── Today's Summary ── */}
         <Text style={styles.sectionTitle}>{t('todaySummary')}</Text>
         <View style={styles.summaryRow}>
-          <SummaryCard icon={<BookingIcon />} label={t('bookings')} value={String(totalBookingsCount)} iconBg="#ffffff" />
-          <SummaryCard icon={<WalletIcon />} label={t('earned')} value={`₹${totalEarned}`} iconBg="#ffffff" />
+          <SummaryCard icon={<BookingIcon />} label={t('bookings')} value={String(todaysBookings.length)} iconBg="#ffffff" />
+          <SummaryCard icon={<WalletIcon />} label={t('earned')} value={`₹${todayEarned}`} iconBg="#ffffff" />
           <SummaryCard icon={<KycIcon />} label={t('ratings')} value={'4.8'} iconBg="#ffffff" />
         </View>
 
@@ -533,14 +544,14 @@ export default function DashboardScreen() {
             <Text style={modalStyles.detailText}>
               {selectedBooking?.guests} guests | North Indian + Cake
             </Text>
-            
+
             <View style={modalStyles.mapPlaceholder}>
               <Text style={modalStyles.mapText}>{t('mapPreview')}</Text>
               <Text style={modalStyles.mapSubText}>{selectedBooking?.location}</Text>
             </View>
-            
+
             <View style={modalStyles.actionRow}>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={modalStyles.actionButtonBlue}
                 activeOpacity={0.8}
                 onPress={() => {
@@ -551,8 +562,8 @@ export default function DashboardScreen() {
               >
                 <Text style={modalStyles.actionButtonText}>{t('getDirection')}</Text>
               </TouchableOpacity>
-              
-              <TouchableOpacity 
+
+              <TouchableOpacity
                 style={modalStyles.actionButtonGreen}
                 activeOpacity={0.8}
                 onPress={() => {
@@ -587,11 +598,8 @@ const modalStyles = StyleSheet.create({
     borderTopRightRadius: 24,
     padding: 24,
     paddingBottom: 40,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-    elevation: 5,
+    borderWidth: 1,
+    borderColor: '#d3dbe2',
   },
   headerRow: {
     flexDirection: 'row',
@@ -690,11 +698,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 6,
-    elevation: 2,
+    borderWidth: 1,
+    borderColor: '#d3dbe2',
   },
   welcomeLeft: { flex: 1 },
   welcomeHi: { fontSize: 13, color: '#888', marginBottom: 2 },
@@ -750,11 +755,8 @@ const styles = StyleSheet.create({
     padding: 24,
     alignItems: 'center',
     marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 1,
+    borderWidth: 1,
+    borderColor: '#d3dbe2',
   },
   emptyText: { fontSize: 14, color: '#999', fontWeight: '500' },
 
@@ -765,11 +767,8 @@ const styles = StyleSheet.create({
     padding: 24,
     alignItems: 'center',
     marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 1,
+    borderWidth: 1,
+    borderColor: '#d3dbe2',
   },
   verificationTitle: {
     fontSize: 16,
@@ -807,11 +806,8 @@ const summaryStyles = StyleSheet.create({
     borderRadius: 12,
     padding: 12,
     alignItems: 'flex-start',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 1,
+    borderWidth: 1,
+    borderColor: '#d3dbe2',
   },
   iconBox: {
     width: 32,
@@ -832,11 +828,8 @@ const bookingStyles = StyleSheet.create({
     borderRadius: 14,
     padding: 16,
     marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 6,
-    elevation: 2,
+    borderWidth: 1,
+    borderColor: '#d3dbe2',
   },
   row: { flexDirection: 'row', alignItems: 'flex-start', gap: 14 },
   timeBox: {
@@ -880,7 +873,7 @@ const bookingStyles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'center',
-   
+
   },
   callBtnText: { fontSize: 13, color: '#fff', fontWeight: '600' },
 });

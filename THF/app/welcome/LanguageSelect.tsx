@@ -3,13 +3,14 @@ import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
   Dimensions,
-  Image,
+ 
   StatusBar,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { getTranslation, type Language } from '@/src/i18n/translations';
 
@@ -55,9 +56,9 @@ export default function LanguageSelectScreen({ onContinue }: LanguageSelectScree
       {/* Hero Image */}
       <View style={styles.imageContainer}>
         <Image
-          source={require('../../assets/THF/language.png')} // Replace with your actual image path
+          source={require('../../assets/THF/lanuage_start.svg')} // Replace with your actual image path
           style={styles.heroImage}
-          resizeMode="cover"
+          contentFit="cover"
         />
         {/* Gradient overlay at the bottom of image */}
         <View style={styles.imageOverlay} />

@@ -6,7 +6,6 @@ import React, { useState } from 'react';
 import {
   Alert,
   Dimensions,
-  Image,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -17,6 +16,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLanguage } from '@/src/hooks/useLanguage';
 
@@ -237,14 +237,14 @@ export default function AadharScreen({ onBack, onUpload, onSkip }: AadharScreenP
                 <Image
                   source={{ uri: frontImageUri }}
                   style={styles.cardImage}
-                  resizeMode="cover"
+                  contentFit="cover"
                 />
               ) : (
                 <>
                   <Image
-                    source={require('../../assets/THF/aadhar_card.png')}
+                    source={require('../../assets/THF/aadar.svg')}
                     style={styles.cardImage}
-                    resizeMode="contain"
+                    contentFit="contain"
                   />
                   <Text style={styles.sideLabel}>Front</Text>
                 </>
@@ -254,14 +254,14 @@ export default function AadharScreen({ onBack, onUpload, onSkip }: AadharScreenP
                 <Image
                   source={{ uri: backImageUri }}
                   style={styles.cardImage}
-                  resizeMode="cover"
+                  contentFit="cover"
                 />
               ) : (
                 <>
                   <Image
-                    source={require('../../assets/THF/aadhar_card.png')}
+                    source={require('../../assets/THF/aadar.svg')}
                     style={styles.cardImage}
-                    resizeMode="contain"
+                    contentFit="contain"
                   />
                   <Text style={styles.sideLabel}>Back</Text>
                 </>
