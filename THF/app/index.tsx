@@ -25,20 +25,6 @@ export default function SplashScreen() {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(40)).current;
 
-  const hasCompletedProfile = (profile: Awaited<ReturnType<typeof getUserProfile>>): boolean => {
-    if (!profile) return false;
-    return Boolean(
-      profile.name?.trim() &&
-      profile.email?.trim() &&
-      profile.phone?.trim() &&
-      profile.emergencyPhone?.trim() &&
-      profile.gender?.trim() &&
-      profile.city?.trim() &&
-      profile.address?.trim() &&
-      Array.isArray(profile.experience) &&
-      profile.experience.length > 0,
-    );
-  };
 
   useEffect(() => {
     let mounted = true;
@@ -82,7 +68,10 @@ export default function SplashScreen() {
         }
 
         const profile = await getUserProfile(user.uid);
-        if (hasCompletedProfile(profile)) {
+        // If a profile document exists in Firestore, the user has already
+        // gone through onboarding — send them straight to the Dashboard.
+        // Only redirect to the KYC flow when there is NO profile at all.
+        if (profile) {
           router.replace('/(tabs)/Dashboard');
         } else {
           router.replace('/kyc/Experience');
@@ -96,14 +85,14 @@ export default function SplashScreen() {
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
-        duration: 800,
-        delay: 300,
+        duration: 400,
+        delay: 100,
         useNativeDriver: true,
       }),
       Animated.timing(slideAnim, {
         toValue: 0,
-        duration: 700,
-        delay: 300,
+        duration: 350,
+        delay: 100,
         useNativeDriver: true,
       }),
     ]).start();
@@ -111,7 +100,7 @@ export default function SplashScreen() {
     const timer = setTimeout(() => {
       if (!mounted) return;
       resolveNextRoute();
-    }, 3000);
+    }, 1500);
 
     return () => {
       mounted = false;

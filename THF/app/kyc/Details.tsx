@@ -61,6 +61,7 @@ interface FloatingInputProps {
   multiline?: boolean;
   isValid?: boolean;
   editable?: boolean;
+  prefix?: string;
 }
 
 function FloatingInput({
@@ -71,6 +72,7 @@ function FloatingInput({
   multiline = false,
   isValid,
   editable = true,
+  prefix,
 }: FloatingInputProps) {
   const [focused, setFocused] = useState(false);
   const showValid = isValid && value.length > 0;
@@ -79,6 +81,12 @@ function FloatingInput({
     <View style={[inputStyles.wrapper, focused && inputStyles.wrapperFocused]}>
       <Text style={[inputStyles.label, focused && inputStyles.labelFocused]}>{label}</Text>
       <View style={inputStyles.row}>
+        {prefix && (
+          <>
+            <Text style={inputStyles.prefix}>{prefix}</Text>
+            <View style={inputStyles.separator} />
+          </>
+        )}
         <TextInput
           style={[inputStyles.input, multiline && inputStyles.multiline]}
           value={value}
@@ -295,7 +303,7 @@ export default function DetailsScreen({ onBack, onRegister }: DetailsScreenProps
 
           <FloatingInput label={t('enterName')} value={name} onChangeText={setName} isValid={name.trim().length > 1} editable={!saving} />
           <FloatingInput label={t('enterEmail')} value={email} onChangeText={setEmail} keyboardType="email-address" isValid={email.length > 0 ? isValidEmail(email) : true} editable={!saving} />
-          <FloatingInput label={t('emergencyContact')} value={emergency} onChangeText={setEmergency} keyboardType="phone-pad" isValid={isValidPhone(emergency)} editable={!saving} />
+          <FloatingInput label={t('emergencyContact')} value={emergency} onChangeText={setEmergency} keyboardType="phone-pad" isValid={isValidPhone(emergency)} editable={!saving} prefix="+91" />
 
           <DropdownField label={t('selectGender')} value={gender} options={GENDERS} onSelect={setGender} />
           <DropdownField label={t('selectCity')} value={city} options={CITIES} onSelect={setCity} />
@@ -363,6 +371,18 @@ const inputStyles = StyleSheet.create({
   },
   labelFocused: { color: '#3b5bdb' },
   row: { flexDirection: 'row', alignItems: 'center' },
+  prefix: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#111',
+    marginRight: 0,
+  },
+  separator: {
+    width: 1,
+    height: 20,
+    backgroundColor: '#ddd',
+    marginHorizontal: 12,
+  },
   input: { flex: 1, fontSize: 15, color: '#111', paddingVertical: 0 },
   multiline: { minHeight: 70, paddingTop: 4 },
 });

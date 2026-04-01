@@ -161,38 +161,53 @@ export default function JobTimerScreen() {
 
 
           {/* Status badge */}
-          {running && (
+          {running ? (
             <View style={styles.liveBadge}>
               <View style={styles.liveDot} />
               <Text style={styles.liveBadgeText}>LIVE</Text>
             </View>
-          )}
+          ): <View style={styles.void}>
+              
+            </View>}
           <TimerDisplay seconds={elapsed} running={running} />
         </View>
 
         {/* CTA Buttons */}
         <View style={styles.ctaArea}>
-          {!running && (
+          {/* Initial State: Only Start Button */}
+          {!running && elapsed === 0 && (
             <TouchableOpacity style={styles.startBtn} onPress={handleStart} activeOpacity={0.88}>
-              <Text style={styles.startBtnText}>
-                {elapsed > 0 ? 'Resume Job Timer' : 'Start Job Timer'}
-              </Text>
+              <Text style={styles.startBtnText}>Start Job Timer</Text>
             </TouchableOpacity>
           )}
 
+          {/* Running State: Stop and Pause Buttons */}
           {running && (
             <View style={styles.runningBtns}>
-
               <TouchableOpacity style={styles.endBtn} onPress={handleEnd} activeOpacity={0.85}>
                 <Text style={styles.endBtnText}>Stop</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.pauseBtn} onPress={handlePause} activeOpacity={0.85}>
                 <Text style={styles.pauseBtnText}>Pause</Text>
               </TouchableOpacity>
-
             </View>
           )}
 
+          {/* Paused State: Resume and Stop Buttons */}
+          {!running && elapsed > 0 && (
+            <View style={styles.runningBtns}>
+              <TouchableOpacity style={styles.endBtn} onPress={handleEnd} activeOpacity={0.85}>
+                <Text style={styles.endBtnText}>Stop</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={[styles.startBtn, { flex: 1, height: 54 }]} 
+                onPress={handleStart} 
+                activeOpacity={0.88}
+              >
+                <Text style={styles.startBtnText}>Resume</Text>
+              </TouchableOpacity>
+            </View>
+          )}
         </View>
       </View>
     </SafeAreaView>
@@ -271,6 +286,9 @@ const styles = StyleSheet.create({
     lineHeight: 66,
     fontVariant: ['tabular-nums'],
   },
+  void: {
+    height: 46,
+  },
   timerLabel: {
     fontSize: 10,
     color: MUTED,
@@ -312,9 +330,9 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 54,
     borderRadius: 12,
-    backgroundColor: '#eb243e',
+    backgroundColor: '#4591E8',
     borderWidth: 2,
-    borderColor: '#eb243e',
+    borderColor: '#4591E8',
     alignItems: 'center',
     justifyContent: 'center',
   },

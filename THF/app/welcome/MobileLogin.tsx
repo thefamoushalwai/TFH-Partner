@@ -12,6 +12,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -35,6 +36,7 @@ export default function MobileLoginScreen({ onGetStarted }: MobileLoginScreenPro
   const mode = params.mode === 'login' ? 'login' : 'signup';
   const [mobile, setMobile] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const isValidMobile = mobile.trim().length >= 10;
@@ -141,6 +143,8 @@ export default function MobileLoginScreen({ onGetStarted }: MobileLoginScreenPro
 
           {/* Mobile Input */}
           <View style={styles.inputWrapper}>
+            <Text style={styles.countryCode}>+91</Text>
+            <View style={styles.separator} />
             <TextInput
               style={styles.input}
               placeholder={t('enterMobileNumber')}
@@ -161,13 +165,24 @@ export default function MobileLoginScreen({ onGetStarted }: MobileLoginScreenPro
                 style={styles.input}
                 placeholder={t('enterPassword')}
                 placeholderTextColor="#b0b0b0"
-                secureTextEntry
+                secureTextEntry={!showPassword}
                 value={password}
                 onChangeText={setPassword}
                 returnKeyType="done"
                 onSubmitEditing={handleGetStarted}
                 editable={!loading}
               />
+              <TouchableOpacity
+                onPress={() => setShowPassword(!showPassword)}
+                style={styles.eyeIcon}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                <Ionicons
+                  name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                  size={22}
+                  color="#000000"
+                />
+              </TouchableOpacity>
             </View>
           )}
 
@@ -246,17 +261,33 @@ const styles = StyleSheet.create({
 
   /* ── Input ── */
   inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F3F3F3',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    height: 56,
     marginBottom: 16,
   },
+  countryCode: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#000',
+  },
+  separator: {
+    width: 1,
+    height: 24,
+    backgroundColor: '#CCC',
+    marginHorizontal: 12,
+  },
   input: {
-    borderWidth: 1.5,
-    borderColor: '#e0e0e0',
-    borderRadius: 10,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    fontSize: 15,
-    color: '#1a1a1a',
-    backgroundColor: '#fff',
+    flex: 1,
+    fontSize: 16,
+    color: '#000',
+    height: '100%',
+  },
+  eyeIcon: {
+    paddingLeft: 8,
   },
 
   /* ── Button ── */

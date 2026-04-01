@@ -68,9 +68,6 @@ function MenuRow({
   );
 }
 
-
-
-
 /* ── Main Screen ── */
 export default function ProfileScreen() {
   const router = useRouter();
@@ -92,7 +89,7 @@ export default function ProfileScreen() {
           const bookings = await getPartnerBookings(profile.userId);
           const completedBookings = bookings.filter((b: any) => b.status === 'completed');
           const totalEarnings = completedBookings.reduce((sum: number, b: any) => sum + (Number(b.amount) || 0), 0);
-          
+
           setStats({
             bookings: bookings.length,
             earnings: totalEarnings,
@@ -143,9 +140,9 @@ export default function ProfileScreen() {
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#fff" />
       <Navbar />
-      <ScrollView 
-        style={styles.scroll} 
-        contentContainerStyle={styles.scrollContent} 
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#E8304A" />}
       >
@@ -155,10 +152,10 @@ export default function ProfileScreen() {
         <View style={styles.profileCard}>
           <View style={styles.avatarWrapper}>
             {profile?.kycDocuments?.selfieUrl ? (
-              <Image 
-                source={{ uri: profile.kycDocuments.selfieUrl }} 
-                style={styles.avatar} 
-                contentFit="cover" 
+              <Image
+                source={{ uri: profile.kycDocuments.selfieUrl }}
+                style={styles.avatar}
+                contentFit="cover"
               />
             ) : (
               <View style={styles.avatarPlaceholder}>
@@ -227,9 +224,6 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f5f5f7' },
   scroll: { flex: 1 },
   scrollContent: { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 8 },
-
-
-
   pageTitle: { fontSize: 22, fontWeight: '700', color: '#111', marginBottom: 16 },
 
   /* Profile Card */
@@ -240,11 +234,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     alignItems: 'center',
     marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 6,
-    elevation: 2,
+    borderWidth: 1,
+    borderColor: '#d3dbe2'
   },
   avatarWrapper: { marginBottom: 12 },
   avatar: { width: 80, height: 80, borderRadius: 40 },
@@ -287,11 +278,8 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     paddingVertical: 18,
     marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 1,
+    borderWidth: 1,
+    borderColor: '#d3dbe2'
   },
   statItem: { flex: 1, alignItems: 'center' },
   statValue: { fontSize: 20, fontWeight: '700', color: '#111', marginBottom: 4 },
@@ -331,11 +319,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderRadius: 14,
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 1,
+    borderWidth: 1,
+    borderColor: '#d3dbe2'
   },
   menuDivider: { height: 1, backgroundColor: '#f5f5f5', marginHorizontal: 16 },
 
@@ -376,7 +361,7 @@ const menuStyles = StyleSheet.create({
     paddingHorizontal: 10,
   },
   badgeText: { fontSize: 11, color: '#B8860B', fontWeight: '600' },
-  chevron: { fontSize: 20, color: '#ccc', fontWeight: '300' },
+  chevron: { fontSize: 20, color: '#222', fontWeight: '300' },
 });
 
 
