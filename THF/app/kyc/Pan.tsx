@@ -81,7 +81,7 @@ export default function PanScreen({ onBack, onUpload, onSkip }: PanScreenProps) 
         return;
       }
       const result = await ImagePicker.launchCameraAsync({
-        allowsEditing: true,
+        allowsEditing: false,
         aspect: [4, 3],
         quality: 0.7,
       });
@@ -100,7 +100,7 @@ export default function PanScreen({ onBack, onUpload, onSkip }: PanScreenProps) 
         return;
       }
       const result = await ImagePicker.launchImageLibraryAsync({
-        allowsEditing: true,
+        allowsEditing: false,
         aspect: [4, 3],
         quality: 0.7,
       });

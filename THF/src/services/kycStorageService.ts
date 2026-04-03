@@ -1,6 +1,5 @@
-import { auth, storage, db } from '@/src/services/firebaseConfig';
-import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
-import { doc, setDoc } from 'firebase/firestore';
+import { auth, storage } from '@/src/services/firebaseConfig';
+import { db } from '@/src/services/firebaseConfig';
 
 type KycDocumentType = 'selfie' | 'aadhar-front' | 'aadhar-back' | 'pan';
 
@@ -21,15 +20,10 @@ export const uploadKycImage = async (
   const extension = getFileExtension(localUri);
   const filePath = `kyc/${uid}/${docType}_${Date.now()}.${extension}`;
 
-  const response = await fetch(localUri);
-  const blob = await response.blob();
+  const ref = storage.ref(filePath);
+  await ref.putFile(localUri);
 
-  const storageRef = ref(storage, filePath);
-  await uploadBytes(storageRef, blob, {
-    contentType: blob.type || 'image/jpeg',
-  });
-
-  return getDownloadURL(storageRef);
+  return ref.getDownloadURL();
 };
 
 export interface KycDocumentUrls {
@@ -45,8 +39,7 @@ export const linkKycToUser = async (kycData: KycDocumentUrls): Promise<void> => 
     throw new Error('User not authenticated');
   }
 
-  const userDocRef = doc(db, 'users', uid);
-  await setDoc(userDocRef, {
+  await db.collection('users').doc(uid).set({
     kycDocuments: kycData,
     kycStatus: 'pending_verification',
     kycSubmittedAt: new Date().toISOString()

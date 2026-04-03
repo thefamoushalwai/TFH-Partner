@@ -373,7 +373,7 @@ const inputStyles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center' },
   prefix: {
     fontSize: 15,
-    fontWeight: '600',
+    fontWeight: '500',
     color: '#111',
     marginRight: 0,
   },

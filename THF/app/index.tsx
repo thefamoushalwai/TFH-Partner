@@ -3,7 +3,7 @@ import { auth } from '@/src/services/firebaseConfig';
 import { clearSession, getSession } from '@/src/services/sessionStorage';
 import { getUserProfile } from '@/src/services/userService';
 import { useRouter } from 'expo-router';
-import type { User } from 'firebase/auth';
+import type { FirebaseAuthTypes } from '@react-native-firebase/auth';
 import React, { useEffect, useRef } from 'react';
 
 import {
@@ -32,7 +32,7 @@ export default function SplashScreen() {
     const waitForAuthUser = async () => {
       if (auth.currentUser) return auth.currentUser;
 
-      return await new Promise<User | null>((resolve) => {
+      return await new Promise<FirebaseAuthTypes.User | null>((resolve) => {
         let settled = false;
         const unsubscribe = onAuthChange((user) => {
           if (!settled) {

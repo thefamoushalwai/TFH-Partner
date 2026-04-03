@@ -32,11 +32,7 @@ interface UploadDocumentsScreenProps {
   onSkip?: () => void;
 }
 
-const DEFAULT_DOCS: DocumentItem[] = [
-  { id: 'selfie', label: 'Upload profile picture (Selfie)', uploaded: false },
-  { id: 'aadhar', label: 'Upload Aadhar card front & back', uploaded: false },
-  { id: 'pan', label: 'Upload PAN number (Optional)', uploaded: false, optional: true },
-];
+
 
 export default function UploadDocumentsScreen({
   docs: initialDocs,

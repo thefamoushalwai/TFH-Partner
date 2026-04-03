@@ -4,7 +4,7 @@ import { registerForPushNotifications, sendLocalNotification } from '@/src/servi
 import { auth } from '@/src/services/firebaseConfig';
 import dayjs from 'dayjs';
 import { Image } from 'expo-image';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import {
   ActivityIndicator,
@@ -20,6 +20,7 @@ import {
   Alert,
   Modal,
   Animated,
+  BackHandler,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -244,6 +245,18 @@ export default function DashboardScreen() {
   const [ignoredBookingIds, setIgnoredBookingIds] = useState<string[]>([]);
 
   const prevBroadcastCount = useRef(0);
+
+  // Disable back button on Dashboard
+  useFocusEffect(
+    useCallback(() => {
+      const onBackPress = () => {
+        BackHandler.exitApp();
+        return true;
+      };
+      const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+      return () => subscription.remove();
+    }, [])
+  );
 
   // Register push token on mount
   useEffect(() => {

@@ -2,25 +2,15 @@
  * src/services/referralService.ts
  *
  * Firestore service layer for the `referrals` collection.
+ * Uses @react-native-firebase/firestore (Native SDK).
  *
  * Collection:
  *   - referrals  (Document ID = auto-generated referralId)
  */
 
-import {
-  collection,
-  addDoc,
-  getDoc,
-  doc,
-  getDocs,
-  updateDoc,
-  query,
-  where,
-  orderBy,
-  serverTimestamp,
-  type Timestamp,
-} from 'firebase/firestore';
 import { db } from './firebaseConfig';
+import firestore from '@react-native-firebase/firestore';
+import type { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
 
 // ---------------------------------------------------------------------------
 // TypeScript Interface
@@ -37,7 +27,7 @@ export interface Referral {
   status: 'pending' | 'joined' | 'rewarded';
   /** Reward amount in INR — 0 until the referral is rewarded */
   reward: number;
-  createdAt: Timestamp;
+  createdAt: FirebaseFirestoreTypes.Timestamp;
 }
 
 // ---------------------------------------------------------------------------
@@ -53,11 +43,11 @@ export async function createReferral(
   data: Pick<Referral, 'referrerId' | 'referredPhone'>,
 ): Promise<string> {
   try {
-    const ref = await addDoc(collection(db, 'referrals'), {
+    const ref = await db.collection('referrals').add({
       ...data,
       status: 'pending',
       reward: 0,
-      createdAt: serverTimestamp(),
+      createdAt: firestore.FieldValue.serverTimestamp(),
     });
     return ref.id;
   } catch (error) {
@@ -72,9 +62,8 @@ export async function createReferral(
  */
 export async function getReferral(referralId: string): Promise<Referral | null> {
   try {
-    const ref = doc(db, 'referrals', referralId);
-    const snap = await getDoc(ref);
-    if (!snap.exists()) return null;
+    const snap = await db.collection('referrals').doc(referralId).get();
+    if (!snap.exists) return null;
     return { referralId: snap.id, ...snap.data() } as Referral;
   } catch (error) {
     console.error('[referralService] getReferral error:', error);
@@ -87,12 +76,11 @@ export async function getReferral(referralId: string): Promise<Referral | null> 
  */
 export async function getPartnerReferrals(referrerId: string): Promise<Referral[]> {
   try {
-    const q = query(
-      collection(db, 'referrals'),
-      where('referrerId', '==', referrerId),
-      orderBy('createdAt', 'desc'),
-    );
-    const snap = await getDocs(q);
+    const snap = await db
+      .collection('referrals')
+      .where('referrerId', '==', referrerId)
+      .orderBy('createdAt', 'desc')
+      .get();
     return snap.docs.map((d) => ({
       referralId: d.id,
       ...d.data(),
@@ -113,8 +101,7 @@ export async function updateReferralStatus(
   reward?: number,
 ): Promise<void> {
   try {
-    const ref = doc(db, 'referrals', referralId);
-    await updateDoc(ref, {
+    await db.collection('referrals').doc(referralId).update({
       status,
       ...(reward !== undefined ? { reward } : {}),
     });
@@ -132,11 +119,10 @@ export async function isPhoneAlreadyReferred(
   referredPhone: string,
 ): Promise<boolean> {
   try {
-    const q = query(
-      collection(db, 'referrals'),
-      where('referredPhone', '==', referredPhone),
-    );
-    const snap = await getDocs(q);
+    const snap = await db
+      .collection('referrals')
+      .where('referredPhone', '==', referredPhone)
+      .get();
     return !snap.empty;
   } catch (error) {
     console.error('[referralService] isPhoneAlreadyReferred error:', error);

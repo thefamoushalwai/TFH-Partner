@@ -50,7 +50,8 @@ export default function CreatePasswordScreen() {
   const [focusedPassword, setFocusedPassword] = useState(false);
   const [focusedConfirm, setFocusedConfirm] = useState(false);
 
-  const passwordsMatch = password === confirmPassword && confirmPassword.length > 0;
+  const isPasswordValid = password.length >= 6;
+  const passwordsMatch = isPasswordValid && password === confirmPassword;
   const canContinue = passwordsMatch;
 
   const hasCompletedProfile = (profile: Awaited<ReturnType<typeof getUserProfile>>): boolean => {
@@ -137,6 +138,9 @@ export default function CreatePasswordScreen() {
             {showPassword ? <EyeOffIcon stroke="#aaa" /> : <EyeIcon stroke="#aaa" />}
           </Pressable>
         </View>
+        <Text style={styles.passwordNote}>
+          * Password must be at least 6 characters long
+        </Text>
 
 
 
@@ -284,6 +288,13 @@ const styles = StyleSheet.create({
   eyeIcon: {
     fontSize: 16,
     opacity: 0.6,
+  },
+  passwordNote: {
+    fontSize: 12,
+    color: '#6B7281',
+    marginTop: 6,
+    marginLeft: 4,
+    fontStyle: 'italic',
   },
 
 

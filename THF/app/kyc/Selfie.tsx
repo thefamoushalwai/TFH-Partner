@@ -75,7 +75,7 @@ export default function SelfieScreen({ onBack, onProceed }: SelfieScreenProps) {
         return;
       }
       const result = await ImagePicker.launchCameraAsync({
-        allowsEditing: true,
+        allowsEditing: false,
         aspect: [1, 1],
         quality: 0.7,
       });
@@ -94,7 +94,7 @@ export default function SelfieScreen({ onBack, onProceed }: SelfieScreenProps) {
         return;
       }
       const result = await ImagePicker.launchImageLibraryAsync({
-        allowsEditing: true,
+        allowsEditing: false,
         aspect: [1, 1],
         quality: 0.7,
       });

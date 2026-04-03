@@ -2,22 +2,15 @@
  * src/services/transactionService.ts
  *
  * Firestore service layer for the `transactions` collection.
+ * Uses @react-native-firebase/firestore (Native SDK).
  *
  * Collection:
  *   - transactions  (Document ID = auto-generated transactionId)
  */
 
-import {
-  collection,
-  addDoc,
-  getDocs,
-  query,
-  where,
-  orderBy,
-  serverTimestamp,
-  type Timestamp,
-} from 'firebase/firestore';
 import { db } from './firebaseConfig';
+import firestore from '@react-native-firebase/firestore';
+import type { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
 
 // ---------------------------------------------------------------------------
 // TypeScript Interface
@@ -34,7 +27,7 @@ export interface Transaction {
   amount: number;
   /** Transaction category — currently only "booking" */
   type: 'booking';
-  createdAt: Timestamp;
+  createdAt: FirebaseFirestoreTypes.Timestamp;
 }
 
 // ---------------------------------------------------------------------------
@@ -50,9 +43,9 @@ export async function addTransaction(
   data: Omit<Transaction, 'transactionId' | 'createdAt'>,
 ): Promise<string> {
   try {
-    const ref = await addDoc(collection(db, 'transactions'), {
+    const ref = await db.collection('transactions').add({
       ...data,
-      createdAt: serverTimestamp(),
+      createdAt: firestore.FieldValue.serverTimestamp(),
     });
     return ref.id;
   } catch (error) {
@@ -68,12 +61,11 @@ export async function getPartnerTransactions(
   partnerId: string,
 ): Promise<Transaction[]> {
   try {
-    const q = query(
-      collection(db, 'transactions'),
-      where('partnerId', '==', partnerId),
-      orderBy('createdAt', 'desc'),
-    );
-    const snap = await getDocs(q);
+    const snap = await db
+      .collection('transactions')
+      .where('partnerId', '==', partnerId)
+      .orderBy('createdAt', 'desc')
+      .get();
     return snap.docs.map((d) => ({
       transactionId: d.id,
       ...d.data(),
@@ -92,12 +84,11 @@ export async function getBookingTransactions(
   bookingId: string,
 ): Promise<Transaction[]> {
   try {
-    const q = query(
-      collection(db, 'transactions'),
-      where('bookingId', '==', bookingId),
-      orderBy('createdAt', 'desc'),
-    );
-    const snap = await getDocs(q);
+    const snap = await db
+      .collection('transactions')
+      .where('bookingId', '==', bookingId)
+      .orderBy('createdAt', 'desc')
+      .get();
     return snap.docs.map((d) => ({
       transactionId: d.id,
       ...d.data(),

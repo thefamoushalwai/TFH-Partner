@@ -2,26 +2,15 @@
  * src/services/userService.ts
  *
  * Firestore service layer for the `users` and `kyc` collections.
+ * Uses @react-native-firebase/firestore (Native SDK).
  *
  * Collections:
  *   - users  (Document ID = userId / Firebase Auth UID)
  *   - kyc    (Document ID = userId / Firebase Auth UID)
  */
 
-import {
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-  limit,
-  query,
-  serverTimestamp,
-  setDoc,
-  where,
-  type PartialWithFieldValue,
-  type Timestamp
-} from 'firebase/firestore';
 import { db } from './firebaseConfig';
+import firestore from '@react-native-firebase/firestore';
 
 // ---------------------------------------------------------------------------
 // TypeScript Interfaces
@@ -48,7 +37,7 @@ export interface UserProfile {
     aadharBackUrl: string;
   };
   kycSubmittedAt?: string;
-  createdAt: Timestamp;
+  createdAt: FirebaseFirestoreTypes.Timestamp;
   bankDetails?: {
     accountNumber: string;
     ifsc: string;
@@ -65,8 +54,8 @@ export interface KycDocument {
   /** Download URL of the uploaded selfie image */
   selfieUrl: string;
   status: 'pending' | 'approved' | 'rejected';
-  submittedAt: Timestamp;
-  verifiedAt: Timestamp | null;
+  submittedAt: FirebaseFirestoreTypes.Timestamp;
+  verifiedAt: FirebaseFirestoreTypes.Timestamp | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -81,12 +70,11 @@ export async function createUserProfile(
   userId: string,
   data: Omit<UserProfile, 'userId' | 'createdAt' | 'kycStatus'>,
 ): Promise<void> {
-  const ref = doc(db, 'users', userId);
-  await setDoc(ref, {
+  await db.collection('users').doc(userId).set({
     ...data,
     userId,
     kycStatus: 'pending',
-    createdAt: serverTimestamp(),
+    createdAt: firestore.FieldValue.serverTimestamp(),
   });
 }
 
@@ -96,9 +84,8 @@ export async function createUserProfile(
  */
 export async function getUserProfile(userId: string): Promise<UserProfile | null> {
   try {
-    const ref = doc(db, 'users', userId);
-    const snap = await getDoc(ref);
-    if (!snap.exists()) return null;
+    const snap = await db.collection('users').doc(userId).get();
+    if (!snap.exists) return null;
     return { userId: snap.id, ...snap.data() } as UserProfile;
   } catch (error) {
     console.error('[userService] getUserProfile error:', error);
@@ -112,9 +99,11 @@ export async function getUserProfile(userId: string): Promise<UserProfile | null
  */
 export async function getUserProfileByPhone(phone: string): Promise<UserProfile | null> {
   try {
-    const usersRef = collection(db, 'users');
-    const q = query(usersRef, where('phone', '==', phone), limit(1));
-    const snap = await getDocs(q);
+    const snap = await db
+      .collection('users')
+      .where('phone', '==', phone)
+      .limit(1)
+      .get();
     if (snap.empty) return null;
 
     const docSnap = snap.docs[0];
@@ -131,13 +120,10 @@ export async function getUserProfileByPhone(phone: string): Promise<UserProfile 
  */
 export async function updateUserProfile(
   userId: string,
-  data: PartialWithFieldValue<
-    Omit<UserProfile, 'userId' | 'createdAt'>
-  >,
+  data: Partial<Omit<UserProfile, 'userId' | 'createdAt'>>,
 ): Promise<void> {
   try {
-    const ref = doc(db, 'users', userId);
-    await setDoc(ref, data as Record<string, unknown>, { merge: true });
+    await db.collection('users').doc(userId).set(data, { merge: true });
   } catch (error) {
     console.error('[userService] updateUserProfile error:', error);
     throw error;
@@ -159,18 +145,16 @@ export async function submitKYC(
 ): Promise<void> {
   try {
     // Write KYC document
-    const kycRef = doc(db, 'kyc', userId);
-    await setDoc(kycRef, {
+    await db.collection('kyc').doc(userId).set({
       ...data,
       userId,
       status: 'pending',
-      submittedAt: serverTimestamp(),
+      submittedAt: firestore.FieldValue.serverTimestamp(),
       verifiedAt: null,
     });
 
     // Reset partner's kycStatus to "pending"
-    const userRef = doc(db, 'users', userId);
-    await setDoc(userRef, { kycStatus: 'pending' }, { merge: true });
+    await db.collection('users').doc(userId).set({ kycStatus: 'pending' }, { merge: true });
   } catch (error) {
     console.error('[userService] submitKYC error:', error);
     throw error;
@@ -183,12 +167,15 @@ export async function submitKYC(
  */
 export async function getKYC(userId: string): Promise<KycDocument | null> {
   try {
-    const ref = doc(db, 'kyc', userId);
-    const snap = await getDoc(ref);
-    if (!snap.exists()) return null;
+    const snap = await db.collection('kyc').doc(userId).get();
+    if (!snap.exists) return null;
     return { userId: snap.id, ...snap.data() } as KycDocument;
   } catch (error) {
     console.error('[userService] getKYC error:', error);
     throw error;
   }
 }
+
+// Re-export Firestore types for consumers
+import type { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
+export type { FirebaseFirestoreTypes };

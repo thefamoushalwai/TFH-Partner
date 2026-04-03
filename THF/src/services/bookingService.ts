@@ -2,28 +2,15 @@
  * src/services/bookingService.ts
  *
  * Firestore service layer for the `bookings` collection.
+ * Uses @react-native-firebase/firestore (Native SDK).
  *
  * Collection:
  *   - bookings  (Document ID = auto-generated bookingId)
  */
 
-import {
-  collection,
-  doc,
-  addDoc,
-  getDoc,
-  getDocs,
-  updateDoc,
-  query,
-  where,
-  orderBy,
-  serverTimestamp,
-  runTransaction,
-  onSnapshot,
-  type Timestamp,
-  type PartialWithFieldValue,
-} from 'firebase/firestore';
 import { db, auth } from './firebaseConfig';
+import firestore from '@react-native-firebase/firestore';
+import type { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
 
 // ---------------------------------------------------------------------------
 // TypeScript Interface
@@ -38,7 +25,7 @@ export interface Booking {
   phone?: string;
   eventType: string;
   /** Date/time of the event */
-  date: Timestamp;
+  date: FirebaseFirestoreTypes.Timestamp;
   location: string;
   guests: number;
   /** Booking fee in INR */
@@ -58,7 +45,7 @@ export async function createBooking(
   data: Omit<Booking, 'bookingId' | 'status'>,
 ): Promise<string> {
   try {
-    const ref = await addDoc(collection(db, 'bookings'), {
+    const ref = await db.collection('bookings').add({
       ...data,
       status: 'pending',
     });
@@ -75,9 +62,8 @@ export async function createBooking(
  */
 export async function getBooking(bookingId: string): Promise<Booking | null> {
   try {
-    const ref = doc(db, 'bookings', bookingId);
-    const snap = await getDoc(ref);
-    if (!snap.exists()) return null;
+    const snap = await db.collection('bookings').doc(bookingId).get();
+    if (!snap.exists) return null;
     return { bookingId: snap.id, ...snap.data() } as Booking;
   } catch (error) {
     console.error('[bookingService] getBooking error:', error);
@@ -90,12 +76,11 @@ export async function getBooking(bookingId: string): Promise<Booking | null> {
  */
 export async function getPartnerBookings(partnerId: string): Promise<Booking[]> {
   try {
-    const q = query(
-      collection(db, 'bookings'),
-      where('partnerId', '==', partnerId),
-      orderBy('date', 'desc'),
-    );
-    const snap = await getDocs(q);
+    const snap = await db
+      .collection('bookings')
+      .where('partnerId', '==', partnerId)
+      .orderBy('date', 'desc')
+      .get();
     return snap.docs.map((d) => ({
       bookingId: d.id,
       ...d.data(),
@@ -112,11 +97,13 @@ export async function getPartnerBookings(partnerId: string): Promise<Booking[]> 
 export async function updateBookingStatus(
   bookingId: string,
   status: Booking['status'],
-  extra?: PartialWithFieldValue<Omit<Booking, 'bookingId' | 'status'>>,
+  extra?: Partial<Omit<Booking, 'bookingId' | 'status'>>,
 ): Promise<void> {
   try {
-    const ref = doc(db, 'bookings', bookingId);
-    await updateDoc(ref, { status, ...(extra ?? {}) });
+    await db.collection('bookings').doc(bookingId).update({
+      status,
+      ...(extra ?? {}),
+    });
   } catch (error) {
     console.error('[bookingService] updateBookingStatus error:', error);
     throw error;
@@ -125,25 +112,33 @@ export async function updateBookingStatus(
 
 /**
  * Listen to broadcasted bookings (status: 'broadcasted')
+ * Only starts the listener if a user is currently authenticated.
  */
 export function listenToBroadcastedBookings(callback: (bookings: Booking[]) => void): () => void {
-  console.log('[bookingService] Setting up broadcast listener, uid:', auth.currentUser?.uid);
-  
-  const q = query(collection(db, 'bookings'), where('status', '==', 'broadcasted'));
-  return onSnapshot(q, (snap) => {
-    const bookings = snap.docs.map((d) => ({
-      bookingId: d.id,
-      ...d.data(),
-    })) as Booking[];
-    console.log('[bookingService] Broadcast bookings received:', bookings.length);
-    callback(bookings);
-  }, (error) => {
-    console.error('[bookingService] broadcast listener error:', error.code, error.message);
-    // Log the error for debugging
-    if (error.code === 'permission-denied') {
-      console.warn('[bookingService] Permission denied - check Firestore rules in Firebase Console');
-    }
-  });
+  const uid = auth.currentUser?.uid;
+  console.log('[bookingService] Setting up broadcast listener, uid:', uid);
+
+  if (!uid) {
+    console.warn('[bookingService] No authenticated user — skipping broadcast listener');
+    return () => {}; // no-op unsubscribe
+  }
+
+  return db
+    .collection('bookings')
+    .where('status', '==', 'broadcasted')
+    .onSnapshot(
+      (snap) => {
+        const bookings = snap.docs.map((d) => ({
+          bookingId: d.id,
+          ...d.data(),
+        })) as Booking[];
+        console.log('[bookingService] Broadcast bookings received:', bookings.length);
+        callback(bookings);
+      },
+      (error) => {
+        console.error('[bookingService] broadcast listener error:', error);
+      },
+    );
 }
 
 /**
@@ -152,10 +147,10 @@ export function listenToBroadcastedBookings(callback: (bookings: Booking[]) => v
  */
 export async function acceptBroadcastedBooking(bookingId: string, partnerId: string): Promise<void> {
   try {
-    const ref = doc(db, 'bookings', bookingId);
-    await runTransaction(db, async (transaction) => {
+    const ref = db.collection('bookings').doc(bookingId);
+    await firestore().runTransaction(async (transaction) => {
       const sfDoc = await transaction.get(ref);
-      if (!sfDoc.exists()) {
+      if (!sfDoc.exists) {
         throw new Error("Booking does not exist!");
       }
       const data = sfDoc.data() as Booking;

@@ -104,7 +104,7 @@ export default function AadharScreen({ onBack, onUpload, onSkip }: AadharScreenP
         return;
       }
       const result = await ImagePicker.launchCameraAsync({
-        allowsEditing: true,
+        allowsEditing: false,
         aspect: [4, 3],
         quality: 0.7,
       });
@@ -123,7 +123,7 @@ export default function AadharScreen({ onBack, onUpload, onSkip }: AadharScreenP
         return;
       }
       const result = await ImagePicker.launchImageLibraryAsync({
-        allowsEditing: true,
+        allowsEditing: false,
         aspect: [4, 3],
         quality: 0.7,
       });
@@ -142,7 +142,7 @@ export default function AadharScreen({ onBack, onUpload, onSkip }: AadharScreenP
         return;
       }
       const result = await ImagePicker.launchCameraAsync({
-        allowsEditing: true,
+        allowsEditing: false,
         aspect: [4, 3],
         quality: 0.7,
       });
@@ -161,7 +161,7 @@ export default function AadharScreen({ onBack, onUpload, onSkip }: AadharScreenP
         return;
       }
       const result = await ImagePicker.launchImageLibraryAsync({
-        allowsEditing: true,
+        allowsEditing: false,
         aspect: [4, 3],
         quality: 0.7,
       });
@@ -230,9 +230,24 @@ export default function AadharScreen({ onBack, onUpload, onSkip }: AadharScreenP
           {/* Heading */}
           <Text style={styles.heading}>{t('aadharHeading')}</Text>
           <Text style={styles.subheading}>{t('uploadDocSub')}</Text>
+          {stage === 'front-uploaded' && frontImageUri && (
+            <View style={styles.docsAddedContainer}>
+              <View style={styles.docsAddedDivider} />
+              <Text style={styles.docsAddedLabel}>Documents Added</Text>
+              <View style={styles.docsAddedRow}>
+                <Image
+                  source={{ uri: frontImageUri }}
+                  style={styles.docsThumbnail}
+                  contentFit="cover"
+                />
+                <Text style={styles.docsFileName}>front side.jpg</Text>
+             
+              </View>
+            </View>
+          )}
 
           <View style={styles.cardContainer}>
-            {stage === 'input' || stage === 'front-uploaded' ? (
+            {stage === 'input' ? (
               frontImageUri ? (
                 <Image
                   source={{ uri: frontImageUri }}
@@ -242,7 +257,7 @@ export default function AadharScreen({ onBack, onUpload, onSkip }: AadharScreenP
               ) : (
                 <>
                   <Image
-                    source={require('../../assets/THF/aadar.svg')}
+                    source={require('../../assets/THF/FRONTSIDE.png')}
                     style={styles.cardImage}
                     contentFit="contain"
                   />
@@ -259,7 +274,7 @@ export default function AadharScreen({ onBack, onUpload, onSkip }: AadharScreenP
               ) : (
                 <>
                   <Image
-                    source={require('../../assets/THF/aadar.svg')}
+                    source={require('../../assets/THF/BACKSIDE.png')}
                     style={styles.cardImage}
                     contentFit="contain"
                   />
@@ -269,36 +284,42 @@ export default function AadharScreen({ onBack, onUpload, onSkip }: AadharScreenP
             )}
           </View>
 
-          {/* Aadhar Number Input */}
-          <View style={[styles.inputWrapper, focused && styles.inputWrapperFocused]}>
-            <Text
-              style={[
-                styles.floatingLabel,
-                (focused || aadhar.length > 0) && styles.floatingLabelFocused,
-              ]}
-            >
-              {t('enterAadhar')}
-            </Text>
-            <View style={styles.inputRow}>
-              <TextInput
-                style={styles.input}
-                value={aadhar}
-                onChangeText={handleChange}
-                keyboardType="number-pad"
-                onFocus={() => setFocused(true)}
-                onBlur={() => setFocused(false)}
-                maxLength={14}
-              />
-              {isValid && (
-                <View style={styles.checkCircle}>
-                  <Text style={styles.checkMark}>✓</Text>
-                </View>
-              )}
-            </View>
-          </View>
+          {/* Documents Added - shown after front is uploaded */}
 
-          {/* Auth note */}
-          <Text style={styles.authNote}>{t('aadharAuthNote')}</Text>
+          {/* Aadhar Number Input - only shown at input stage */}
+          {stage === 'input' && (
+            <>
+              <View style={[styles.inputWrapper, focused && styles.inputWrapperFocused]}>
+                <Text
+                  style={[
+                    styles.floatingLabel,
+                    (focused || aadhar.length > 0) && styles.floatingLabelFocused,
+                  ]}
+                >
+                  {t('enterAadhar')}
+                </Text>
+                <View style={styles.inputRow}>
+                  <TextInput
+                    style={styles.input}
+                    value={aadhar}
+                    onChangeText={handleChange}
+                    keyboardType="number-pad"
+                    onFocus={() => setFocused(true)}
+                    onBlur={() => setFocused(false)}
+                    maxLength={14}
+                  />
+                  {isValid && (
+                    <View style={styles.checkCircle}>
+                      <Text style={styles.checkMark}>✓</Text>
+                    </View>
+                  )}
+                </View>
+              </View>
+
+              {/* Auth note */}
+              <Text style={styles.authNote}>{t('aadharAuthNote')}</Text>
+            </>
+          )}
         </ScrollView>
 
         {/* Bottom Buttons */}
@@ -388,7 +409,7 @@ const styles = StyleSheet.create({
   },
   cardImage: {
     width: width,
-    height: (width) * 0.6,
+    height: (width) * 0.7,
   },
   sideLabel: {
     position: 'absolute',
@@ -401,6 +422,45 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 4,
+  },
+
+  /* Documents Added */
+  docsAddedContainer: {
+    marginBottom: 20,
+  },
+  docsAddedDivider: {
+    height: 1,
+    backgroundColor: '#e8e8e8',
+    marginBottom: 12,
+  },
+  docsAddedLabel: {
+    fontSize: 13,
+    color: '#888',
+    fontWeight: '500',
+    marginBottom: 10,
+  },
+  docsAddedRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    paddingVertical: 4,
+  },
+  docsThumbnail: {
+    width: 44,
+    height: 44,
+    borderRadius: 6,
+    marginRight: 12,
+  },
+  docsFileName: {
+    flex: 1,
+    fontSize: 14,
+    color: '#222',
+    fontWeight: '400',
+  },
+  docsKebab: {
+    fontSize: 20,
+    color: '#888',
+    paddingHorizontal: 8,
   },
 
   /* Input */
@@ -455,7 +515,7 @@ const styles = StyleSheet.create({
   /* Footer */
   footer: {
     paddingHorizontal: 20,
-    paddingBottom: 36,
+    paddingBottom: 12,
     paddingTop: 8,
     backgroundColor: '#fff',
     gap: 14,

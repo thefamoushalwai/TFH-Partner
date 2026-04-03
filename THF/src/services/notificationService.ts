@@ -2,15 +2,15 @@
  * src/services/notificationService.ts
  *
  * Push-notification helpers using expo-notifications.
- * Registers for Expo push tokens, stores them in Firestore,
- * and exposes helpers for scheduling local notifications.
+ * Registers for Expo push tokens, stores them in Firestore
+ * (via @react-native-firebase/firestore), and exposes helpers
+ * for scheduling local notifications.
  */
 
 import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
-import { doc, setDoc } from 'firebase/firestore';
 import { db } from './firebaseConfig';
 
 // NOTE: setNotificationHandler is now configured in app/_layout.tsx
@@ -56,8 +56,7 @@ export async function registerForPushNotifications(
     console.log('[notifications] Device push token (FCM/APNs):', token);
 
     // Store token in Firestore as fcmToken
-    await setDoc(
-      doc(db, 'users', uid),
+    await db.collection('users').doc(uid).set(
       { fcmToken: token },
       { merge: true },
     );

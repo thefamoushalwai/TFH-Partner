@@ -5,71 +5,50 @@
 //   Signup → After OTP, link an EmailAuthProvider credential to the Phone user.
 //   Login  → signInWithEmailAndPassword using a hidden derived email.
 //
+// Uses @react-native-firebase/auth exclusively (Native SDK).
+//
 // IMPORTANT: Enable "Email/Password" sign-in provider in Firebase Console:
 //   Authentication → Sign-in method → Email/Password → Enable → Save
 //   (Disable "Email link / passwordless" — only classic email+password is needed)
 
 import * as SecureStore from 'expo-secure-store';
-import {
-  EmailAuthProvider,
-  linkWithCredential,
-  signOut as firebaseSignOut,
-  onAuthStateChanged,
-  PhoneAuthProvider,
-  signInWithCredential,
-  signInWithEmailAndPassword,
-  type User,
-} from 'firebase/auth';
 import { auth } from '@/src/services/firebaseConfig';
-
-// Firebase Web API key
-const FIREBASE_API_KEY = 'AIzaSyARaozx4Pum4IKrO6FruKCfKSKzHfAZzGM';
-
-// Android package name (from app.json)
-const ANDROID_PACKAGE_NAME = 'com.tfh.app';
+import { firebase } from '@react-native-firebase/auth';
 
 // ─── OTP helpers ─────────────────────────────────────────────────────────────
 
 /**
- * Send an OTP to the given phone number via Firebase Identity Toolkit REST API.
+ * Send an OTP to the given phone number using the native Firebase SDK.
+ * Uses @react-native-firebase/auth which handles SafetyNet/Play Integrity automatically.
  * @param phoneNumber – E.164 format, e.g. "+919205394233"
- * @returns verificationId (sessionInfo)
+ * @returns verificationId
  */
 export async function sendOtp(phoneNumber: string): Promise<string> {
-  const url = `https://identitytoolkit.googleapis.com/v1/accounts:sendVerificationCode?key=${FIREBASE_API_KEY}`;
-
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      phoneNumber,
-      androidPackageName: ANDROID_PACKAGE_NAME,
-      androidInstallApp: false,
-    }),
-  });
-
-  const data = await response.json();
-  if (!response.ok) throw new Error(data?.error?.message ?? 'Failed to send OTP');
-  return data.sessionInfo as string;
+  const confirmation = await auth.signInWithPhoneNumber(phoneNumber);
+  if (!confirmation.verificationId) {
+    throw new Error('Failed to get verification ID. Please try again.');
+  }
+  return confirmation.verificationId;
 }
 
 /**
  * Verify the 6-digit OTP and sign in with Firebase Phone Auth.
+ * Uses only the Native SDK — no more Web SDK syncing needed.
  */
-export async function verifyOtp(verificationId: string, otp: string): Promise<User> {
-  const credential = PhoneAuthProvider.credential(verificationId, otp);
-  const result = await signInWithCredential(auth, credential);
+export async function verifyOtp(verificationId: string, otp: string) {
+  const credential = firebase.auth.PhoneAuthProvider.credential(verificationId, otp);
+  const result = await auth.signInWithCredential(credential);
   return result.user;
 }
 
 // ─── Auth state ───────────────────────────────────────────────────────────────
 
-export function onAuthChange(callback: (user: User | null) => void) {
-  return onAuthStateChanged(auth, callback);
+export function onAuthChange(callback: (user: FirebaseAuthTypes.User | null) => void) {
+  return auth.onAuthStateChanged(callback);
 }
 
 export async function signOut() {
-  return firebaseSignOut(auth);
+  return auth.signOut();
 }
 
 // ─── Phone ↔ Email mapping ────────────────────────────────────────────────────
@@ -110,13 +89,13 @@ export async function savePhonePassword(
   if (!user) throw new Error('Not authenticated. Please complete OTP verification first.');
 
   const email = getHiddenEmail(phoneNumber);
-  const credential = EmailAuthProvider.credential(email, password);
+  const credential = firebase.auth.EmailAuthProvider.credential(email, password);
 
   try {
-    await linkWithCredential(user, credential);
+    await user.linkWithCredential(credential);
   } catch (error: any) {
-    // auth/provider-already-linked or auth/email-already-in-use means 
-    // user already set a password before — treat as success so they can 
+    // auth/provider-already-linked or auth/email-already-in-use means
+    // user already set a password before — treat as success so they can
     // update their password via the profile settings screen later.
     if (
       error.code === 'auth/provider-already-linked' ||
@@ -148,7 +127,7 @@ export async function loginWithPhonePassword(
   const email = getHiddenEmail(phoneNumber);
 
   try {
-    const cred = await signInWithEmailAndPassword(auth, email, password);
+    const cred = await auth.signInWithEmailAndPassword(email, password);
 
     // Refresh local cache
     await SecureStore.setItemAsync(getLocalPasswordKey(phoneNumber), password);
@@ -174,3 +153,7 @@ export async function loginWithPhonePassword(
     throw new Error('Login failed. Please try again.');
   }
 }
+
+// Re-export the FirebaseAuthTypes namespace for use elsewhere
+import type { FirebaseAuthTypes } from '@react-native-firebase/auth';
+export type { FirebaseAuthTypes };
