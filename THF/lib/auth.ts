@@ -69,6 +69,56 @@ function getLocalPasswordKey(phoneNumber: string): string {
   return `auth_pw_${normalizePhone(phoneNumber)}`;
 }
 
+// ─── Reset password (forgot password flow) ───────────────────────────────────
+
+/**
+ * Called in the forgot-password flow after OTP verification.
+ * Re-authenticates the user with the phone credential, then updates the
+ * email/password provider's password.
+ *
+ * @param phoneNumber    – E.164 phone number
+ * @param password       – new plaintext password
+ * @param verificationId – from the sendOtp() call
+ * @param otp            – the 6-digit code the user entered
+ */
+export async function resetPasswordWithOtp(
+  phoneNumber: string,
+  password: string,
+  verificationId: string,
+  otp: string,
+): Promise<void> {
+  // Re-authenticate current user with the phone credential so Firebase
+  // considers this a "recent" sign-in, allowing password changes.
+  const phoneCredential = firebase.auth.PhoneAuthProvider.credential(verificationId, otp);
+  const user = auth.currentUser;
+  if (!user) throw new Error('No authenticated user found. Please try again.');
+
+  await user.reauthenticateWithCredential(phoneCredential);
+
+  // Now update or link the email/password provider.
+  const email = getHiddenEmail(phoneNumber);
+  const emailCredential = firebase.auth.EmailAuthProvider.credential(email, password);
+
+  try {
+    await user.linkWithCredential(emailCredential);
+  } catch (error: any) {
+    if (
+      error.code === 'auth/provider-already-linked' ||
+      error.code === 'auth/email-already-in-use' ||
+      // React Native Firebase sometimes returns auth/unknown for this case
+      (error.code === 'auth/unknown' && error.message?.includes('already been linked'))
+    ) {
+      // Email provider exists — update the password directly.
+      await user.updatePassword(password);
+    } else {
+      throw error;
+    }
+  }
+
+  // Cache locally for fast same-device logins.
+  await SecureStore.setItemAsync(getLocalPasswordKey(phoneNumber), password);
+}
+
 // ─── Signup: link email+password to the existing Phone Auth user ─────────────
 
 /**
@@ -95,13 +145,15 @@ export async function savePhonePassword(
     await user.linkWithCredential(credential);
   } catch (error: any) {
     // auth/provider-already-linked or auth/email-already-in-use means
-    // user already set a password before — treat as success so they can
-    // update their password via the profile settings screen later.
+    // user already set a password before — update the password instead.
+    // Note: React Native Firebase sometimes returns auth/unknown for this case.
     if (
       error.code === 'auth/provider-already-linked' ||
-      error.code === 'auth/email-already-in-use'
+      error.code === 'auth/email-already-in-use' ||
+      (error.code === 'auth/unknown' && error.message?.includes('already been linked'))
     ) {
-      // Already linked, which is fine.
+      // Update the existing password to the new one
+      await user.updatePassword(password);
     } else {
       throw error;
     }

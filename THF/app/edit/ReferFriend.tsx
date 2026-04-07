@@ -15,6 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { auth } from '@/src/services/firebaseConfig';
 import { createReferral, isPhoneAlreadyReferred } from '@/src/services/referralService';
 import { useRouter } from 'expo-router';
+import { useLanguage } from '@/src/hooks/useLanguage';
 
 interface ReferFriendScreenProps {
   onGenerate?: (data: { name: string; contact: string; email: string }) => void;
@@ -22,6 +23,7 @@ interface ReferFriendScreenProps {
 
 export default function ReferFriendScreen() {
   const router = useRouter();
+  const { t } = useLanguage();
   const [name, setName] = useState('');
   const [contact, setContact] = useState('');
   const [email, setEmail] = useState('');
@@ -36,7 +38,7 @@ export default function ReferFriendScreen() {
 
     const uid = auth.currentUser?.uid;
     if (!uid) {
-      Alert.alert('Error', 'Not logged in. Please restart the app.');
+      Alert.alert(t('error'), t('notLoggedInRestart'));
       return;
     }
 
@@ -46,18 +48,18 @@ export default function ReferFriendScreen() {
       // Duplicate check
       const already = await isPhoneAlreadyReferred(e164Phone);
       if (already) {
-        Alert.alert('Already Referred', `${contact} has already been referred.`);
+        Alert.alert(t('alreadyReferred'), `${contact} ${t('alreadyReferredMsg')}`);
         return;
       }
 
       const referralId = await createReferral({ referrerId: uid, referredPhone: e164Phone });
-      Alert.alert('Referral Sent! 🎉', `Your referral link has been created. Referral ID: ${referralId.slice(0, 8)}...`);
+      Alert.alert(t('referralSent'), `${t('referralSentMsg')} ID: ${referralId.slice(0, 8)}...`);
       setName('');
       setContact('');
       setEmail('');
     } catch (err: any) {
       console.error('[ReferFriendScreen] error:', err);
-      Alert.alert('Error', err?.message ?? 'Failed to create referral.');
+      Alert.alert(t('error'), err?.message ?? t('failedReferral'));
     } finally {
       setSaving(false);
     }
@@ -81,11 +83,11 @@ export default function ReferFriendScreen() {
             <Text style={styles.backArrow}>←</Text>
           </TouchableOpacity>
 
-          <Text style={styles.heading}>Refer a friend</Text>
+          <Text style={styles.heading}>{t('referAFriend')}</Text>
 
           {/* Friend Name */}
           <View style={[styles.inputWrapper, focusedField === 'name' && styles.inputWrapperFocused]}>
-            <Text style={[styles.floatingLabel, focusedField === 'name' && styles.floatingLabelFocused]}>Friend name</Text>
+            <Text style={[styles.floatingLabel, focusedField === 'name' && styles.floatingLabelFocused]}>{t('friendName')}</Text>
             <TextInput
               style={styles.input}
               value={name}
@@ -98,7 +100,7 @@ export default function ReferFriendScreen() {
 
           {/* Contact Number */}
           <View style={[styles.inputWrapper, focusedField === 'contact' && styles.inputWrapperFocused]}>
-            <Text style={[styles.floatingLabel, focusedField === 'contact' && styles.floatingLabelFocused]}>Contact number</Text>
+            <Text style={[styles.floatingLabel, focusedField === 'contact' && styles.floatingLabelFocused]}>{t('contactNumber')}</Text>
             <TextInput
               style={styles.input}
               value={contact}
@@ -113,7 +115,7 @@ export default function ReferFriendScreen() {
 
           {/* Email (optional) */}
           <View style={[styles.inputWrapper, focusedField === 'email' && styles.inputWrapperFocused]}>
-            <Text style={[styles.floatingLabel, focusedField === 'email' && styles.floatingLabelFocused]}>Email id (optional)</Text>
+            <Text style={[styles.floatingLabel, focusedField === 'email' && styles.floatingLabelFocused]}>{t('emailOptional')}</Text>
             <TextInput
               style={styles.input}
               value={email}
@@ -140,7 +142,7 @@ export default function ReferFriendScreen() {
               <ActivityIndicator color="#fff" size="small" />
             ) : (
               <Text style={[styles.generateText, isValid && styles.generateTextActive]}>
-                Generate Referral Link
+                {t('generateReferral')}
               </Text>
             )}
           </TouchableOpacity>

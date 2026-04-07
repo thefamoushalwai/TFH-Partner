@@ -136,6 +136,7 @@ const translations = {
 
   // ── Password Screen ───────────────────────────────────────────────────
   createPasswordTitle:  { en: 'Create a Password',              hi: 'पासवर्ड बनाएं'                   },
+  resetPasswordTitle:   { en: 'Create new password',            hi: 'नया पासवर्ड बनाएं'               },
   createPasswordSub:    { en: 'Set a strong password to secure your account', hi: 'अपना खाता सुरक्षित करने के लिए मजबूत पासवर्ड बनाएं' },
   newPassword:          { en: 'New Password',                   hi: 'नया पासवर्ड'                     },
   confirmPassword:      { en: 'Confirm Password',               hi: 'पासवर्ड की पुष्टि करें'          },
@@ -146,6 +147,15 @@ const translations = {
   passwordSavedMsg:     { en: 'Your password has been set successfully.',  hi: 'आपका पासवर्ड सफलतापूर्वक सेट हो गया है।' },
   failedPassword:       { en: 'Failed to save password. Please try again.', hi: 'पासवर्ड सहेजने में विफल। कृपया पुनः प्रयास करें।' },
 
+  // ── Forgot Password ──────────────────────────────────────────────────
+  forgotPassword:       { en: 'Forgot Password?',                   hi: 'पासवर्ड भूल गए?'                   },
+  forgotPasswordTitle:  { en: 'Reset Password',                     hi: 'पासवर्ड रीसेट करें'                 },
+  forgotPasswordSub:    { en: 'Enter your registered mobile number to receive an OTP', hi: 'OTP प्राप्त करने के लिए अपना पंजीकृत मोबाइल नंबर दर्ज करें' },
+  sendOtp:              { en: 'Send OTP',                           hi: 'OTP भेजें'                           },
+  notRegistered:        { en: 'Not Registered',                     hi: 'पंजीकृत नहीं'                        },
+  notRegisteredMsg:     { en: 'This mobile number is not registered. Please sign up first.', hi: 'यह मोबाइल नंबर पंजीकृत नहीं है। कृपया पहले साइन अप करें।' },
+  backToLogin:          { en: 'Back to Login',                       hi: 'लॉगिन पर वापस जाएं'                 },
+
   // ── KYC – Details ─────────────────────────────────────────────────────
   kycDetailsHeading:    { en: 'Please share the details',       hi: 'कृपया विवरण साझा करें'           },
   kycDetailsSub:        { en: 'To sign up to an account in the application, enter your details below.', hi: 'खाता बनाने के लिए नीचे अपना विवरण दर्ज करें।' },
@@ -154,6 +164,7 @@ const translations = {
   emergencyContact:     { en: 'Emergency contact number',       hi: 'आपातकालीन संपर्क नंबर'           },
   selectGender:         { en: 'Select Gender',                  hi: 'लिंग चुनें'                      },
   selectCity:           { en: 'Select City',                    hi: 'शहर चुनें'                       },
+  selectZone:           { en: 'Select Zone',                    hi: 'ज़ोन चुनें'                       },
   addressLabel:         { en: 'Address',                        hi: 'पता'                             },
   register:             { en: 'Register',                       hi: 'पंजीकरण करें'                    },
 
@@ -192,9 +203,11 @@ const translations = {
   camPermSelfie:        { en: 'Please allow camera access to take a selfie.', hi: 'सेल्फी लेने के लिए कैमरा एक्सेस की अनुमति दें।' },
   galPermSelfie:        { en: 'Please allow gallery access to choose a photo.', hi: 'फ़ोटो चुनने के लिए गैलरी एक्सेस की अनुमति दें।' },
 
-  // ── KYC – Experience ──────────────────────────────────────────────────
+  // ── KYC – Experience & Cuisines ──────────────────────────────────────────────────
   expHeading:           { en: 'Please share your experience',   hi: 'कृपया अपना अनुभव साझा करें'      },
   expSub:               { en: 'This will help us to understand the area of expertise so that we could allocate the bookings accordingly', hi: 'यह हमें आपकी विशेषज्ञता के क्षेत्र को समझने में मदद करेगा ताकि हम बुकिंग आवंटित कर सकें।' },
+  cuisinesHeading:      { en: 'Please choose the cuisines you can cook', hi: 'कृपया वे व्यंजन चुनें जिन्हें आप पका सकते हैं' },
+  cuisinesSub:          { en: 'This will help us to understand the area of expertise so that we could allocate the bookings accordingly', hi: 'यह हमें आपकी विशेषज्ञता के क्षेत्र को समझने में मदद करेगा ताकि हम बुकिंग आवंटित कर सकें।' },
   continueBtn:          { en: 'Continue',                       hi: 'जारी रखें'                       },
 
   // ── KYC – Upload Documents ────────────────────────────────────────────
@@ -203,6 +216,83 @@ const translations = {
   docSelfie:            { en: 'Upload profile picture (Selfie)', hi: 'प्रोफाइल फ़ोटो अपलोड करें (सेल्फी)' },
   docAadhar:            { en: 'Upload Aadhar card front & back', hi: 'आधार कार्ड सामने और पीछे अपलोड करें' },
   docPan:               { en: 'Upload PAN number (Optional)',   hi: 'PAN नंबर अपलोड करें (वैकल्पिक)'  },
+
+  // ── Edit Details ────────────────────────────────────────────────────────
+  editDetails:          { en: 'Edit details',                    hi: 'विवरण संपादित करें'               },
+  enterNameLabel:       { en: 'Enter Name',                      hi: 'नाम दर्ज करें'                   },
+  enterEmailLabel:      { en: 'Enter Email',                     hi: 'ईमेल दर्ज करें'                  },
+  enterMobileLabel:     { en: 'Enter mobile number',             hi: 'मोबाइल नंबर दर्ज करें'           },
+  emergencyContactLabel:{ en: 'Emergency contact number',        hi: 'आपातकालीन संपर्क नंबर'           },
+  selectGenderLabel:    { en: 'Select Gender',                   hi: 'लिंग चुनें'                      },
+  selectCityLabel:      { en: 'Select City',                     hi: 'शहर चुनें'                       },
+  addressLabel2:        { en: 'Address',                         hi: 'पता'                             },
+  saveAndUpdate:        { en: 'Save and Update',                 hi: 'सहेजें और अपडेट करें'            },
+  saved:                { en: 'Saved',                           hi: 'सहेजा गया'                       },
+  savedDetails:         { en: 'Your details have been updated.', hi: 'आपकी जानकारी अपडेट कर दी गई है।' },
+  failedSave:           { en: 'Failed to save. Please try again.', hi: 'सहेजने में विफल। कृपया पुनः प्रयास करें।' },
+
+  // ── Refer a Friend ─────────────────────────────────────────────────────
+  referAFriend:         { en: 'Refer a friend',                  hi: 'मित्र को रेफर करें'              },
+  friendName:           { en: 'Friend name',                     hi: 'मित्र का नाम'                    },
+  contactNumber:        { en: 'Contact number',                  hi: 'संपर्क नंबर'                     },
+  emailOptional:        { en: 'Email id (optional)',             hi: 'ईमेल (वैकल्पिक)'                 },
+  generateReferral:     { en: 'Generate Referral Link',          hi: 'रेफरल लिंक बनाएं'                },
+  alreadyReferred:      { en: 'Already Referred',                hi: 'पहले से रेफर किया गया'            },
+  alreadyReferredMsg:   { en: 'has already been referred.',      hi: 'पहले से रेफर किया जा चुका है।'    },
+  referralSent:         { en: 'Referral Sent! 🎉',               hi: 'रेफरल भेजा गया! 🎉'              },
+  referralSentMsg:      { en: 'Your referral link has been created.', hi: 'आपका रेफरल लिंक बनाया गया है।' },
+  failedReferral:       { en: 'Failed to create referral.',      hi: 'रेफरल बनाने में विफल।'            },
+
+  // ── Account Details ─────────────────────────────────────────────────────
+  accountDetailsTitle:  { en: 'Account details',                 hi: 'खाता विवरण'                      },
+  bankAccountNumber:    { en: 'Bank account number',             hi: 'बैंक खाता नंबर'                  },
+  ifscCode:             { en: 'IFSC / MICR Code',                hi: 'IFSC / MICR कोड'                 },
+  bankNameLabel:        { en: 'Bank name',                       hi: 'बैंक का नाम'                     },
+  upiDetail:            { en: 'UPI detail',                      hi: 'UPI विवरण'                       },
+  upiIdLabel:           { en: 'UPI id',                          hi: 'UPI आईडी'                        },
+  upiHint:              { en: 'The UPI ID is in the format of name/phone number @bank number.', hi: 'UPI ID का प्रारूप नाम/फ़ोन नंबर @बैंक नंबर है।' },
+  savedAccountDetails:  { en: 'Your account details have been updated.', hi: 'आपके खाता विवरण अपडेट कर दिए गए हैं।' },
+  failedAccountUpdate:  { en: 'Failed to update account details.', hi: 'खाता विवरण अपडेट करने में विफल।' },
+
+  // ── Job Timer ───────────────────────────────────────────────────────────
+  currentJob:           { en: 'Current job',                     hi: 'वर्तमान कार्य'                   },
+  timePrefix:           { en: 'Time:',                           hi: 'समय:'                            },
+  locationPrefix:       { en: 'Location:',                       hi: 'स्थान:'                          },
+  guestsLabel:          { en: 'guests',                          hi: 'अतिथि'                          },
+  live:                 { en: 'LIVE',                            hi: 'लाइव'                            },
+  startJobTimer:        { en: 'Start Job Timer',                 hi: 'जॉब टाइमर शुरू करें'             },
+  stopBtn:              { en: 'Stop',                            hi: 'बंद करें'                         },
+  pauseLabel:           { en: 'Pause',                           hi: 'रोकें'                           },
+  resumeLabel:          { en: 'Resume',                          hi: 'जारी रखें'                       },
+  quitConfirmTitle:     { en: 'Verification',                    hi: 'सत्यापन'                         },
+  quitConfirmMsg:       { en: 'Are you sure to quit?',           hi: 'क्या आप वाकई छोड़ना चाहते हैं?'  },
+  yes:                  { en: 'Yes',                             hi: 'हाँ'                             },
+
+  // ── Shared Alert / Error Messages ───────────────────────────────────────
+  notLoggedInRestart:   { en: 'Not logged in. Please restart the app.', hi: 'लॉग इन नहीं है। कृपया ऐप पुनः शुरू करें।' },
+  phoneMissing:         { en: 'Phone number is missing. Please retry signup.', hi: 'फ़ोन नंबर गुम है। कृपया पुनः साइन अप करें।' },
+  sessionExpired:       { en: 'Session expired. Please signup again.', hi: 'सत्र समाप्त हो गया। कृपया फिर से साइन अप करें।' },
+  couldNotSavePassword: { en: 'Could not save password. Please try again.', hi: 'पासवर्ड सहेजने में विफल। कृपया पुनः प्रयास करें।' },
+  passwordNote:         { en: '* Password must be at least 6 characters long', hi: '* पासवर्ड कम से कम 6 अक्षर का होना चाहिए' },
+  footerLegal:          { en: 'By Clicking "Sign up", you agree with the', hi: '"साइन अप" पर क्लिक करके, आप सहमत हैं' },
+  termsConditions:      { en: 'Terms & conditions',              hi: 'नियम और शर्तें'                  },
+  privacyPolicy:        { en: 'Privacy Policy',                  hi: 'गोपनीयता नीति'                   },
+  failedResendOtp:      { en: 'Failed to resend OTP. Please try again.', hi: 'OTP पुनः भेजने में विफल। कृपया पुनः प्रयास करें।' },
+  verificationExpired:  { en: 'Verification session expired. Please go back and try again.', hi: 'सत्यापन सत्र समाप्त हो गया। कृपया वापस जाएं और पुनः प्रयास करें।' },
+  verificationFailedTitle: { en: 'Verification Failed',          hi: 'सत्यापन विफल'                    },
+  invalidOtpGeneric:    { en: 'Invalid OTP. Please try again.',  hi: 'अवैध OTP। कृपया पुनः प्रयास करें।' },
+  otpIncorrect:         { en: 'The OTP you entered is incorrect. Please check and try again.', hi: 'आपने गलत OTP दर्ज किया है। कृपया जाँचें और पुनः प्रयास करें।' },
+  otpExpired:           { en: 'The OTP has expired. Please resend and try again.', hi: 'OTP की अवधि समाप्त हो गई। कृपया पुनः भेजें और प्रयास करें।' },
+  sessionExpiredOtp:    { en: 'Your session has expired. Please go back and request a new OTP.', hi: 'सत्र समाप्त हो गया। कृपया वापस जाएं और नया OTP अनुरोध करें।' },
+  whatsappUpdates:      { en: 'Get updates on Whatsapp',         hi: 'Whatsapp पर अपडेट प्राप्त करें'  },
+  failedCaptureImage:   { en: 'Failed to capture image',         hi: 'छवि कैप्चर करने में विफल'         },
+  failedSelectImage:    { en: 'Failed to select image',          hi: 'छवि चुनने में विफल'               },
+  failedLinkDocs:       { en: 'Failed to link documents. Please try again.', hi: 'दस्तावेज़ लिंक करने में विफल। कृपया पुनः प्रयास करें।' },
+  failedSaveRetry:      { en: 'Failed to save. Please try again.', hi: 'सहेजने में विफल। कृपया पुनः प्रयास करें।' },
+  uploadFailedAadharFront: { en: 'Unable to upload Aadhar front. Please try again.', hi: 'आधार सामने अपलोड करने में असमर्थ। कृपया पुनः प्रयास करें।' },
+  uploadFailedAadharBack:  { en: 'Unable to upload Aadhar back. Please try again.', hi: 'आधार पीछे अपलोड करने में असमर्थ। कृपया पुनः प्रयास करें।' },
+  uploadFailedPan:      { en: 'Unable to upload PAN document. Please try again.', hi: 'PAN दस्तावेज़ अपलोड करने में असमर्थ। कृपया पुनः प्रयास करें।' },
+  uploadFailedSelfie:   { en: 'Unable to upload selfie. Please try again.', hi: 'सेल्फी अपलोड करने में असमर्थ। कृपया पुनः प्रयास करें।' },
 } as const;
 
 export type TranslationKey = keyof typeof translations;

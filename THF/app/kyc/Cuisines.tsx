@@ -33,21 +33,20 @@ const SELECTED_SVG = `<svg width="24" height="24" viewBox="0 0 18 18" fill="none
 </svg>`;
 
 const OPTIONS = [
-  'Hotel',
-  'Hostels',
-  'Canteen',
-  'Houses',
-  'Restaurant',
-  'Pub & bar',
-  'Other',
+  'North Indian',
+  'South Indian',
+  'Chinese',
+  'Mexican',
+  'Continental',
+  'Thai',
 ];
 
-interface ExperienceScreenProps {
+interface CuisinesScreenProps {
   onBack?: () => void;
   onContinue?: (selected: string[]) => void;
 }
 
-export default function ExperienceScreen({ onBack, onContinue }: ExperienceScreenProps) {
+export default function CuisinesScreen({ onBack, onContinue }: CuisinesScreenProps) {
   const router = useRouter();
   const { t } = useLanguage();
   const [selected, setSelected] = useState<string[]>([]);
@@ -77,16 +76,16 @@ export default function ExperienceScreen({ onBack, onContinue }: ExperienceScree
 
     setSaving(true);
     try {
-      // Save experience tags to Firestore
-      await updateUserProfile(uid, { experience: selected });
+      // Save cuisines tags to Firestore
+      await updateUserProfile(uid, { cuisines: selected });
 
       // Update AsyncStorage cache
       const fresh = await getUserProfile(uid);
       if (fresh) await AsyncStorage.setItem(PROFILE_CACHE_KEY, JSON.stringify(fresh));
 
-      router.push('/kyc/Cuisines');
+      router.push('/kyc/Details');
     } catch (err: any) {
-      console.error('[ExperienceScreen] save error:', err);
+      console.error('[CuisinesScreen] save error:', err);
       Alert.alert('Error', err?.message ?? 'Failed to save. Please try again.');
     } finally {
       setSaving(false);
@@ -120,8 +119,8 @@ export default function ExperienceScreen({ onBack, onContinue }: ExperienceScree
         showsVerticalScrollIndicator={false}
       >
         {/* Heading */}
-        <Text style={styles.heading}>{t('expHeading')}</Text>
-        <Text style={styles.subheading}>{t('expSub')}</Text>
+        <Text style={styles.heading}>{t('cuisinesHeading')}</Text>
+        <Text style={styles.subheading}>{t('cuisinesSub')}</Text>
 
         {/* Options */}
         <View style={styles.optionsList}>
@@ -228,7 +227,7 @@ const styles = StyleSheet.create({
     height: 24,
     borderRadius: 12,
     borderWidth: 1.5,
-    borderColor: '#555',
+    borderColor: '#b4b4b4',
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#fff',

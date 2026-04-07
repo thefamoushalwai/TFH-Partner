@@ -16,6 +16,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { auth } from '@/src/services/firebaseConfig';
 import { getUserProfile, updateUserProfile } from '@/src/services/userService';
+import { useLanguage } from '@/src/hooks/useLanguage';
 
 interface AccountDetailsScreenProps {
   onSave?: (data: {
@@ -28,6 +29,7 @@ interface AccountDetailsScreenProps {
 
 export default function AccountDetailsScreen({ onSave }: AccountDetailsScreenProps) {
   const router = useRouter();
+  const { t } = useLanguage();
 
   const [accountNumber, setAccountNumber] = useState('');
   const [ifsc, setIfsc] = useState('');
@@ -72,7 +74,7 @@ export default function AccountDetailsScreen({ onSave }: AccountDetailsScreenPro
 
     const uid = auth.currentUser?.uid;
     if (!uid) {
-      Alert.alert('Error', 'Not logged in. Please restart the app.');
+      Alert.alert(t('error'), t('notLoggedInRestart'));
       return;
     }
 
@@ -92,12 +94,12 @@ export default function AccountDetailsScreen({ onSave }: AccountDetailsScreenPro
         onSave({ accountNumber, ifsc, bankName, upiId });
       }
 
-      Alert.alert('Saved', 'Your account details have been updated.', [
-        { text: 'OK', onPress: () => router.back() }
+      Alert.alert(t('saved'), t('savedAccountDetails'), [
+        { text: t('ok'), onPress: () => router.back() }
       ]);
     } catch (err: any) {
       console.error('[AccountDetailsScreen] save error:', err);
-      Alert.alert('Error', err?.message ?? 'Failed to update account details.');
+      Alert.alert(t('error'), err?.message ?? t('failedAccountUpdate'));
     } finally {
       setSaving(false);
     }
@@ -135,10 +137,10 @@ export default function AccountDetailsScreen({ onSave }: AccountDetailsScreenPro
           </TouchableOpacity>
 
           {/* ── Bank Account Section ── */}
-          <Text style={styles.sectionHeading}>Account details</Text>
+          <Text style={styles.sectionHeading}>{t('accountDetailsTitle')}</Text>
 
           <View style={[styles.inputWrapper, focusedField === 'account' && styles.inputWrapperFocused]}>
-            <Text style={[styles.floatingLabel, focusedField === 'account' && styles.floatingLabelFocused]}>Bank account number</Text>
+            <Text style={[styles.floatingLabel, focusedField === 'account' && styles.floatingLabelFocused]}>{t('bankAccountNumber')}</Text>
             <TextInput
               style={styles.input}
               value={accountNumber}
@@ -151,7 +153,7 @@ export default function AccountDetailsScreen({ onSave }: AccountDetailsScreenPro
           </View>
 
           <View style={[styles.inputWrapper, focusedField === 'ifsc' && styles.inputWrapperFocused]}>
-            <Text style={[styles.floatingLabel, focusedField === 'ifsc' && styles.floatingLabelFocused]}>IFSC / MICR Code</Text>
+            <Text style={[styles.floatingLabel, focusedField === 'ifsc' && styles.floatingLabelFocused]}>{t('ifscCode')}</Text>
             <TextInput
               style={styles.input}
               value={ifsc}
@@ -164,7 +166,7 @@ export default function AccountDetailsScreen({ onSave }: AccountDetailsScreenPro
           </View>
 
           <View style={[styles.inputWrapper, focusedField === 'bank' && styles.inputWrapperFocused]}>
-            <Text style={[styles.floatingLabel, focusedField === 'bank' && styles.floatingLabelFocused]}>Bank name</Text>
+            <Text style={[styles.floatingLabel, focusedField === 'bank' && styles.floatingLabelFocused]}>{t('bankNameLabel')}</Text>
             <TextInput
               style={styles.input}
               value={bankName}
@@ -176,10 +178,10 @@ export default function AccountDetailsScreen({ onSave }: AccountDetailsScreenPro
           </View>
 
           {/* ── UPI Section ── */}
-          <Text style={[styles.sectionHeading, { marginTop: 24 }]}>UPI detail</Text>
+          <Text style={[styles.sectionHeading, { marginTop: 24 }]}>{t('upiDetail')}</Text>
 
           <View style={[styles.inputWrapper, focusedField === 'upi' && styles.inputWrapperFocused]}>
-            <Text style={[styles.floatingLabel, focusedField === 'upi' && styles.floatingLabelFocused]}>UPI id</Text>
+            <Text style={[styles.floatingLabel, focusedField === 'upi' && styles.floatingLabelFocused]}>{t('upiIdLabel')}</Text>
             <TextInput
               style={styles.input}
               value={upiId}
@@ -193,7 +195,7 @@ export default function AccountDetailsScreen({ onSave }: AccountDetailsScreenPro
           </View>
 
           <Text style={styles.upiHint}>
-            The UPI ID is in the format of name/phone number @bank number.
+            {t('upiHint')}
           </Text>
 
           <View style={{ height: 16 }} />
@@ -211,7 +213,7 @@ export default function AccountDetailsScreen({ onSave }: AccountDetailsScreenPro
               <ActivityIndicator color="#fff" size="small" />
             ) : (
               <Text style={[styles.saveText, isValid && styles.saveTextActive]}>
-                Save and Update
+                {t('saveAndUpdate')}
               </Text>
             )}
           </TouchableOpacity>

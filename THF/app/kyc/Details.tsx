@@ -48,6 +48,7 @@ const SELECTED_SVG = `<svg width="24" height="24" viewBox="0 0 18 18" fill="none
 
 const GENDERS = ['Male', 'Female', 'Other'];
 const CITIES = ['Delhi', 'Mumbai', 'Bangalore', 'Chennai', 'Hyderabad', 'Kolkata', 'Pune', 'Ahmedabad'];
+const ZONES = ['North zone', 'South zone', 'East zone', 'West zone', 'Central zone'];
 
 const isValidEmail = (e: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
 const isValidPhone = (p: string) => /^[0-9]{10}$/.test(p);
@@ -62,6 +63,7 @@ interface FloatingInputProps {
   isValid?: boolean;
   editable?: boolean;
   prefix?: string;
+  maxLength?: number;
 }
 
 function FloatingInput({
@@ -73,6 +75,7 @@ function FloatingInput({
   isValid,
   editable = true,
   prefix,
+  maxLength,
 }: FloatingInputProps) {
   const [focused, setFocused] = useState(false);
   const showValid = isValid && value.length > 0;
@@ -99,6 +102,7 @@ function FloatingInput({
           textAlignVertical={multiline ? 'top' : 'center'}
           placeholderTextColor="#bbb"
           editable={editable}
+          maxLength={maxLength}
         />
         {showValid && (
           <SvgXml xml={SELECTED_SVG} width={24} height={24} style={{ marginLeft: 8 }} />
@@ -168,6 +172,7 @@ export interface RegistrationDetails {
   emergency: string;
   gender: string;
   city: string;
+  zone: string;
   address: string;
 }
 
@@ -184,6 +189,7 @@ export default function DetailsScreen({ onBack, onRegister }: DetailsScreenProps
   const [emergency, setEmergency] = useState('');
   const [gender, setGender] = useState('');
   const [city, setCity] = useState('');
+  const [zone, setZone] = useState('');
   const [address, setAddress] = useState('');
   const [saving, setSaving] = useState(false);
 
@@ -201,6 +207,7 @@ export default function DetailsScreen({ onBack, onRegister }: DetailsScreenProps
             setGender(existing.gender.charAt(0).toUpperCase() + existing.gender.slice(1));
           }
           if (existing.city) setCity(existing.city);
+          if (existing.zone) setZone(existing.zone);
           if (existing.address) setAddress(existing.address);
         }
       } catch (e) {
@@ -216,6 +223,7 @@ export default function DetailsScreen({ onBack, onRegister }: DetailsScreenProps
     isValidPhone(emergency) &&
     gender &&
     city &&
+    zone &&
     address.trim().length > 5;
 
   const handleRegister = async () => {
@@ -223,7 +231,7 @@ export default function DetailsScreen({ onBack, onRegister }: DetailsScreenProps
 
     // Custom callback mode (e.g., used as a nested component)
     if (onRegister) {
-      onRegister({ name, email, emergency, gender, city, address });
+      onRegister({ name, email, emergency, gender, city, zone, address });
       return;
     }
 
@@ -247,6 +255,7 @@ export default function DetailsScreen({ onBack, onRegister }: DetailsScreenProps
         emergencyPhone: emergency.trim(),
         gender: gender.toLowerCase() as 'male' | 'female' | 'other',
         city,
+        zone,
         address: address.trim(),
         language: 'en',
       };
@@ -303,10 +312,11 @@ export default function DetailsScreen({ onBack, onRegister }: DetailsScreenProps
 
           <FloatingInput label={t('enterName')} value={name} onChangeText={setName} isValid={name.trim().length > 1} editable={!saving} />
           <FloatingInput label={t('enterEmail')} value={email} onChangeText={setEmail} keyboardType="email-address" isValid={email.length > 0 ? isValidEmail(email) : true} editable={!saving} />
-          <FloatingInput label={t('emergencyContact')} value={emergency} onChangeText={setEmergency} keyboardType="phone-pad" isValid={isValidPhone(emergency)} editable={!saving} prefix="+91" />
+          <FloatingInput label={t('emergencyContact')} value={emergency} onChangeText={setEmergency} keyboardType="phone-pad" isValid={isValidPhone(emergency)} editable={!saving} prefix="+91" maxLength={10} />
 
           <DropdownField label={t('selectGender')} value={gender} options={GENDERS} onSelect={setGender} />
           <DropdownField label={t('selectCity')} value={city} options={CITIES} onSelect={setCity} />
+          <DropdownField label={t('selectZone')} value={zone} options={ZONES} onSelect={setZone} />
 
           <FloatingInput label={t('addressLabel')} value={address} onChangeText={setAddress} multiline isValid={address.trim().length > 5} editable={!saving} />
 

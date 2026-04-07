@@ -63,7 +63,7 @@ export default function AadharScreen({ onBack, onUpload, onSkip }: AadharScreenP
         setStage('front-uploaded');
       } catch (error) {
         console.error('Error uploading Aadhar front:', error);
-        Alert.alert(t('uploadFailed'), 'Unable to upload Aadhar front. Please try again.');
+        Alert.alert(t('uploadFailed'), t('uploadFailedAadharFront'));
       } finally {
         setIsUploading(false);
       }
@@ -89,7 +89,7 @@ export default function AadharScreen({ onBack, onUpload, onSkip }: AadharScreenP
         }
       } catch (error) {
         console.error('Error uploading Aadhar back:', error);
-        Alert.alert(t('uploadFailed'), 'Unable to upload Aadhar back. Please try again.');
+        Alert.alert(t('uploadFailed'), t('uploadFailedAadharBack'));
       } finally {
         setIsUploading(false);
       }
@@ -111,7 +111,7 @@ export default function AadharScreen({ onBack, onUpload, onSkip }: AadharScreenP
       await processFrontImage(result);
     } catch (error) {
       console.error('Error capturing document:', error);
-      Alert.alert('Error', 'Failed to capture image');
+      Alert.alert(t('error'), t('failedCaptureImage'));
     }
   };
 
@@ -130,7 +130,7 @@ export default function AadharScreen({ onBack, onUpload, onSkip }: AadharScreenP
       await processFrontImage(result);
     } catch (error) {
       console.error('Error selecting document:', error);
-      Alert.alert('Error', 'Failed to select image');
+      Alert.alert(t('error'), t('failedSelectImage'));
     }
   };
 
@@ -149,7 +149,7 @@ export default function AadharScreen({ onBack, onUpload, onSkip }: AadharScreenP
       await processBackImage(result);
     } catch (error) {
       console.error('Error capturing document:', error);
-      Alert.alert('Error', 'Failed to capture image');
+      Alert.alert(t('error'), t('failedCaptureImage'));
     }
   };
 
@@ -168,7 +168,7 @@ export default function AadharScreen({ onBack, onUpload, onSkip }: AadharScreenP
       await processBackImage(result);
     } catch (error) {
       console.error('Error selecting document:', error);
-      Alert.alert('Error', 'Failed to select image');
+      Alert.alert(t('error'), t('failedSelectImage'));
     }
   };
 

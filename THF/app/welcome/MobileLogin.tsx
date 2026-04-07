@@ -40,22 +40,11 @@ export default function MobileLoginScreen({ onGetStarted }: MobileLoginScreenPro
   const [loading, setLoading] = useState(false);
 
   const isValidMobile = mobile.trim().length >= 10;
-  const isValidPassword = password.trim().length >= 8;
+  const isValidPassword = password.trim().length >= 6;
   const canContinue = mode === 'login' ? isValidMobile && isValidPassword : isValidMobile;
 
   const hasCompletedProfile = (profile: Awaited<ReturnType<typeof getUserProfile>>): boolean => {
-    if (!profile) return false;
-    return Boolean(
-      profile.name?.trim() &&
-      profile.email?.trim() &&
-      profile.phone?.trim() &&
-      profile.emergencyPhone?.trim() &&
-      profile.gender?.trim() &&
-      profile.city?.trim() &&
-      profile.address?.trim() &&
-      Array.isArray(profile.experience) &&
-      profile.experience.length > 0,
-    );
+    return profile !== null;
   };
 
   const handleGetStarted = async () => {
@@ -73,11 +62,11 @@ export default function MobileLoginScreen({ onGetStarted }: MobileLoginScreenPro
         const existingProfile = await getUserProfileByPhone(phoneNumber);
         if (existingProfile) {
           Alert.alert(
-            'Already Registered',
-            'This mobile number is already registered. Please login instead.',
+            t('alreadyRegistered'),
+            t('alreadyRegisteredMsg'),
             [
               {
-                text: 'OK',
+                text: t('ok'),
                 onPress: () =>
                   router.replace({
                     pathname: '/welcome/MobileLogin',
@@ -115,9 +104,9 @@ export default function MobileLoginScreen({ onGetStarted }: MobileLoginScreenPro
     } catch (error: any) {
       console.error('Auth error:', error);
       Alert.alert(
-        'Error',
+        t('error'),
         error?.message ||
-          'Authentication failed. If you are logging in on a new device, complete signup OTP once to link this device, then login with password.',
+          t('failedSaveRetry'),
       );
     } finally {
       setLoading(false);
@@ -132,6 +121,21 @@ export default function MobileLoginScreen({ onGetStarted }: MobileLoginScreenPro
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
+        {/* Back Button */}
+        <TouchableOpacity
+          style={styles.backBtn}
+          onPress={() => {
+            if (router.canGoBack()) {
+              router.back();
+            } else {
+              router.replace('/');
+            }
+          }}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.backArrow}>←</Text>
+        </TouchableOpacity>
+
         {/* Hero Image */}
 
 
@@ -184,6 +188,17 @@ export default function MobileLoginScreen({ onGetStarted }: MobileLoginScreenPro
                 />
               </TouchableOpacity>
             </View>
+          )}
+
+          {/* Forgot Password Link (login mode only) */}
+          {mode === 'login' && (
+            <TouchableOpacity
+              onPress={() => router.push('/welcome/ForgotPassword' as any)}
+              disabled={loading}
+              style={styles.forgotPasswordBtn}
+            >
+              <Text style={styles.forgotPasswordText}>{t('forgotPassword')}</Text>
+            </TouchableOpacity>
           )}
 
           {/* Get Started Button */}
@@ -240,6 +255,19 @@ const styles = StyleSheet.create({
   heroImage: {
     width: '100%',
     height: '100%',
+  },
+
+  /* ── Back Btn ── */
+  backBtn: {
+    paddingHorizontal: 24,
+    paddingTop: 16,
+    alignSelf: 'flex-start',
+    zIndex: 10,
+  },
+  backArrow: {
+    fontSize: 24,
+    color: '#E8304A',
+    fontWeight: '700',
   },
 
   /* ── Bottom Sheet ── */
@@ -317,6 +345,16 @@ const styles = StyleSheet.create({
   },
   buttonTextDisabled: {
     color: '#aaa',
+  },
+  forgotPasswordBtn: {
+    alignSelf: 'flex-end',
+    marginBottom: 8,
+    marginTop: -8,
+  },
+  forgotPasswordText: {
+    color: '#E8304A',
+    fontSize: 13,
+    fontWeight: '500',
   },
   switchModeBtn: {
     marginTop: 16,

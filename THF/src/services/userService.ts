@@ -25,9 +25,12 @@ export interface UserProfile {
   emergencyPhone: string;
   gender: 'male' | 'female' | 'other';
   city: string;
+  zone?: string;
   address: string;
   /** List of experience tags, e.g. ["Hotel", "Houses"] */
   experience: string[];
+  /** List of cuisines the user can cook */
+  cuisines?: string[];
   language: string;
   kycStatus: 'unsubmitted' | 'pending' | 'pending_verification' | 'approved' | 'verified' | 'rejected';
   kycDocuments?: {

@@ -1,8 +1,7 @@
-import { savePhonePassword } from '@/lib/auth';
+import { resetPasswordWithOtp } from '@/lib/auth';
 import { useLanguage } from '@/src/hooks/useLanguage';
 import { auth } from '@/src/services/firebaseConfig';
 import { saveSession } from '@/src/services/sessionStorage';
-import { getUserProfile } from '@/src/services/userService';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
@@ -18,6 +17,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
+
 const EyeIcon = ({ stroke = "#6B7280" }) => (
   <Svg width="24" height="24" viewBox="0 0 24 24" fill="none">
     <Path d="M12 16.01C14.2091 16.01 16 14.2191 16 12.01C16 9.80087 14.2091 8.01001 12 8.01001C9.79086 8.01001 8 9.80087 8 12.01C8 14.2191 9.79086 16.01 12 16.01Z" stroke={stroke} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -36,11 +36,14 @@ const EyeOffIcon = ({ stroke = "#6B7280" }) => (
     <Path d="M19.5695 8.42999C20.4801 9.55186 21.2931 10.7496 21.9995 12.01C17.9995 19.01 13.2695 21.4 8.76953 19.23" stroke={stroke} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
   </Svg>
 );
-export default function CreatePasswordScreen() {
+
+export default function ResetPasswordScreen() {
   const router = useRouter();
   const { t } = useLanguage();
-  const params = useLocalSearchParams<{ phoneNumber?: string }>();
+  const params = useLocalSearchParams<{ phoneNumber?: string; verificationId?: string; otp?: string }>();
   const phoneNumber = params.phoneNumber ?? auth.currentUser?.phoneNumber ?? '';
+  const verificationId = params.verificationId ?? '';
+  const otpCode = params.otp ?? '';
 
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -54,31 +57,20 @@ export default function CreatePasswordScreen() {
   const passwordsMatch = isPasswordValid && password === confirmPassword;
   const canContinue = passwordsMatch;
 
-  const hasCompletedProfile = (profile: Awaited<ReturnType<typeof getUserProfile>>): boolean => {
-    if (!profile) return false;
-    return Boolean(
-      profile.name?.trim() &&
-      profile.email?.trim() &&
-      profile.phone?.trim() &&
-      profile.emergencyPhone?.trim() &&
-      profile.gender?.trim() &&
-      profile.city?.trim() &&
-      profile.address?.trim() &&
-      Array.isArray(profile.experience) &&
-      profile.experience.length > 0,
-    );
-  };
-
   const handleContinue = async () => {
     if (!canContinue || loading) return;
     if (!phoneNumber) {
       Alert.alert(t('error'), t('phoneMissing'));
       return;
     }
+    if (!verificationId || !otpCode) {
+      Alert.alert(t('error'), 'Session expired. Please request a new OTP.');
+      return;
+    }
 
     setLoading(true);
     try {
-      await savePhonePassword(phoneNumber, password);
+      await resetPasswordWithOtp(phoneNumber, password, verificationId, otpCode);
 
       const uid = auth.currentUser?.uid;
       if (!uid) {
@@ -88,9 +80,9 @@ export default function CreatePasswordScreen() {
 
       await saveSession({ uid, phoneNumber });
 
-      const profile = await getUserProfile(uid);
-      if (hasCompletedProfile(profile)) router.replace('/(tabs)/Dashboard');
-      else router.replace('/kyc/Experience');
+      // User has successfully reset their password. Login them in.
+      router.replace('/(tabs)/Dashboard');
+
     } catch (error: any) {
       Alert.alert(t('error'), error?.message ?? t('couldNotSavePassword'));
     } finally {
@@ -112,7 +104,7 @@ export default function CreatePasswordScreen() {
         </TouchableOpacity>
 
         {/* Title */}
-        <Text style={styles.title}>{t('createPasswordTitle')}</Text>
+        <Text style={styles.title}>{t('resetPasswordTitle')}</Text>
 
         {/* Password Field */}
         <View style={[styles.inputWrapper, focusedPassword && styles.inputWrapperFocused]}>
@@ -145,8 +137,6 @@ export default function CreatePasswordScreen() {
         <Text style={styles.passwordNote}>
           {t('passwordNote')}
         </Text>
-
-
 
         {/* Confirm Password Field */}
         <View style={[styles.inputWrapper, styles.inputWrapperMarginTop, focusedConfirm && styles.inputWrapperFocused]}>
@@ -300,8 +290,6 @@ const styles = StyleSheet.create({
     marginLeft: 4,
     fontStyle: 'italic',
   },
-
-
 
   // Mismatch
   mismatchText: {

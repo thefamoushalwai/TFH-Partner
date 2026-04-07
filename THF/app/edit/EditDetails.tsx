@@ -28,6 +28,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { auth } from '@/src/services/firebaseConfig';
 import { getUserProfile, updateUserProfile } from '@/src/services/userService';
 import { Image } from 'expo-image';
+import { useLanguage } from '@/src/hooks/useLanguage';
 
 const PROFILE_CACHE_KEY = 'user_profile_cache';
 const GENDERS = ['Male', 'Female', 'Other'];
@@ -41,9 +42,10 @@ interface EditFieldProps {
   keyboardType?: 'default' | 'email-address' | 'phone-pad';
   multiline?: boolean;
   disabled?: boolean;
+  maxLength?: number;
 }
 
-function EditField({ label, value, onChangeText, keyboardType = 'default', multiline = false, disabled }: EditFieldProps) {
+function EditField({ label, value, onChangeText, keyboardType = 'default', multiline = false, disabled, maxLength }: EditFieldProps) {
   const [focused, setFocused] = useState(false);
   const [editable, setEditable] = useState(false);
 
@@ -68,6 +70,7 @@ function EditField({ label, value, onChangeText, keyboardType = 'default', multi
           onFocus={() => setFocused(true)}
           onBlur={() => { setFocused(false); setEditable(false); }}
           placeholderTextColor="#bbb"
+          maxLength={maxLength}
         />
         {!multiline && !disabled && (
           <TouchableOpacity onPress={handlePencil} style={fieldStyles.pencilBtn} activeOpacity={0.7}>
@@ -101,7 +104,7 @@ function DropdownField({ label, value, options, onSelect, disabled }: DropdownFi
         <Text style={dropStyles.label}>{label}</Text>
         <View style={dropStyles.row}>
           <Text style={[dropStyles.value, !value && dropStyles.placeholder]}>
-            {value || `Select ${label}`}
+            {value || `${label}`}
           </Text>
           {!disabled && <Image source={require('@/assets/THF/Right Chevron.svg')} style={dropStyles.chevron} />}
         </View>
@@ -136,6 +139,7 @@ function DropdownField({ label, value, options, onSelect, disabled }: DropdownFi
 // ── Main Screen ─────────────────────────────────────────────────────────────
 export default function EditDetailsScreen() {
   const router = useRouter();
+  const { t } = useLanguage();
 
   // Form state
   const [name, setName] = useState('');
@@ -194,7 +198,7 @@ export default function EditDetailsScreen() {
     if (saving) return;
     const uid = auth.currentUser?.uid;
     if (!uid) {
-      Alert.alert('Error', 'Not logged in. Please restart the app.');
+      Alert.alert(t('error'), t('notLoggedInRestart'));
       return;
     }
 
@@ -216,12 +220,12 @@ export default function EditDetailsScreen() {
       const fresh = await getUserProfile(uid);
       if (fresh) await AsyncStorage.setItem(PROFILE_CACHE_KEY, JSON.stringify(fresh));
 
-      Alert.alert('Saved', 'Your details have been updated.', [
-        { text: 'OK', onPress: () => router.back() },
+      Alert.alert(t('saved'), t('savedDetails'), [
+        { text: t('ok'), onPress: () => router.back() },
       ]);
     } catch (err: any) {
       console.error('[EditDetailsScreen] save error:', err);
-      Alert.alert('Error', err?.message ?? 'Failed to save. Please try again.');
+      Alert.alert(t('error'), err?.message ?? t('failedSave'));
     } finally {
       setSaving(false);
     }
@@ -254,17 +258,17 @@ export default function EditDetailsScreen() {
           </TouchableOpacity>
 
           {/* Header */}
-          <Text style={styles.heading}>Edit details</Text>
+          <Text style={styles.heading}>{t('editDetails')}</Text>
 
-          <EditField label="Enter Name" value={name} onChangeText={setName} disabled={saving} />
-          <EditField label="Enter Email" value={email} onChangeText={setEmail} keyboardType="email-address" disabled={saving} />
-          <EditField label="Enter mobile number" value={mobile} onChangeText={setMobile} keyboardType="phone-pad" disabled={saving} />
-          <EditField label="Emergency contact number" value={emergency} onChangeText={setEmergency} keyboardType="phone-pad" disabled={saving} />
+          <EditField label={t('enterNameLabel')} value={name} onChangeText={setName} disabled={saving} />
+          <EditField label={t('enterEmailLabel')} value={email} onChangeText={setEmail} keyboardType="email-address" disabled={saving} />
+          <EditField label={t('enterMobileLabel')} value={mobile} onChangeText={setMobile} keyboardType="phone-pad" disabled={saving} />
+          <EditField label={t('emergencyContactLabel')} value={emergency} onChangeText={setEmergency} keyboardType="phone-pad" disabled={saving} maxLength={10} />
 
-          <DropdownField label="Select Gender" value={gender} options={GENDERS} onSelect={setGender} disabled={saving} />
-          <DropdownField label="Select City" value={city} options={CITIES} onSelect={setCity} disabled={saving} />
+          <DropdownField label={t('selectGenderLabel')} value={gender} options={GENDERS} onSelect={setGender} disabled={saving} />
+          <DropdownField label={t('selectCityLabel')} value={city} options={CITIES} onSelect={setCity} disabled={saving} />
 
-          <EditField label="Address" value={address} onChangeText={setAddress} multiline disabled={saving} />
+          <EditField label={t('addressLabel2')} value={address} onChangeText={setAddress} multiline disabled={saving} />
 
           <View style={{ height: 16 }} />
         </ScrollView>
@@ -275,7 +279,7 @@ export default function EditDetailsScreen() {
             {saving ? (
               <ActivityIndicator color="#fff" size="small" />
             ) : (
-              <Text style={styles.saveText}>Save and Update</Text>
+              <Text style={styles.saveText}>{t('saveAndUpdate')}</Text>
             )}
           </TouchableOpacity>
         </View>

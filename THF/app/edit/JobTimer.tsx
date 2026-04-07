@@ -11,6 +11,8 @@ import {
 import Navbar from '@/components/Navbar';
 import { updateBookingStatus } from '@/src/services/bookingService';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useLanguage } from '@/src/hooks/useLanguage';
+import type { TranslationKey } from '@/src/i18n/translations';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface JobDetails {
@@ -23,15 +25,15 @@ interface JobDetails {
 
 
 // ─── Job Card ─────────────────────────────────────────────────────────────────
-const JobCard = ({ job }: { job: JobDetails }) => (
+const JobCard = ({ job, t }: { job: JobDetails; t: (key: TranslationKey) => string }) => (
   <View style={styles.jobCard}>
-    <Text style={styles.currentJobLabel}>Current job</Text>
+    <Text style={styles.currentJobLabel}>{t('currentJob')}</Text>
     <Text style={styles.jobTitle}>{job.title}</Text>
     <View style={styles.jobMeta}>
-      <Text style={styles.jobMetaText}>⏰  Time: {job.time}</Text>
-      <Text style={styles.jobMetaText}>📍  Location: {job.location}</Text>
+      <Text style={styles.jobMetaText}>⏰  {t('timePrefix')} {job.time}</Text>
+      <Text style={styles.jobMetaText}>📍  {t('locationPrefix')} {job.location}</Text>
       <Text style={styles.jobMetaText}>
-        👥  {job.guests} guests  |  {job.cuisine}
+        👥  {job.guests} {t('guestsLabel')}  |  {job.cuisine}
       </Text>
     </View>
   </View>
@@ -43,9 +45,10 @@ const pad = (n: number) => String(n).padStart(2, '0');
 interface TimerDisplayProps {
   seconds: number;
   running: boolean;
+  t: (key: TranslationKey) => string;
 }
 
-const TimerDisplay = ({ seconds, running }: TimerDisplayProps) => {
+const TimerDisplay = ({ seconds, running, t }: TimerDisplayProps) => {
   const h = Math.floor(seconds / 3600);
   const m = Math.floor((seconds % 3600) / 60);
   const s = seconds % 60;
@@ -65,11 +68,11 @@ const TimerDisplay = ({ seconds, running }: TimerDisplayProps) => {
 
   return (
     <View style={styles.timerRow}>
-      <TimerUnit value={pad(h)} label="HOURS" />
+      <TimerUnit value={pad(h)} label={t('hours')} />
       <Text style={styles.timerColon}>:</Text>
-      <TimerUnit value={pad(m)} label="MINUTES" />
+      <TimerUnit value={pad(m)} label={t('minutes')} />
       <Text style={styles.timerColon}>:</Text>
-      <TimerUnit value={pad(s)} label="SECONDS" />
+      <TimerUnit value={pad(s)} label={t('seconds')} />
     </View>
   );
 };
@@ -78,6 +81,7 @@ const TimerDisplay = ({ seconds, running }: TimerDisplayProps) => {
 
 
 export default function JobTimerScreen() {
+  const { t } = useLanguage();
   const params = useLocalSearchParams<{
     bookingId?: string;
     title?: string;
@@ -121,10 +125,10 @@ export default function JobTimerScreen() {
   const handlePause = () => setRunning(false);
 
   const handleEnd = () => {
-    Alert.alert('Verification', 'Are you sure to quit ??', [
-      { text: 'Cancel', style: 'cancel' },
+    Alert.alert(t('quitConfirmTitle'), t('quitConfirmMsg'), [
+      { text: t('cancel'), style: 'cancel' },
       {
-        text: 'Yes',
+        text: t('yes'),
         style: 'destructive',
         onPress: async () => {
           setRunning(false);
@@ -151,7 +155,7 @@ export default function JobTimerScreen() {
       <StatusBar barStyle="dark-content" backgroundColor="#F5F5F5" />
       <View style={styles.screen}>
         <Navbar />
-        <JobCard job={JOB} />
+        <JobCard job={JOB} t={t} />
 
         <View style={{ height: 100 }}></View>
 
@@ -164,12 +168,12 @@ export default function JobTimerScreen() {
           {running ? (
             <View style={styles.liveBadge}>
               <View style={styles.liveDot} />
-              <Text style={styles.liveBadgeText}>LIVE</Text>
+              <Text style={styles.liveBadgeText}>{t('live')}</Text>
             </View>
           ): <View style={styles.void}>
               
             </View>}
-          <TimerDisplay seconds={elapsed} running={running} />
+          <TimerDisplay seconds={elapsed} running={running} t={t} />
         </View>
 
         {/* CTA Buttons */}
@@ -177,7 +181,7 @@ export default function JobTimerScreen() {
           {/* Initial State: Only Start Button */}
           {!running && elapsed === 0 && (
             <TouchableOpacity style={styles.startBtn} onPress={handleStart} activeOpacity={0.88}>
-              <Text style={styles.startBtnText}>Start Job Timer</Text>
+              <Text style={styles.startBtnText}>{t('startJobTimer')}</Text>
             </TouchableOpacity>
           )}
 
@@ -185,10 +189,10 @@ export default function JobTimerScreen() {
           {running && (
             <View style={styles.runningBtns}>
               <TouchableOpacity style={styles.endBtn} onPress={handleEnd} activeOpacity={0.85}>
-                <Text style={styles.endBtnText}>Stop</Text>
+                <Text style={styles.endBtnText}>{t('stopBtn')}</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.pauseBtn} onPress={handlePause} activeOpacity={0.85}>
-                <Text style={styles.pauseBtnText}>Pause</Text>
+                <Text style={styles.pauseBtnText}>{t('pauseLabel')}</Text>
               </TouchableOpacity>
             </View>
           )}
@@ -197,14 +201,14 @@ export default function JobTimerScreen() {
           {!running && elapsed > 0 && (
             <View style={styles.runningBtns}>
               <TouchableOpacity style={styles.endBtn} onPress={handleEnd} activeOpacity={0.85}>
-                <Text style={styles.endBtnText}>Stop</Text>
+                <Text style={styles.endBtnText}>{t('stopBtn')}</Text>
               </TouchableOpacity>
               <TouchableOpacity 
                 style={[styles.startBtn, { flex: 1, height: 54 }]} 
                 onPress={handleStart} 
                 activeOpacity={0.88}
               >
-                <Text style={styles.startBtnText}>Resume</Text>
+                <Text style={styles.startBtnText}>{t('resumeLabel')}</Text>
               </TouchableOpacity>
             </View>
           )}

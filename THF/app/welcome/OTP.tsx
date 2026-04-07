@@ -49,11 +49,11 @@ const hasCompletedProfile = (profile: Awaited<ReturnType<typeof getUserProfile>>
 export default function OTPScreen({ onVerify, onBack }: OTPScreenProps) {
   const router = useRouter();
   const { t } = useLanguage();
-  const params = useLocalSearchParams<{ verificationId?: string; phoneNumber?: string; mode?: 'signup' | 'login' }>();
+  const params = useLocalSearchParams<{ verificationId?: string; phoneNumber?: string; mode?: 'signup' | 'login' | 'forgot_password' }>();
 
   const [verificationId, setVerificationId] = useState(params.verificationId ?? '');
   const phoneNumber = params.phoneNumber ?? '+91 9205394233';
-  const mode = params.mode === 'signup' ? 'signup' : 'login';
+  const mode = params.mode ?? 'login';
 
   const [otp, setOtp] = useState(Array(OTP_LENGTH).fill(''));
   const [focusedIndex, setFocusedIndex] = useState(0);
@@ -87,7 +87,7 @@ export default function OTPScreen({ onVerify, onBack }: OTPScreenProps) {
       setCanResend(false);
     } catch (error: any) {
       console.error('Resend OTP error:', error);
-      Alert.alert('Error', error?.message || 'Failed to resend OTP. Please try again.');
+      Alert.alert(t('error'), error?.message || t('failedResendOtp'));
     } finally {
       setResending(false);
     }
@@ -126,7 +126,7 @@ export default function OTPScreen({ onVerify, onBack }: OTPScreenProps) {
     }
 
     if (!verificationId) {
-      Alert.alert('Error', 'Verification session expired. Please go back and try again.');
+      Alert.alert(t('error'), t('verificationExpired'));
       return;
     }
 
@@ -136,12 +136,16 @@ export default function OTPScreen({ onVerify, onBack }: OTPScreenProps) {
       await saveSession({ uid: user.uid, phoneNumber });
       console.log('Firebase user signed in:', user.uid);
 
-      // OTP is only for signup; next step is to set password.
-      if (mode === 'signup') {
+      // If it's a new signup or forgot password
+      if (mode === 'signup' || mode === 'forgot_password') {
+        const nextScreen = mode === 'forgot_password' ? '/welcome/ResetPassword' : '/welcome/password';
         router.replace({
-          pathname: '/welcome/password',
+          pathname: nextScreen,
           params: {
             phoneNumber,
+            mode,
+            verificationId,
+            otp: otpCode,
           },
         });
         return;
@@ -154,16 +158,16 @@ export default function OTPScreen({ onVerify, onBack }: OTPScreenProps) {
     } catch (error: any) {
       console.error('OTP verify error:', error);
 
-      let message = 'Invalid OTP. Please try again.';
+      let message = t('invalidOtpGeneric');
       if (error?.code === 'auth/invalid-verification-code') {
-        message = 'The OTP you entered is incorrect. Please check and try again.';
+        message = t('otpIncorrect');
       } else if (error?.code === 'auth/code-expired') {
-        message = 'The OTP has expired. Please resend and try again.';
+        message = t('otpExpired');
       } else if (error?.code === 'auth/session-expired') {
-        message = 'Your session has expired. Please go back and request a new OTP.';
+        message = t('sessionExpiredOtp');
       }
 
-      Alert.alert('Verification Failed', message);
+      Alert.alert(t('verificationFailedTitle'), message);
     } finally {
       setLoading(false);
     }
@@ -260,7 +264,7 @@ export default function OTPScreen({ onVerify, onBack }: OTPScreenProps) {
             <View style={[styles.checkbox, whatsapp && styles.checkboxChecked]}>
               {whatsapp && <Text style={styles.checkmark}>✓</Text>}
             </View>
-            <Text style={styles.checkboxLabel}>Get updates on Whatsapp</Text>
+            <Text style={styles.checkboxLabel}>{t('whatsappUpdates')}</Text>
           </TouchableOpacity>
 
           {/* Verify Button */}
