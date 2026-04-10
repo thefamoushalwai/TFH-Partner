@@ -4,7 +4,15 @@
  * Body: { tokens: string[], title: string, body: string, data?: object }
  */
 import { NextRequest, NextResponse } from "next/server";
-import admin from "@/lib/firebase-admin";
+
+// Use dynamic import to prevent build-time initialization
+async function getMessaging() {
+  const { default: admin } = await import("@/lib/firebase-admin");
+  // Ensure initialized
+  const { getAdminDb: _ } = await import("@/lib/firebase-admin");
+  _(); // triggers init if needed
+  return admin.messaging();
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -38,7 +46,8 @@ export async function POST(req: NextRequest) {
       tokens: validTokens,
     };
 
-    const response = await admin.messaging().sendEachForMulticast(message);
+    const messaging = await getMessaging();
+    const response = await messaging.sendEachForMulticast(message);
     
     // Log the outcome for debugging
     const failedTokens: string[] = [];
@@ -62,4 +71,3 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
-
