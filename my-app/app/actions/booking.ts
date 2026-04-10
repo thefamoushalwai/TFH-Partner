@@ -26,23 +26,30 @@ export async function createBookingForChef(
       location: data.location,
       guests: data.guests,
       amount: data.amount,
-      status: "pending",
+      status: "broadcasted",
       createdAt: new Date(),
     });
 
-    // Notify the specific partner about the new direct booking assignment
-    const partnerDoc = await adminDb.collection("users").doc(partnerId).get();
-    if (partnerDoc.exists) {
-      const partnerData = partnerDoc.data();
-      if (partnerData?.fcmToken) {
-        await sendPushNotification(
-          [partnerData.fcmToken],
-          "📌 New Booking Assigned!",
-          `You've been assigned a ${data.eventType} for ${data.guests} guests at ${data.location}.`,
-          { type: "direct_booking_assigned", bookingId: bookingRef.id }
-        );
-      }
+    // Broadcast to ALL chefs who have a registered FCM token
+    const chefsSnap = await adminDb
+      .collection("users")
+      .where("fcmToken", "!=", "")
+      .get();
+
+    const allTokens = chefsSnap.docs
+      .map((doc) => doc.data().fcmToken as string)
+      .filter(Boolean);
+
+    if (allTokens.length > 0) {
+      await sendPushNotification(
+        allTokens,
+        "🍽️ New Booking Available!",
+        `${data.eventType} • ${data.guests} guests • ${data.location}`,
+        { type: "new_booking_available", bookingId: bookingRef.id }
+      );
     }
+
+    console.log(`[createBooking] Notified ${allTokens.length} chef(s) about booking ${bookingRef.id}`);
 
     return { success: true, bookingId: bookingRef.id };
   } catch (error: any) {

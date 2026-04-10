@@ -18,7 +18,7 @@ export default function Sidebar() {
   return (
     <aside className="w-[260px] shrink-0 flex-col hidden md:flex border-r border-zinc-200 bg-white">
       <div className="pt-8 px-6 pb-6 border-b border-zinc-100">
-        <div className="w-12 h-12 bg-brand-500 rounded-lg flex items-center justify-center text-white font-bold text-xl mb-4">
+        <div className="w-12 h-12 bg-[#eb243e] rounded-lg flex items-center justify-center text-white font-bold text-xl mb-4">
           TFH
         </div>
         <h1 className="text-[17px] font-bold tracking-tight text-zinc-900 leading-tight">
@@ -36,7 +36,7 @@ export default function Sidebar() {
               href={item.href}
               className={`relative flex items-start justify-start w-full px-4 py-3 pl-8  rounded-lg transition-all font-medium text-[14px] ${
                 isActive
-                  ? "bg-brand-500 text-white shadow-sm"
+                  ? "bg-[#eb243e] text-white shadow-sm"
                   : "bg-[#F9FAFB] text-gray-700 border-2 border-[#d3dbe2] hover:bg-gray-100"
               }`}
             >
