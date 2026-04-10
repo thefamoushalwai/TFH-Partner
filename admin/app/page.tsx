@@ -2,7 +2,6 @@ import { getDashboardStats } from "@/app/actions/dashboard";
 import { Users, ShieldCheck, FileText, AlertCircle } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import CreateBookingModal from "@/components/CreateBookingModal";
 
 export default async function DashboardPage() {
   const result = await getDashboardStats();
@@ -36,7 +35,7 @@ export default async function DashboardPage() {
             Overview of your application stats directly from Firestore.
           </p>
         </div>
-        <CreateBookingModal />
+        {/* <CreateBookingModal /> */}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

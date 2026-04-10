@@ -36,16 +36,13 @@ export default function LanguageSelectScreen({ onContinue }: LanguageSelectScree
   const router = useRouter();
   const [selected, setSelected] = useState<Language>('en');
 
-  const handleContinue = async (mode: 'login' | 'signup') => {
+  const handleContinue = async () => {
     // Persist selected language so MobileLogin & OTP use it immediately
     await AsyncStorage.setItem(LANG_CACHE_KEY, selected);
     if (onContinue) {
       onContinue(selected);
     } else {
-      router.push({
-        pathname: '/welcome/MobileLogin',
-        params: { mode },
-      });
+      router.push('/welcome/MobileLogin');
     }
   };
 
@@ -88,14 +85,15 @@ export default function LanguageSelectScreen({ onContinue }: LanguageSelectScree
               >
                 {lang.label}
               </Text>
-              <View
-                style={[
-                  styles.radioOuter,
-                  selected === lang.id && styles.radioOuterSelected,
-                ]}
-              >
-                {selected === lang.id && <View style={styles.radioInner} />}
-              </View>
+              {selected === lang.id ? (
+                <Image
+                  source={require('../../assets/THF/Check.svg')}
+                  style={styles.checkIcon}
+                  contentFit="contain"
+                />
+              ) : (
+                <View style={styles.radioOuter} />
+              )}
             </TouchableOpacity>
           ))}
         </View>
@@ -103,18 +101,10 @@ export default function LanguageSelectScreen({ onContinue }: LanguageSelectScree
         {/* Auth Buttons */}
         <TouchableOpacity
           style={styles.continueButton}
-          onPress={() => handleContinue('signup')}
+          onPress={() => handleContinue()}
           activeOpacity={0.85}
         >
-          <Text style={styles.continueText}>{tFor(selected, 'signUp')}</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.loginButton}
-          onPress={() => handleContinue('login')}
-          activeOpacity={0.85}
-        >
-          <Text style={styles.loginText}>{tFor(selected, 'login')}</Text>
+          <Text style={styles.continueText}>{tFor(selected, 'continueBtn')}</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -201,17 +191,11 @@ const styles = StyleSheet.create({
     borderRadius: 11,
     borderWidth: 2,
     borderColor: '#ccc',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: '#fff',
   },
-  radioOuterSelected: {
-    borderColor: '#E8304A',
-  },
-  radioInner: {
-    width: 11,
-    height: 11,
-    borderRadius: 5.5,
-    backgroundColor: '#E8304A',
+  checkIcon: {
+    width: 22,
+    height: 22,
   },
 
   /* Continue Button */
@@ -228,20 +212,6 @@ const styles = StyleSheet.create({
   },
   continueText: {
     color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-    letterSpacing: 0.3,
-  },
-  loginButton: {
-    borderRadius: 12,
-    paddingVertical: 16,
-    alignItems: 'center',
-    borderWidth: 1.5,
-    borderColor: '#E8304A',
-    marginTop: 12,
-  },
-  loginText: {
-    color: '#E8304A',
     fontSize: 16,
     fontWeight: '600',
     letterSpacing: 0.3,

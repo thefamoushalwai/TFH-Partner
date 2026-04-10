@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "THF",
-    "slug": "THF",
+    "name": "The Famous Halwai Partners",
+    "slug": "thefamoushalwaipartners",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/THF/image.png",
@@ -46,7 +46,7 @@
         "expo-notifications",
         {
           "sounds": [],
-          "color": "#E8304A"
+          "color": "#E8304A"  
         }
       ],
       "@react-native-firebase/app",

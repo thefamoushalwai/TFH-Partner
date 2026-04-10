@@ -3,13 +3,11 @@
 import { createBookingForChef } from "@/app/actions/booking";
 import { X, Calendar, ChevronDown } from "lucide-react";
 import Link from "next/link";
-import { useRouter, useParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 export default function CreateBookingPage() {
   const router = useRouter();
-  const params = useParams();
-  const partnerId = params.id as string;
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -23,18 +21,18 @@ export default function CreateBookingPage() {
       clientName: formData.get("clientName") as string,
       phone: formData.get("phone") as string,
       eventType: formData.get("eventType") as string,
-      // For now, combine date and time handling generically or leave as is for action compatibility
       date: new Date(formData.get("date") as string || new Date()),
       location: formData.get("location") as string,
       guests: parseInt(formData.get("guests") as string, 10),
-      amount: 0, // Placeholder
+      amount: 0,
     };
 
-    const result = await createBookingForChef(partnerId, data);
+    // Generic booking action (assuming partnerId is optional or not needed here)
+    const result = await createBookingForChef("generic-booking", data);
     setLoading(false);
 
     if (result.success) {
-      router.push(`/users/${partnerId}`);
+      router.push(`/bookings`);
       router.refresh();
     } else {
       setError(result.error || "Something went wrong.");
@@ -47,7 +45,7 @@ export default function CreateBookingPage() {
         {/* Header */}
         <div className="flex items-center justify-between px-8 py-6">
           <h2 className="text-[22px] font-semibold text-[#1F2937]">New Booking Form</h2>
-          <Link href={`/users/${partnerId}`} className="flex items-center justify-center w-7 h-7 bg-[#9CA3AF] text-white rounded-full hover:bg-gray-500 transition-colors">
+          <Link href={`/bookings`} className="flex items-center justify-center w-7 h-7 bg-[#9CA3AF] text-white rounded-full hover:bg-gray-500 transition-colors">
             <X className="w-4 h-4" />
           </Link>
         </div>

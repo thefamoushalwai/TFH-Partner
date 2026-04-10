@@ -31,17 +31,16 @@ interface MobileLoginScreenProps {
 export default function MobileLoginScreen({ onGetStarted }: MobileLoginScreenProps) {
   const router = useRouter();
   const { t } = useLanguage();
-  const params = useLocalSearchParams<{ mode?: 'login' | 'signup' }>();
-
-  const mode = params.mode === 'login' ? 'login' : 'signup';
   const [mobile, setMobile] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [step, setStep] = useState<'phone' | 'password'>('phone');
+  const [errorMessage, setErrorMessage] = useState('');
 
   const isValidMobile = mobile.trim().length >= 10;
   const isValidPassword = password.trim().length >= 6;
-  const canContinue = mode === 'login' ? isValidMobile && isValidPassword : isValidMobile;
+  const canContinue = step === 'phone' ? isValidMobile : isValidMobile && isValidPassword;
 
   const hasCompletedProfile = (profile: Awaited<ReturnType<typeof getUserProfile>>): boolean => {
     return profile !== null;
@@ -50,7 +49,7 @@ export default function MobileLoginScreen({ onGetStarted }: MobileLoginScreenPro
   const handleGetStarted = async () => {
     if (!canContinue) return;
 
-    if (onGetStarted) {
+    if (onGetStarted && step === 'phone') {
       onGetStarted(mobile.trim());
       return;
     }
@@ -58,39 +57,28 @@ export default function MobileLoginScreen({ onGetStarted }: MobileLoginScreenPro
     setLoading(true);
     try {
       const phoneNumber = `+91${mobile.trim()}`;
-      if (mode === 'signup') {
+      
+      if (step === 'phone') {
         const existingProfile = await getUserProfileByPhone(phoneNumber);
+        
         if (existingProfile) {
-          Alert.alert(
-            t('alreadyRegistered'),
-            t('alreadyRegisteredMsg'),
-            [
-              {
-                text: t('ok'),
-                onPress: () =>
-                  router.replace({
-                    pathname: '/welcome/MobileLogin',
-                    params: { mode: 'login' },
-                  }),
-              },
-            ]
-          );
-          setLoading(false);
-          return;
+          // Profile exists -> Move to password step for login
+          setStep('password');
+        } else {
+          // No profile -> Proceed to OTP for signup
+          const verificationId = await sendOtp(phoneNumber);
+
+          router.push({
+            pathname: '/welcome/OTP',
+            params: {
+              verificationId,
+              phoneNumber,
+              mode: 'signup',
+            },
+          });
         }
-
-        const verificationId = await sendOtp(phoneNumber);
-
-        // Signup flow uses OTP verification.
-        router.push({
-          pathname: '/welcome/OTP',
-          params: {
-            verificationId,
-            phoneNumber,
-            mode: 'signup',
-          },
-        });
       } else {
+        // Step is password -> perform login
         const result = await loginWithPhonePassword(phoneNumber, password.trim());
         await saveSession({ uid: result.uid, phoneNumber: result.phoneNumber });
         const existingProfile = await getUserProfile(result.uid);
@@ -103,11 +91,14 @@ export default function MobileLoginScreen({ onGetStarted }: MobileLoginScreenPro
       }
     } catch (error: any) {
       console.error('Auth error:', error);
-      Alert.alert(
-        t('error'),
-        error?.message ||
-          t('failedSaveRetry'),
-      );
+      if (step === 'password') {
+        setErrorMessage('Invalid Phone No. or Password entered');
+      } else {
+        Alert.alert(
+          t('error'),
+          error?.message || t('failedSaveRetry'),
+        );
+      }
     } finally {
       setLoading(false);
     }
@@ -142,7 +133,7 @@ export default function MobileLoginScreen({ onGetStarted }: MobileLoginScreenPro
         {/* Bottom Content */}
         <View style={styles.bottomSheet}>
           <Text style={styles.title}>
-            {mode === 'login' ? t('loginWithMobile') : t('signUpWithMobile')}
+            {step === 'password' ? t('loginWithMobile') : t('getStarted2')}
           </Text>
 
           {/* Mobile Input */}
@@ -156,14 +147,21 @@ export default function MobileLoginScreen({ onGetStarted }: MobileLoginScreenPro
               keyboardType="phone-pad"
               maxLength={10}
               value={mobile}
-              onChangeText={setMobile}
+              onChangeText={(text) => {
+                setMobile(text);
+                setErrorMessage('');
+                if (step === 'password') {
+                  setStep('phone');
+                  setPassword('');
+                }
+              }}
               returnKeyType="done"
               onSubmitEditing={handleGetStarted}
               editable={!loading}
             />
           </View>
 
-          {mode === 'login' && (
+          {step === 'password' && (
             <View style={styles.inputWrapper}>
               <TextInput
                 style={styles.input}
@@ -171,10 +169,14 @@ export default function MobileLoginScreen({ onGetStarted }: MobileLoginScreenPro
                 placeholderTextColor="#b0b0b0"
                 secureTextEntry={!showPassword}
                 value={password}
-                onChangeText={setPassword}
+                onChangeText={(text) => {
+                  setPassword(text);
+                  setErrorMessage('');
+                }}
                 returnKeyType="done"
                 onSubmitEditing={handleGetStarted}
                 editable={!loading}
+                autoFocus={true}
               />
               <TouchableOpacity
                 onPress={() => setShowPassword(!showPassword)}
@@ -190,15 +192,19 @@ export default function MobileLoginScreen({ onGetStarted }: MobileLoginScreenPro
             </View>
           )}
 
-          {/* Forgot Password Link (login mode only) */}
-          {mode === 'login' && (
+          {/* Forgot Password Link */}
+          {step === 'password' && (
             <TouchableOpacity
-              onPress={() => router.push('/welcome/ForgotPassword' as any)}
+              onPress={() => router.push({ pathname: '/welcome/ForgotPassword', params: { phone: mobile } } as any)}
               disabled={loading}
               style={styles.forgotPasswordBtn}
             >
               <Text style={styles.forgotPasswordText}>{t('forgotPassword')}</Text>
             </TouchableOpacity>
+          )}
+
+          {!!errorMessage && (
+            <Text style={styles.errorText}>{errorMessage}</Text>
           )}
 
           {/* Get Started Button */}
@@ -212,24 +218,9 @@ export default function MobileLoginScreen({ onGetStarted }: MobileLoginScreenPro
               <ActivityIndicator color="#fff" size="small" />
             ) : (
               <Text style={[styles.buttonText, canContinue ? styles.buttonTextActive : styles.buttonTextDisabled]}>
-                {mode === 'login' ? t('login') : t('getStarted2')}
+                {step === 'password' ? t('login') : t('getStarted2')}
               </Text>
             )}
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={() =>
-              router.replace({
-                pathname: '/welcome/MobileLogin',
-                params: { mode: mode === 'login' ? 'signup' : 'login' },
-              })
-            }
-            disabled={loading}
-            style={styles.switchModeBtn}
-          >
-            <Text style={styles.switchModeText}>
-              {mode === 'login' ? t('dontHaveAccount') : t('alreadyHaveAccount')}
-            </Text>
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
@@ -364,5 +355,11 @@ const styles = StyleSheet.create({
     color: '#E8304A',
     fontSize: 14,
     fontWeight: '500',
+  },
+  errorText: {
+    color: '#E8304A',
+    fontSize: 14,
+    marginBottom: 16,
+    textAlign: 'center',
   },
 });
