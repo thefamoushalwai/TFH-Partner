@@ -20,6 +20,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Navbar from '../../components/Navbar';
 import { useLanguage } from '@/src/hooks/useLanguage';
+import { Fonts } from '@/src/theme/fonts';
+import Constants from 'expo-constants';
 
 /* ── Types ── */
 interface ProfileScreenProps {
@@ -213,6 +215,12 @@ export default function ProfileScreen() {
           <Text style={styles.logoutText}>{t('logout')}</Text>
         </TouchableOpacity>
 
+        <View style={styles.footerInfo}>
+          <Text style={styles.versionText}>Version {Constants.expoConfig?.version ?? '1.0.0'}</Text>
+          <Text style={styles.developerText}>Developed by Mohit Aggarwal</Text>
+        
+        </View>
+
         <View style={{ height: 16 }} />
       </ScrollView>
     </SafeAreaView>
@@ -341,6 +349,23 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600',
     color: '#E8304A',
+  },
+  footerInfo: {
+    marginTop: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+  },
+  versionText: {
+    fontSize: 14,
+    color: '#999',
+    fontFamily: Fonts.medium,
+  },
+  developerText: {
+    paddingTop: 4,
+    fontSize: 13,
+    color: '#bbb',
+    fontFamily: Fonts.regular,
   },
 });
 

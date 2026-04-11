@@ -1,7 +1,20 @@
 import { Stack, useRouter } from "expo-router";
 import * as Notifications from "expo-notifications";
-import { useEffect, useRef } from "react";
+import * as SplashScreen from "expo-splash-screen";
+import { useEffect, useRef, useCallback } from "react";
 import type { EventSubscription } from "expo-modules-core";
+import {
+  useFonts,
+  Inter_400Regular,
+  Inter_500Medium,
+  Inter_600SemiBold,
+  Inter_700Bold,
+} from "@expo-google-fonts/inter";
+import { View } from "react-native";
+import NetworkBanner from "../components/NetworkBanner";
+
+// ── Keep the splash screen visible until fonts are ready ──
+SplashScreen.preventAutoHideAsync();
 
 // ── Configure how notifications appear when app is in the FOREGROUND ──
 // This MUST be at the top level so it runs as soon as the app loads,
@@ -20,6 +33,19 @@ export default function RootLayout() {
   const router = useRouter();
   const notificationListener = useRef<EventSubscription | null>(null);
   const responseListener = useRef<EventSubscription | null>(null);
+
+  const [fontsLoaded, fontError] = useFonts({
+    Inter_400Regular,
+    Inter_500Medium,
+    Inter_600SemiBold,
+    Inter_700Bold,
+  });
+
+  const onLayoutRootView = useCallback(async () => {
+    if (fontsLoaded || fontError) {
+      await SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded, fontError]);
 
   useEffect(() => {
     // When a notification is received while app is foregrounded
@@ -44,19 +70,29 @@ export default function RootLayout() {
     };
   }, []);
 
+  // Don't render anything until fonts are loaded (or errored)
+  if (!fontsLoaded && !fontError) {
+    return null;
+  }
+
   return (
-    <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="index" />
-      <Stack.Screen name="welcome/LanguageSelect" />
-      <Stack.Screen name="welcome/MobileLogin" />
-      <Stack.Screen name="welcome/OTP" />
-      <Stack.Screen name="welcome/password" />
-      <Stack.Screen name="welcome/ForgotPassword" />
-      <Stack.Screen name="kyc/Details" />
-      <Stack.Screen name="kyc/Experience" />
-      <Stack.Screen name="kyc/Aadhar" />
-      <Stack.Screen name="kyc/Selfie" />
-      <Stack.Screen name="(tabs)" />
-    </Stack>
+    <View style={{ flex: 1 }} onLayout={onLayoutRootView}>
+      {/* ── Global network banner – overlays every screen ── */}
+      <NetworkBanner />
+
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="index" />
+        <Stack.Screen name="welcome/LanguageSelect" />
+        <Stack.Screen name="welcome/MobileLogin" />
+        <Stack.Screen name="welcome/OTP" />
+        <Stack.Screen name="welcome/password" />
+        <Stack.Screen name="welcome/ForgotPassword" />
+        <Stack.Screen name="kyc/Details" />
+        <Stack.Screen name="kyc/Experience" />
+        <Stack.Screen name="kyc/Aadhar" />
+        <Stack.Screen name="kyc/Selfie" />
+        <Stack.Screen name="(tabs)" />
+      </Stack>
+    </View>
   );
 }

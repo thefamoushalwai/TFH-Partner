@@ -14,6 +14,9 @@ export async function createBookingForChef(
     location: string;
     guests: number;
     amount: number;
+    zone?: string;
+    requirements?: string;
+    address?: string;
   }
 ) {
   try {
@@ -23,9 +26,12 @@ export async function createBookingForChef(
       phone: data.phone,
       eventType: data.eventType,
       date: data.date,
-      location: data.location,
+      location: data.location, // this is the city
+      address: data.address || "",
       guests: data.guests,
       amount: data.amount,
+      zone: data.zone || "",
+      requirements: data.requirements || "",
       status: "broadcasted",
       createdAt: new Date(),
     });

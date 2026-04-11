@@ -30,6 +30,7 @@ type FormValues = {
   zone: string;
   address: string;
   requirements: string;
+  amount: string;
 };
 
 export default function CreateBookingPage() {
@@ -42,7 +43,6 @@ export default function CreateBookingPage() {
   const [showConfirm, setShowConfirm] = useState(false);
   const [pendingData, setPendingData] = useState<FormValues | null>(null);
 
-  // Step 1: collect form data and show confirmation
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
@@ -57,11 +57,11 @@ export default function CreateBookingPage() {
       zone: formData.get("zone") as string,
       address: formData.get("address") as string,
       requirements: formData.get("requirements") as string,
+      amount: formData.get("amount") as string,
     });
     setShowConfirm(true);
   };
 
-  // Step 2: user confirmed — broadcast and reset
   const handleConfirm = async () => {
     if (!pendingData) return;
     setShowConfirm(false);
@@ -77,9 +77,12 @@ export default function CreateBookingPage() {
       phone: pendingData.phone,
       eventType: pendingData.eventType,
       date: dateTime,
-      location: pendingData.address || pendingData.location,
+      location: pendingData.location, // City from dropdown
+      address: pendingData.address,   // Full address from textarea
       guests: parseInt(pendingData.guests, 10),
-      amount: 0,
+      amount: parseFloat(pendingData.amount) || 0,
+      zone: pendingData.zone,
+      requirements: pendingData.requirements,
     });
 
     setLoading(false);
@@ -88,282 +91,157 @@ export default function CreateBookingPage() {
       setSuccess(true);
       setPendingData(null);
       formRef.current?.reset();
-      // Auto-hide success banner after 4s
       setTimeout(() => setSuccess(false), 4000);
     } else {
       setError(result.error || "Something went wrong.");
     }
   };
 
-  return (
-    <>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-        <div className="bg-white w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+  const inputClass = "w-full px-4 py-3.5 bg-white border border-[#E5E7EB] rounded-xl text-[14px] text-gray-700 placeholder-[#9CA3AF] focus:outline-none focus:ring-1 focus:ring-[#E11D48] focus:border-[#E11D48] transition-all";
+  const selectWrapper = "relative";
+  const selectIcon = "w-4 h-4 text-[#9CA3AF] absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none";
 
-          {/* Header */}
-          <div className="flex items-center justify-between px-7 py-5 border-b border-gray-100">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 bg-[#eb243e]/10 rounded-lg flex items-center justify-center">
-                <FileText className="w-4 h-4 text-[#eb243e]" />
-              </div>
-              <div>
-                <h2 className="text-[16px] font-bold text-gray-900 leading-tight">New Booking</h2>
-                <p className="text-[12px] text-gray-400 mt-0.5">Fill in the details to broadcast to all chefs</p>
-              </div>
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0a0f1c]/20 backdrop-blur-sm">
+      <div className="bg-white w-full max-w-[580px] rounded-[24px] shadow-2xl overflow-hidden relative animate-in fade-in zoom-in-95 duration-200">
+        
+        {/* Close Button */}
+        <Link
+          href="/bookings"
+          className="absolute top-6 right-6 z-10 w-7 h-7 bg-[#9CA3AF]/20 text-[#9CA3AF] rounded-full flex items-center justify-center hover:bg-[#9CA3AF]/30 transition-colors"
+        >
+          <X className="w-4 h-4" />
+        </Link>
+
+        {/* Header */}
+        <div className="px-8 pt-8 pb-6">
+          <h2 className="text-[18px] font-bold text-[#374151]">New Booking Form</h2>
+        </div>
+
+        {/* Form Body */}
+        <form ref={formRef} onSubmit={handleSubmit} className="px-8 pb-8 space-y-4">
+          
+          {error && (
+            <div className="p-3 bg-red-50 text-red-600 rounded-lg text-xs border border-red-100 mb-2">
+              {error}
             </div>
-            <Link
-              href="/bookings"
-              className="flex items-center justify-center w-8 h-8 bg-gray-100 text-gray-500 rounded-full hover:bg-gray-200 transition-colors"
-            >
-              <X className="w-4 h-4" />
-            </Link>
+          )}
+
+          {success && (
+            <div className="p-3 bg-green-50 text-green-700 rounded-lg text-xs border border-green-100 mb-2">
+              Booking broadcasted successfully!
+            </div>
+          )}
+
+          {/* Row 1: Name & Phone */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <input name="clientName" required placeholder="Client full name" className={inputClass} />
+            <input name="phone" required placeholder="Client Contact number" className={inputClass} />
           </div>
 
-          {/* Form Body */}
-          <form ref={formRef} onSubmit={handleSubmit} className="px-7 py-6 space-y-5 max-h-[75vh] overflow-y-auto">
-
-            {error && (
-              <div className="flex items-start gap-2.5 p-3.5 bg-red-50 text-red-600 rounded-lg text-[13px] border border-red-100">
-                <X className="w-4 h-4 mt-0.5 shrink-0" />
-                {error}
-              </div>
-            )}
-
-            {success && (
-              <div className="flex items-center gap-2.5 p-3.5 bg-green-50 text-green-700 rounded-lg text-[13px] border border-green-100">
-                <CheckCircle className="w-4 h-4 shrink-0" />
-                Booking broadcasted to all available chefs! You can create another one below.
-              </div>
-            )}
-
-            {/* Row 1: Location + Occasion */}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>Location</Label>
-                <div className="relative">
-                  <MapPin className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-                  <select name="location" required className={selectBase + " pl-9"}>
-                    <option value="">Select city</option>
-                    <option value="delhi">Delhi</option>
-                    <option value="mumbai">Mumbai</option>
-                    <option value="bangalore">Bangalore</option>
-                    <option value="hyderabad">Hyderabad</option>
-                    <option value="chennai">Chennai</option>
-                  </select>
-                  <ChevronDown className="w-4 h-4 text-gray-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-                </div>
-              </div>
-              <div>
-                <Label>Occasion</Label>
-                <div className="relative">
-                  <select name="eventType" required className={selectBase}>
-                    <option value="">Select occasion</option>
-                    <option value="birthday">Birthday</option>
-                    <option value="wedding">Wedding</option>
-                    <option value="corporate">Corporate Event</option>
-                    <option value="housewarming">Housewarming</option>
-                    <option value="other">Other</option>
-                  </select>
-                  <ChevronDown className="w-4 h-4 text-gray-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-                </div>
-              </div>
+          {/* Row 2: Location & Occasion */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className={selectWrapper}>
+              <select name="location" required className={inputClass + " appearance-none"}>
+                <option value="">Select location</option>
+                <option value="delhi">Delhi</option>
+                <option value="mumbai">Mumbai</option>
+                <option value="bangalore">Bangalore</option>
+              </select>
+              <ChevronDown className={selectIcon} />
             </div>
-
-            {/* Row 2: Client Name + Phone */}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>Client Name</Label>
-                <div className="relative">
-                  <User className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-                  <input
-                    required
-                    name="clientName"
-                    placeholder="Full name"
-                    className={inputBase + " pl-9"}
-                  />
-                </div>
-              </div>
-              <div>
-                <Label>Contact Number</Label>
-                <div className="relative">
-                  <Phone className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-                  <input
-                    required
-                    name="phone"
-                    type="tel"
-                    placeholder="+91 00000 00000"
-                    className={inputBase + " pl-9"}
-                  />
-                </div>
-              </div>
+            <div className={selectWrapper}>
+              <select name="eventType" required className={inputClass + " appearance-none"}>
+                <option value="">Select occasion</option>
+                <option value="birthday">Birthday</option>
+                <option value="wedding">Wedding</option>
+                <option value="other">Other</option>
+              </select>
+              <ChevronDown className={selectIcon} />
             </div>
+          </div>
 
-            {/* Row 3: Guests + Date */}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>No. of Guests</Label>
-                <div className="relative">
-                  <Users className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-                  <input
-                    required
-                    type="number"
-                    min={1}
-                    name="guests"
-                    placeholder="e.g. 50"
-                    className={inputBase + " pl-9"}
-                  />
-                </div>
-              </div>
-              <div>
-                <Label>Event Date</Label>
-                <div className="relative">
-                  <Calendar className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-                  <input
-                    required
-                    type="date"
-                    name="date"
-                    className={inputBase + " pl-9"}
-                  />
-                </div>
-              </div>
+          {/* Row 3: Guests & Cuisine */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <input name="guests" type="number" required placeholder="No of guests" className={inputClass} />
+            <div className={selectWrapper}>
+              <select name="cuisine" className={inputClass + " appearance-none bg-white"}>
+                <option value="">Cuisine type</option>
+                <option value="indian">Indian</option>
+                <option value="continental">Continental</option>
+                <option value="chinese">Chinese</option>
+              </select>
+              <ChevronDown className={selectIcon} />
             </div>
+          </div>
 
-            {/* Row 4: Time + Zone */}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>Event Time</Label>
-                <div className="relative">
-                  <Clock className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-                  <input
-                    required
-                    type="time"
-                    name="time"
-                    className={inputBase + " pl-9"}
-                  />
-                </div>
-              </div>
-              <div>
-                <Label>Zone</Label>
-                <div className="relative">
-                  <select name="zone" className={selectBase}>
-                    <option value="">Select zone</option>
-                    <option value="zone1">Zone 1 — North</option>
-                    <option value="zone2">Zone 2 — South</option>
-                    <option value="zone3">Zone 3 — East</option>
-                    <option value="zone4">Zone 4 — West</option>
-                  </select>
-                  <ChevronDown className="w-4 h-4 text-gray-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-                </div>
-              </div>
+          {/* Row 4: Date & Time */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="relative">
+              <input name="date" type="text" onFocus={(e) => (e.target.type = "date")} placeholder="Select date" className={inputClass} />
+              <Calendar className="w-5 h-5 text-[#9CA3AF] absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" />
             </div>
+            <input name="time" placeholder="Enter time" className={inputClass} />
+          </div>
 
-            {/* Row 5: Full Address */}
-            <div>
-              <Label>Full Address</Label>
-              <textarea
-                required
-                name="address"
-                placeholder="House no., street, locality, city, pincode"
-                rows={3}
-                className={inputBase + " resize-none"}
-              />
-            </div>
+          {/* Row 5: Address */}
+          <textarea
+            name="address"
+            required
+            placeholder="Enter full address"
+            rows={4}
+            className={inputClass + " resize-none"}
+          />
 
-            {/* Row 6: Special Requirements */}
-            <div>
-              <Label>Special Requirements <span className="normal-case font-normal text-gray-400">(optional)</span></Label>
-              <input
-                name="requirements"
-                placeholder="Dietary needs, cuisine preference, setup instructions…"
-                className={inputBase}
-              />
+          {/* Row 6: Zone & Amount */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className={selectWrapper}>
+              <select name="zone" required className={inputClass + " appearance-none"}>
+                <option value="">Select zone</option>
+                <option value="north">North</option>
+                <option value="south">South</option>
+                <option value="east">East</option>
+                <option value="west">West</option>
+              </select>
+              <ChevronDown className={selectIcon} />
             </div>
+            <input 
+              name="amount" 
+              type="number" 
+              step="0.01" 
+              required 
+              placeholder="Booking Amount" 
+              className={inputClass} 
+            />
+          </div>
 
-            {/* Submit */}
-            <div className="pt-1 flex gap-3">
-              <Link
-                href="/bookings"
-                className="flex-1 py-2.5 rounded-lg border border-gray-200 text-[14px] font-medium text-gray-600 text-center hover:bg-gray-50 transition-colors"
-              >
-                Cancel
-              </Link>
-              <button
-                type="submit"
-                disabled={loading}
-                className="flex-1 bg-[#eb243e] hover:bg-[#c8102e] text-white py-2.5 rounded-lg font-semibold text-[14px] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-              >
-                {loading ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    Broadcasting…
-                  </span>
-                ) : (
-                  "Create Booking"
-                )}
-              </button>
-            </div>
-          </form>
-        </div>
+          {/* Row 7: Special Requirements */}
+          <input name="requirements" placeholder="any special requirement" className={inputClass} />
+
+          {/* Action Button */}
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-[#E11D48] hover:bg-red-700 text-white py-4 rounded-xl font-bold text-[16px] transition-all disabled:opacity-70 mt-4 shadow-lg shadow-red-100"
+          >
+            {loading ? "Creating..." : "Create Booking"}
+          </button>
+        </form>
       </div>
 
-      {/* ── Confirmation Dialog ── */}
+      {/* Confirmation Dialog Placeholder (Hidden logic preserved) */}
       {showConfirm && pendingData && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl p-6 animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 bg-[#eb243e]/10 rounded-full flex items-center justify-center">
-                <FileText className="w-5 h-5 text-[#eb243e]" />
-              </div>
-              <div>
-                <h3 className="text-[15px] font-bold text-gray-900">Confirm Broadcast</h3>
-                <p className="text-[12px] text-gray-400">This will notify all available chefs.</p>
-              </div>
-            </div>
-
-            <div className="bg-gray-50 rounded-xl p-4 space-y-2 text-[13px] text-gray-700 mb-5 border border-gray-100">
-              <div className="flex justify-between">
-                <span className="text-gray-400 font-medium">Client</span>
-                <span className="font-semibold">{pendingData.clientName}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-400 font-medium">Phone</span>
-                <span>{pendingData.phone}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-400 font-medium">Occasion</span>
-                <span className="capitalize">{pendingData.eventType}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-400 font-medium">Date & Time</span>
-                <span>{pendingData.date} {pendingData.time && `at ${pendingData.time}`}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-400 font-medium">Guests</span>
-                <span>{pendingData.guests}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-400 font-medium">City</span>
-                <span className="capitalize">{pendingData.location}</span>
-              </div>
-            </div>
-
+          <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl p-6">
+            <h3 className="text-lg text-[#374151] font-bold mb-4">Confirm Broadcast</h3>
+            <p className="text-sm text-gray-500 mb-6">Are you sure you want to broadcast this booking to all chefs?</p>
             <div className="flex gap-3">
-              <button
-                onClick={() => setShowConfirm(false)}
-                className="flex-1 py-2.5 rounded-xl border border-gray-200 text-[14px] font-medium text-gray-600 hover:bg-gray-50 transition-colors"
-              >
-                Go Back
-              </button>
-              <button
-                onClick={handleConfirm}
-                className="flex-1 py-2.5 rounded-xl bg-[#eb243e] hover:bg-[#c8102e] text-white text-[14px] font-semibold transition-colors"
-              >
-                Yes, Broadcast
-              </button>
+              <button onClick={() => setShowConfirm(false)} className="flex-1 py-2 rounded-lg border border-[#E5E7EB] text-[#374151] text-sm font-medium">Cancel</button>
+              <button onClick={handleConfirm} className="flex-1 py-2 rounded-lg bg-[#E11D48] text-white text-sm font-semibold">Yes, Broadcast</button>
             </div>
           </div>
         </div>
       )}
-    </>
+    </div>
   );
 }

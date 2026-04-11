@@ -1,17 +1,24 @@
 "use server";
 
 import { adminDb } from "@/lib/firebase-admin";
+import { revalidatePath } from "next/cache";
 
 export interface BookingRow {
   id: string;
+  fullId: string;
   chefName: string;
   client: string;
+  phone: string;
   eventType: string;
   date: string;
   time: string;
   guests: number;
   amount: string;
+  rawAmount: number;
   status: string;
+  address: string;
+  requirements: string;
+  zone: string;
 }
 
 export interface BookingStats {
@@ -49,7 +56,7 @@ function normaliseStatus(raw: string = ""): string {
   const s = raw.toLowerCase().trim();
   if (s === "completed" || s === "done") return "Completed";
   if (s === "in_progress" || s === "inprogress" || s === "in progress" || s === "active") return "In progress";
-  if (s === "scheduled" || s === "confirmed" || s === "pending") return "Scheduled";
+  if (s === "scheduled" || s === "confirmed" || s === "pending" || s === "broadcasted") return "Scheduled";
   if (s === "cancelled" || s === "canceled" || s === "rejected") return "Cancelled";
   return "Scheduled"; // default
 }
@@ -97,18 +104,25 @@ export async function getBookingsData(): Promise<{
         "Unknown Client";
 
       const { date, time } = formatDate(b.date ?? b.createdAt);
-      const amount = b.amount ? `₹${Number(b.amount).toLocaleString("en-IN")}` : "—";
+      const amountValue = Number(b.amount) || 0;
+      const amount = amountValue ? `₹${amountValue.toLocaleString("en-IN")}` : "—";
 
       bookings.push({
         id: `#${doc.id.slice(0, 5).toUpperCase()}`,
+        fullId: doc.id,
         chefName,
         client,
+        phone: b.phone || "",
         eventType: b.eventType || b.occasion || "Event",
         date,
         time,
         guests: Number(b.guests) || 0,
         amount,
+        rawAmount: amountValue,
         status,
+        address: b.address || b.location || "",
+        requirements: b.requirements || "",
+        zone: b.zone || "",
       });
     }
 
@@ -116,5 +130,33 @@ export async function getBookingsData(): Promise<{
   } catch (error: any) {
     console.error("Error fetching bookings:", error);
     return { success: false, error: error.message || "Failed to fetch bookings." };
+  }
+}
+
+export async function updateBooking(id: string, data: Partial<BookingRow & { rawStatus: string }>) {
+  try {
+    const updateData: any = {};
+    if (data.rawAmount !== undefined) updateData.amount = data.rawAmount;
+    if (data.zone !== undefined) updateData.zone = data.zone;
+    if (data.status !== undefined) updateData.status = data.status.toLowerCase().replace(" ", "_");
+    if (data.chefName !== undefined) updateData.chefName = data.chefName;
+
+    await adminDb.collection("bookings").doc(id).update(updateData);
+    revalidatePath("/bookings");
+    return { success: true };
+  } catch (error: any) {
+    console.error("Error updating booking:", error);
+    return { success: false, error: error.message || "Failed to update booking" };
+  }
+}
+
+export async function deleteBooking(id: string) {
+  try {
+    await adminDb.collection("bookings").doc(id).delete();
+    revalidatePath("/bookings");
+    return { success: true };
+  } catch (error: any) {
+    console.error("Error deleting booking:", error);
+    return { success: false, error: error.message || "Failed to delete booking" };
   }
 }

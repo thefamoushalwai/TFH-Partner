@@ -1,5 +1,7 @@
 import { getBookingsData } from "@/app/actions/bookings";
-import { AlertCircle, Eye } from "lucide-react";
+import BookingActionButtons from "@/components/BookingActionButtons";
+import { AlertCircle } from "lucide-react";
+import Link from "next/link";
 
 const STATUS_CONFIG: Record<
   string,
@@ -31,7 +33,14 @@ const STATUS_CONFIG: Record<
   },
 };
 
-export default async function BookingsPage() {
+export default async function BookingsPage(props: {
+  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
+  const searchParams = props.searchParams ? await props.searchParams : {};
+  const pageStr = typeof searchParams.page === 'string' ? searchParams.page : "1";
+  const currentPage = parseInt(pageStr, 10) || 1;
+  const itemsPerPage = 10;
+
   const result = await getBookingsData();
 
   if (!result.success || !result.data) {
@@ -47,6 +56,11 @@ export default async function BookingsPage() {
   }
 
   const { stats, bookings } = result.data;
+  const totalItems = bookings.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
+  const safePage = Math.min(Math.max(1, currentPage), totalPages);
+  
+  const currentBookings = bookings.slice((safePage - 1) * itemsPerPage, safePage * itemsPerPage);
 
   const cards = [
     {
@@ -146,7 +160,7 @@ export default async function BookingsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {bookings.map((booking, i) => {
+                {currentBookings.map((booking, i) => {
                   const pill = STATUS_CONFIG[booking.status]?.pill ?? "bg-gray-100 text-gray-600 border-gray-200";
                   return (
                     <tr key={i} className="hover:bg-gray-50 transition-colors">
@@ -180,11 +194,7 @@ export default async function BookingsPage() {
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center gap-3 text-gray-400">
-                          <button className="hover:text-gray-600 transition-colors">
-                            <Eye className="w-4 h-4" />
-                          </button>
-                        </div>
+                        <BookingActionButtons booking={booking} />
                       </td>
                     </tr>
                   );
@@ -198,24 +208,36 @@ export default async function BookingsPage() {
         {bookings.length > 0 && (
           <div className="flex items-center justify-between px-6 py-4 border-t border-gray-100 bg-[#FAFAFA]">
             <p className="text-[11px] text-gray-500">
-              Showing {bookings.length} of {stats.total} bookings
+              Showing {(safePage - 1) * itemsPerPage + 1} to {Math.min(safePage * itemsPerPage, totalItems)} of {totalItems} bookings
             </p>
             <div className="flex items-center gap-1">
-              <button className="flex items-center justify-center w-7 h-7 rounded border border-gray-200 bg-white text-gray-500 hover:bg-gray-50 text-xs shadow-sm">
+              <Link 
+                href={`?page=1`}
+                className={`flex items-center justify-center w-7 h-7 rounded border text-xs shadow-sm transition-colors ${safePage <= 1 ? "border-gray-100 bg-gray-50 text-gray-300 pointer-events-none" : "border-gray-200 bg-white text-gray-500 hover:bg-gray-50"}`}
+              >
                 &laquo;
-              </button>
-              <button className="flex items-center justify-center w-7 h-7 rounded border border-gray-200 bg-white text-gray-500 hover:bg-gray-50 text-xs shadow-sm">
+              </Link>
+              <Link 
+                href={`?page=${Math.max(1, safePage - 1)}`}
+                className={`flex items-center justify-center w-7 h-7 rounded border text-xs shadow-sm transition-colors ${safePage <= 1 ? "border-gray-100 bg-gray-50 text-gray-300 pointer-events-none" : "border-gray-200 bg-white text-gray-500 hover:bg-gray-50"}`}
+              >
                 &lsaquo;
+              </Link>
+              <button className="flex items-center justify-center px-3 h-7 rounded bg-[#C44629] text-white text-xs font-medium shadow-sm transition-colors">
+                {safePage}
               </button>
-              <button className="flex items-center justify-center w-7 h-7 rounded bg-[#E11D48] text-white text-xs font-medium shadow-sm">
-                1
-              </button>
-              <button className="flex items-center justify-center w-7 h-7 rounded border border-gray-200 bg-white text-gray-500 hover:bg-gray-50 text-xs shadow-sm">
+              <Link 
+                href={`?page=${Math.min(totalPages, safePage + 1)}`}
+                className={`flex items-center justify-center w-7 h-7 rounded border text-xs shadow-sm transition-colors ${safePage >= totalPages ? "border-gray-100 bg-gray-50 text-gray-300 pointer-events-none" : "border-gray-200 bg-white text-gray-500 hover:bg-gray-50"}`}
+              >
                 &rsaquo;
-              </button>
-              <button className="flex items-center justify-center w-7 h-7 rounded border border-gray-200 bg-white text-gray-500 hover:bg-gray-50 text-xs shadow-sm">
+              </Link>
+              <Link 
+                href={`?page=${totalPages}`}
+                className={`flex items-center justify-center w-7 h-7 rounded border text-xs shadow-sm transition-colors ${safePage >= totalPages ? "border-gray-100 bg-gray-50 text-gray-300 pointer-events-none" : "border-gray-200 bg-white text-gray-500 hover:bg-gray-50"}`}
+              >
                 &raquo;
-              </button>
+              </Link>
             </div>
           </div>
         )}
