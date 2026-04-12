@@ -12,15 +12,15 @@
  *   const { profile, loading, updateProfile } = useUserStore();
  */
 
-import { useEffect, useState, useCallback } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { auth } from '@/src/services/firebaseConfig';
 import {
-  getUserProfile,
   createUserProfile,
+  getUserProfile,
   updateUserProfile,
   type UserProfile,
 } from '@/src/services/userService';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useCallback, useEffect, useState } from 'react';
 
 const CACHE_KEY = 'user_profile_cache';
 
@@ -98,8 +98,8 @@ export function useUserStore(): UseUserStoreReturn {
     }
 
     load();
-    return () => { 
-      cancelled = true; 
+    return () => {
+      cancelled = true;
       profileListeners.delete(listener);
     };
   }, []);
@@ -134,10 +134,10 @@ export function useUserStore(): UseUserStoreReturn {
           if (!prev) return prev;
           const updated = { ...prev, ...data };
           AsyncStorage.setItem(CACHE_KEY, JSON.stringify(updated));
-          
+
           // Use setTimeout to ensure we don't trigger state updates on unmounted components inside the same cycle
           setTimeout(() => notifyProfileListeners(updated), 0);
-          
+
           return updated;
         });
       } catch (err: any) {

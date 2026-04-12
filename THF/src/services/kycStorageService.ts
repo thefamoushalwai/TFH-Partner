@@ -1,5 +1,4 @@
-import { auth, storage } from '@/src/services/firebaseConfig';
-import { db } from '@/src/services/firebaseConfig';
+import { auth, db, storage } from '@/src/services/firebaseConfig';
 
 type KycDocumentType = 'selfie' | 'aadhar-front' | 'aadhar-back' | 'pan';
 

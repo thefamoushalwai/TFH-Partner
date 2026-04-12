@@ -4,25 +4,24 @@
     "slug": "thefamoushalwaipartners",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/THF/image.png",
+    "icon": "./assets/app_assets/TFH-icon.png",
     "splash": {
-      "image": "./assets/THF/image.png",
+      "image": "./assets/app_assets/TFH-splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#EA243F"
     },
     "scheme": "thf",
     "userInterfaceStyle": "automatic",
     "android": {
       "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
-        "backgroundColor": "#FFFFFF",
-        "foregroundImage": "./assets/THF/image.png"
+        "backgroundColor": "#EA243F",
+        "foregroundImage": "./assets/app_assets/TFH-adaptive-icon.png"
       },
       "predictiveBackGestureEnabled": false,
       "package": "com.thfpartner.myapp",
       "permissions": [
-        "android.permission.CAMERA",
-        "android.permission.READ_EXTERNAL_STORAGE"
+        "android.permission.CAMERA"
       ]
     },
     "plugins": [
@@ -45,8 +44,9 @@
       [
         "expo-notifications",
         {
-          "sounds": [],
-          "color": "#E8304A"  
+          "icon": "./assets/app_assets/Union.png",
+          "color": "#E8304A",
+          "sounds": []
         }
       ],
       "@react-native-firebase/app",

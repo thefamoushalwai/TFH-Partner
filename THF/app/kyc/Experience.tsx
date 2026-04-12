@@ -106,7 +106,10 @@ export default function ExperienceScreen({ onBack, onContinue }: ExperienceScree
           if (onBack) {
             onBack();
           } else {
-            router.back();
+            // During onboarding, going "back" from the very first KYC
+            // screen should take the user to the Dashboard (skip KYC)
+            // rather than back to the password/OTP auth flow.
+            router.replace('/(tabs)/Dashboard');
           }
         }}
         activeOpacity={0.7}

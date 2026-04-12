@@ -13,6 +13,9 @@ import {
 import { View } from "react-native";
 import NetworkBanner from "../components/NetworkBanner";
 
+// Global error boundary – catches rendering errors and prevents white-screen crashes
+export { ErrorBoundary } from "expo-router";
+
 // ── Keep the splash screen visible until fonts are ready ──
 SplashScreen.preventAutoHideAsync();
 
@@ -82,15 +85,28 @@ export default function RootLayout() {
 
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="index" />
+        {/* Welcome / Auth flow */}
         <Stack.Screen name="welcome/LanguageSelect" />
         <Stack.Screen name="welcome/MobileLogin" />
         <Stack.Screen name="welcome/OTP" />
         <Stack.Screen name="welcome/password" />
         <Stack.Screen name="welcome/ForgotPassword" />
-        <Stack.Screen name="kyc/Details" />
+        <Stack.Screen name="welcome/ResetPassword" />
+        {/* KYC onboarding flow */}
         <Stack.Screen name="kyc/Experience" />
-        <Stack.Screen name="kyc/Aadhar" />
+        <Stack.Screen name="kyc/Cuisines" />
+        <Stack.Screen name="kyc/Details" />
+        <Stack.Screen name="kyc/UploadDocuments_1" />
         <Stack.Screen name="kyc/Selfie" />
+        <Stack.Screen name="kyc/Aadhar" />
+        <Stack.Screen name="kyc/Pan" />
+        {/* Edit screens */}
+        <Stack.Screen name="edit/AccountDetails" />
+        <Stack.Screen name="edit/EditDetails" />
+        <Stack.Screen name="edit/ChangeLanguage" />
+        <Stack.Screen name="edit/ReferFriend" />
+        <Stack.Screen name="edit/JobTimer" />
+        {/* Main tabs */}
         <Stack.Screen name="(tabs)" />
       </Stack>
     </View>

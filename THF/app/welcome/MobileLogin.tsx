@@ -20,6 +20,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { loginWithPhonePassword, sendOtp } from '@/lib/auth';
 import { saveSession } from '@/src/services/sessionStorage';
 import { getUserProfile, getUserProfileByPhone } from '@/src/services/userService';
+import { hasCompletedProfile } from '@/src/utils/profileUtils';
 import { useLanguage } from '@/src/hooks/useLanguage';
 
 const { height } = Dimensions.get('window');
@@ -42,9 +43,7 @@ export default function MobileLoginScreen({ onGetStarted }: MobileLoginScreenPro
   const isValidPassword = password.trim().length >= 6;
   const canContinue = step === 'phone' ? isValidMobile : isValidMobile && isValidPassword;
 
-  const hasCompletedProfile = (profile: Awaited<ReturnType<typeof getUserProfile>>): boolean => {
-    return profile !== null;
-  };
+  // Profile completion check is now in @/src/utils/profileUtils
 
   const handleGetStarted = async () => {
     if (!canContinue) return;

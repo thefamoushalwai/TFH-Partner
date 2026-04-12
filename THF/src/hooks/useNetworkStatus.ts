@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
 import NetInfo, { NetInfoState } from "@react-native-community/netinfo";
+import { useEffect, useState } from "react";
 
 export interface NetworkStatus {
   /** True when the device has an active internet connection */

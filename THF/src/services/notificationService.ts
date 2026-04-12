@@ -99,6 +99,6 @@ export async function sendLocalNotification(
       data,
       sound: 'default',
     },
-    trigger: null, // fire immediately
+    trigger: null, // fires immediately — supported across all expo-notifications versions
   });
 }

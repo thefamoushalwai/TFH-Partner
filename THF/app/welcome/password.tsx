@@ -3,6 +3,7 @@ import { useLanguage } from '@/src/hooks/useLanguage';
 import { auth } from '@/src/services/firebaseConfig';
 import { saveSession } from '@/src/services/sessionStorage';
 import { getUserProfile } from '@/src/services/userService';
+import { hasCompletedProfile } from '@/src/utils/profileUtils';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
@@ -54,20 +55,7 @@ export default function CreatePasswordScreen() {
   const passwordsMatch = isPasswordValid && password === confirmPassword;
   const canContinue = passwordsMatch;
 
-  const hasCompletedProfile = (profile: Awaited<ReturnType<typeof getUserProfile>>): boolean => {
-    if (!profile) return false;
-    return Boolean(
-      profile.name?.trim() &&
-      profile.email?.trim() &&
-      profile.phone?.trim() &&
-      profile.emergencyPhone?.trim() &&
-      profile.gender?.trim() &&
-      profile.city?.trim() &&
-      profile.address?.trim() &&
-      Array.isArray(profile.experience) &&
-      profile.experience.length > 0,
-    );
-  };
+  // Profile completion check is now in @/src/utils/profileUtils
 
   const handleContinue = async () => {
     if (!canContinue || loading) return;

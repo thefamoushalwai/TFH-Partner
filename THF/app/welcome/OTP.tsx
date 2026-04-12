@@ -20,6 +20,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { sendOtp, verifyOtp } from '@/lib/auth';
 import { saveSession } from '@/src/services/sessionStorage';
 import { getUserProfile } from '@/src/services/userService';
+import { hasCompletedProfile } from '@/src/utils/profileUtils';
 import { useLanguage } from '@/src/hooks/useLanguage';
 
 const OTP_LENGTH = 6;
@@ -30,21 +31,7 @@ interface OTPScreenProps {
   onBack?: () => void;
 }
 
-const hasCompletedProfile = (profile: Awaited<ReturnType<typeof getUserProfile>>): boolean => {
-  if (!profile) return false;
-
-  return Boolean(
-    profile.name?.trim() &&
-      profile.email?.trim() &&
-      profile.phone?.trim() &&
-      profile.emergencyPhone?.trim() &&
-      profile.gender?.trim() &&
-      profile.city?.trim() &&
-      profile.address?.trim() &&
-      Array.isArray(profile.experience) &&
-      profile.experience.length > 0,
-  );
-};
+// Profile completion check is now in @/src/utils/profileUtils
 
 export default function OTPScreen({ onVerify, onBack }: OTPScreenProps) {
   const router = useRouter();
@@ -52,7 +39,7 @@ export default function OTPScreen({ onVerify, onBack }: OTPScreenProps) {
   const params = useLocalSearchParams<{ verificationId?: string; phoneNumber?: string; mode?: 'signup' | 'login' | 'forgot_password' }>();
 
   const [verificationId, setVerificationId] = useState(params.verificationId ?? '');
-  const phoneNumber = params.phoneNumber ?? '+91 9205394233';
+  const phoneNumber = params.phoneNumber ?? '';
   const mode = params.mode ?? 'login';
 
   const [otp, setOtp] = useState(Array(OTP_LENGTH).fill(''));

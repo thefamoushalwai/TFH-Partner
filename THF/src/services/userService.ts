@@ -9,8 +9,8 @@
  *   - kyc    (Document ID = userId / Firebase Auth UID)
  */
 
-import { db } from './firebaseConfig';
 import firestore from '@react-native-firebase/firestore';
+import { db } from './firebaseConfig';
 
 // ---------------------------------------------------------------------------
 // TypeScript Interfaces
@@ -32,7 +32,7 @@ export interface UserProfile {
   /** List of cuisines the user can cook */
   cuisines?: string[];
   language: string;
-  kycStatus: 'unsubmitted' | 'pending' | 'pending_verification' | 'approved' | 'verified' | 'rejected';
+  kycStatus: 'unsubmitted' | 'pending' | 'pending_verification' | 'approved' | 'rejected';
   kycDocuments?: {
     selfieUrl: string;
     panUrl: string;

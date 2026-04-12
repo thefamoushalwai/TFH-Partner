@@ -8,9 +8,9 @@
  *   - bookings  (Document ID = auto-generated bookingId)
  */
 
-import { db, auth } from './firebaseConfig';
-import firestore from '@react-native-firebase/firestore';
 import type { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
+import firestore from '@react-native-firebase/firestore';
+import { auth, db } from './firebaseConfig';
 
 // ---------------------------------------------------------------------------
 // TypeScript Interface
@@ -120,7 +120,7 @@ export function listenToBroadcastedBookings(callback: (bookings: Booking[]) => v
 
   if (!uid) {
     console.warn('[bookingService] No authenticated user — skipping broadcast listener');
-    return () => {}; // no-op unsubscribe
+    return () => { }; // no-op unsubscribe
   }
 
   return db

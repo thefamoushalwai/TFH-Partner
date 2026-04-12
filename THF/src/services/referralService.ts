@@ -8,9 +8,9 @@
  *   - referrals  (Document ID = auto-generated referralId)
  */
 
-import { db } from './firebaseConfig';
-import firestore from '@react-native-firebase/firestore';
 import type { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
+import firestore from '@react-native-firebase/firestore';
+import { db } from './firebaseConfig';
 
 // ---------------------------------------------------------------------------
 // TypeScript Interface

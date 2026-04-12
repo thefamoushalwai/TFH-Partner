@@ -5,6 +5,7 @@ import { clearSession } from '@/src/services/sessionStorage';
 import { getPartnerBookings } from '@/src/services/bookingService';
 import { useRouter } from 'expo-router';
 import { Image } from 'expo-image';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import React from 'react';
 import {
   ActivityIndicator,
@@ -121,6 +122,19 @@ export default function ProfileScreen() {
             await signOut();
             await clearUserCache();
             await clearSession();
+
+            // Clear all KYC / document caches to prevent cross-account data leaks
+            const kycKeys = [
+              'profilePhotoUrl',
+              'aadharPhotoUrl',
+              'aadharPhotoBackUrl',
+              'aadharPhoto',
+              'aadharPhotoBack',
+              'panPhotoUrl',
+              'ignored_bookings',
+            ];
+            await AsyncStorage.multiRemove(kycKeys);
+
             router.replace('/welcome/LanguageSelect');
           } catch (error) {
             Alert.alert(t('error'), t('failedLogout'));

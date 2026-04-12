@@ -11,9 +11,9 @@
 //   Authentication → Sign-in method → Email/Password → Enable → Save
 //   (Disable "Email link / passwordless" — only classic email+password is needed)
 
-import * as SecureStore from 'expo-secure-store';
 import { auth } from '@/src/services/firebaseConfig';
 import { firebase } from '@react-native-firebase/auth';
+import * as SecureStore from 'expo-secure-store';
 
 // ─── OTP helpers ─────────────────────────────────────────────────────────────
 
