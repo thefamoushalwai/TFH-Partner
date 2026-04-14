@@ -165,7 +165,7 @@ export default function CreateBookingPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <input name="guests" type="number" required placeholder="No of guests" className={inputClass} />
             <div className={selectWrapper}>
-              <select name="cuisine" className={inputClass + " appearance-none bg-white"}>
+              <select name="cuisine" required className={inputClass + " appearance-none bg-white"}>
                 <option value="">Cuisine type</option>
                 <option value="indian">Indian</option>
                 <option value="continental">Continental</option>
@@ -178,10 +178,10 @@ export default function CreateBookingPage() {
           {/* Row 4: Date & Time */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="relative">
-              <input name="date" type="text" onFocus={(e) => (e.target.type = "date")} placeholder="Select date" className={inputClass} />
+              <input name="date" type="text" required onFocus={(e) => (e.target.type = "date")} placeholder="Select date" className={inputClass} />
               <Calendar className="w-5 h-5 text-[#9CA3AF] absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" />
             </div>
-            <input name="time" placeholder="Enter time" className={inputClass} />
+            <input name="time" required placeholder="Enter time" className={inputClass} />
           </div>
 
           {/* Row 5: Address */}
