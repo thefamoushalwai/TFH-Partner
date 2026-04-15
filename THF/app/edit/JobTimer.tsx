@@ -1,18 +1,12 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useState, useEffect, useRef } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  StatusBar,
-  Alert,
-} from 'react-native';
+import { View, TouchableOpacity, StyleSheet, StatusBar, Alert,  } from 'react-native';
 import Navbar from '@/components/Navbar';
 import { updateBookingStatus } from '@/src/services/bookingService';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLanguage } from '@/src/hooks/useLanguage';
 import type { TranslationKey } from '@/src/i18n/translations';
+import { CustomText as Text } from '../../components/CustomText';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface JobDetails {

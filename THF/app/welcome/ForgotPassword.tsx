@@ -1,17 +1,5 @@
 import React, { useState } from 'react';
-import {
-  ActivityIndicator,
-  Alert,
-  Dimensions,
-  KeyboardAvoidingView,
-  Platform,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Alert, Dimensions, KeyboardAvoidingView, Platform, StatusBar, StyleSheet, TextInput, TouchableOpacity, View,  } from 'react-native';
 
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -19,6 +7,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { sendOtp } from '@/lib/auth';
 import { getUserProfileByPhone } from '@/src/services/userService';
 import { useLanguage } from '@/src/hooks/useLanguage';
+import { Image } from 'expo-image';
+import { CustomText as Text } from '../../components/CustomText';
 
 const { height } = Dimensions.get('window');
 
@@ -95,7 +85,7 @@ export default function ForgotPasswordScreen() {
             onPress={() => router.back()}
             activeOpacity={0.7}
           >
-            <Text style={styles.backArrow}>←</Text>
+            <Image source={require('../../assets/THF/left.svg')} style={{ width: 24, height: 24 }} contentFit="contain" />
           </TouchableOpacity>
 
           {/* Title & Subtitle */}
@@ -271,7 +261,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   backToLoginText: {
-    color: '#E8304A',
+    color: '#1E62F7',
     fontSize: 14,
     fontWeight: '500',
   },

@@ -3,22 +3,11 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import {
-  Alert,
-  Dimensions,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { Alert, Dimensions, KeyboardAvoidingView, Platform, ScrollView, StatusBar, StyleSheet, TextInput, TouchableOpacity, View,  } from 'react-native';
 import { Image } from 'expo-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLanguage } from '@/src/hooks/useLanguage';
+import { CustomText as Text } from '../../components/CustomText';
 
 const { width } = Dimensions.get('window');
 
@@ -224,7 +213,7 @@ export default function AadharScreen({ onBack, onUpload, onSkip }: AadharScreenP
             }}
             activeOpacity={0.7}
           >
-            <Text style={styles.backArrow}>←</Text>
+            <Image source={require('../../assets/THF/left.svg')} style={{ width: 24, height: 24 }} contentFit="contain" />
           </TouchableOpacity>
 
           {/* Heading */}

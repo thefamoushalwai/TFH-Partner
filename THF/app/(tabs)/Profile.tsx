@@ -7,22 +7,13 @@ import { useRouter } from 'expo-router';
 import { Image } from 'expo-image';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React from 'react';
-import {
-  ActivityIndicator,
-  Alert,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-  RefreshControl,
-} from 'react-native';
+import { ActivityIndicator, Alert, ScrollView, StatusBar, StyleSheet, TouchableOpacity, View, RefreshControl,  } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Navbar from '../../components/Navbar';
 import { useLanguage } from '@/src/hooks/useLanguage';
 import { Fonts } from '@/src/theme/fonts';
 import Constants from 'expo-constants';
+import { CustomText as Text } from '../../components/CustomText';
 
 /* ── Types ── */
 interface ProfileScreenProps {

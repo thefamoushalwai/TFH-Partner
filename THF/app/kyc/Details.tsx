@@ -7,22 +7,7 @@
  */
 
 import React, { useState } from 'react';
-import {
-  ActivityIndicator,
-  Alert,
-  FlatList,
-  KeyboardAvoidingView,
-  KeyboardTypeOptions,
-  Modal,
-  Platform,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Alert, FlatList, KeyboardAvoidingView, KeyboardTypeOptions, Modal, Platform, ScrollView, StatusBar, StyleSheet, TextInput, TouchableOpacity, View,  } from 'react-native';
 import { SvgXml } from 'react-native-svg';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -30,6 +15,8 @@ import { auth } from '@/src/services/firebaseConfig';
 import { createUserProfile, getUserProfile } from '@/src/services/userService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useLanguage } from '@/src/hooks/useLanguage';
+import { Image } from 'expo-image';
+import { CustomText as Text } from '../../components/CustomText';
 
 const PROFILE_CACHE_KEY = 'user_profile_cache';
 
@@ -298,7 +285,7 @@ export default function DetailsScreen({ onBack, onRegister }: DetailsScreenProps
           onPress={() => { if (onBack) onBack(); else router.back(); }}
           activeOpacity={0.7}
         >
-          <Text style={styles.backArrow}>←</Text>
+          <Image source={require('../../assets/THF/left.svg')} style={{ width: 24, height: 24 }} contentFit="contain" />
         </TouchableOpacity>
 
         <ScrollView

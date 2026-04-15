@@ -7,17 +7,10 @@ import { useRouter } from 'expo-router';
 import type { FirebaseAuthTypes } from '@react-native-firebase/auth';
 import React, { useEffect, useRef } from 'react';
 
-import {
-  Animated,
-  Dimensions,
- 
-  StatusBar,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Animated, Dimensions, StatusBar, StyleSheet, View,  } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
+import { CustomText as Text } from '../components/CustomText';
 
 const { width, height } = Dimensions.get('window');
 

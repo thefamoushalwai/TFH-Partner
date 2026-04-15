@@ -1,17 +1,5 @@
 import React, { useState } from 'react';
-import {
-  ActivityIndicator,
-  Alert,
-  Dimensions,
-  KeyboardAvoidingView,
-  Platform,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Alert, Dimensions, KeyboardAvoidingView, Platform, StatusBar, StyleSheet, TextInput, TouchableOpacity, View,  } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -22,6 +10,8 @@ import { saveSession } from '@/src/services/sessionStorage';
 import { getUserProfile, getUserProfileByPhone } from '@/src/services/userService';
 import { hasCompletedProfile } from '@/src/utils/profileUtils';
 import { useLanguage } from '@/src/hooks/useLanguage';
+import { Image } from 'expo-image';
+import { CustomText as Text } from '../../components/CustomText';
 
 const { height } = Dimensions.get('window');
 
@@ -123,7 +113,7 @@ export default function MobileLoginScreen({ onGetStarted }: MobileLoginScreenPro
           }}
           activeOpacity={0.7}
         >
-          <Text style={styles.backArrow}>←</Text>
+          <Image source={require('../../assets/THF/left.svg')} style={{ width: 24, height: 24 }} contentFit="contain" />
         </TouchableOpacity>
 
         {/* Hero Image */}
@@ -338,11 +328,12 @@ const styles = StyleSheet.create({
   },
   forgotPasswordBtn: {
     alignSelf: 'flex-end',
-    marginBottom: 8,
-    marginTop: -8,
+    marginBottom: 10,
+    marginTop: -6,
+
   },
   forgotPasswordText: {
-    color: '#E8304A',
+    color: '#1E62F7',
     fontSize: 13,
     fontWeight: '500',
   },

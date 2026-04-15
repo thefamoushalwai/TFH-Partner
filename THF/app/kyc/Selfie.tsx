@@ -1,19 +1,11 @@
+import { CustomText as Text } from '../../components/CustomText';
 import { uploadKycImage } from '@/src/services/kycStorageService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
-import {
-  Alert,
-  Animated,
-  Dimensions,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { Alert, Animated, Dimensions, StatusBar, StyleSheet, TouchableOpacity, View,  } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLanguage } from '@/src/hooks/useLanguage';
 
@@ -134,7 +126,7 @@ export default function SelfieScreen({ onBack, onProceed }: SelfieScreenProps) {
         }}
         activeOpacity={0.7}
       >
-        <Text style={styles.backArrow}>←</Text>
+        <Image source={require('../../assets/THF/left.svg')} style={{ width: 24, height: 24 }} contentFit="contain" />
       </TouchableOpacity>
 
       {/* Content */}

@@ -4,19 +4,11 @@ import { auth } from '@/src/services/firebaseConfig';
 import { saveSession } from '@/src/services/sessionStorage';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import {
-  ActivityIndicator,
-  Alert,
-  Pressable,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Alert, Pressable, StatusBar, StyleSheet, TextInput, TouchableOpacity, View,  } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
+import { Image } from 'expo-image';
+import { CustomText as Text } from '../../components/CustomText';
 
 const EyeIcon = ({ stroke = "#6B7280" }) => (
   <Svg width="24" height="24" viewBox="0 0 24 24" fill="none">
@@ -100,7 +92,7 @@ export default function ResetPasswordScreen() {
           activeOpacity={0.7}
           onPress={() => router.back()}
         >
-          <Text style={styles.backArrow}>←</Text>
+          <Image source={require('../../assets/THF/left.svg')} style={{ width: 24, height: 24 }} contentFit="contain" />
         </TouchableOpacity>
 
         {/* Title */}

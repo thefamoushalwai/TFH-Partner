@@ -1,18 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import {
-  ActivityIndicator,
-  Alert,
-  KeyboardAvoidingView,
-  NativeSyntheticEvent,
-  Platform,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TextInput,
-  TextInputKeyPressEventData,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Alert, KeyboardAvoidingView, NativeSyntheticEvent, Platform, StatusBar, StyleSheet, TextInput, TextInputKeyPressEventData, TouchableOpacity, View,  } from 'react-native';
 
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -22,6 +9,8 @@ import { saveSession } from '@/src/services/sessionStorage';
 import { getUserProfile } from '@/src/services/userService';
 import { hasCompletedProfile } from '@/src/utils/profileUtils';
 import { useLanguage } from '@/src/hooks/useLanguage';
+import { Image } from 'expo-image';
+import { CustomText as Text } from '../../components/CustomText';
 
 const OTP_LENGTH = 6;
 const RESEND_SECONDS = 30;
@@ -188,7 +177,7 @@ export default function OTPScreen({ onVerify, onBack }: OTPScreenProps) {
             }}
             activeOpacity={0.7}
           >
-            <Text style={styles.backArrow}>←</Text>
+            <Image source={require('../../assets/THF/left.svg')} style={{ width: 24, height: 24 }} contentFit="contain" />
           </TouchableOpacity>
 
           {/* Heading */}

@@ -1,18 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  StatusBar,
-  ActivityIndicator,
-  Alert,
-} from 'react-native';
+import { View, TouchableOpacity, StyleSheet, StatusBar, ActivityIndicator, Alert,  } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { auth } from '@/src/services/firebaseConfig';
 import { useUserStore } from '@/src/hooks/useUserStore';
 import { useLanguage } from '@/src/hooks/useLanguage';
+import { Image } from 'expo-image';
+import { CustomText as Text } from '../../components/CustomText';
 
 const LANGUAGES = [
   { id: 'en', label: 'English' },
@@ -84,7 +78,7 @@ export default function ChangeLanguageScreen({
                   onPress={() => router.back()}
                   activeOpacity={0.7}
                 >
-                  <Text style={styles.backArrow}>←</Text>
+                  <Image source={require('../../assets/THF/left.svg')} style={{ width: 24, height: 24 }} contentFit="contain" />
                 </TouchableOpacity>
 
       {/* Content */}

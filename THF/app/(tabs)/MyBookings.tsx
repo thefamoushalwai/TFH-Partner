@@ -1,25 +1,13 @@
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  ScrollView,
-  StyleSheet,
-  StatusBar,
-  ActivityIndicator,
-  RefreshControl,
-  Linking,
-  Alert,
-  Modal,
-  TextInput,
-} from 'react-native';
+import { View, TouchableOpacity, ScrollView, StyleSheet, StatusBar, ActivityIndicator, RefreshControl, Linking, Alert, Modal, TextInput,  } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Navbar from '../../components/Navbar';
 import { auth } from '@/src/services/firebaseConfig';
 import { getPartnerBookings, type Booking as FSBooking } from '@/src/services/bookingService';
 import dayjs from 'dayjs';
 import { useLanguage } from '@/src/hooks/useLanguage';
+import { CustomText as Text } from '../../components/CustomText';
 
 /* ── Types ── */
 type BookingStatus = 'Today' | 'Active' | 'Completed' | 'Upcoming';

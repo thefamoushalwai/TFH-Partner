@@ -1,18 +1,11 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import {
-  Dimensions,
- 
-  StatusBar,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { Dimensions, StatusBar, StyleSheet, TouchableOpacity, View,  } from 'react-native';
 import { Image } from 'expo-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { getTranslation, type Language } from '@/src/i18n/translations';
+import { CustomText as Text } from '../../components/CustomText';
 
 const { width, height } = Dimensions.get('window');
 
@@ -205,10 +198,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     alignItems: 'center',
     shadowColor: '#E8304A',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 5,
+   
   },
   continueText: {
     color: '#fff',

@@ -1,14 +1,9 @@
 import React, { useEffect, useRef } from "react";
-import {
-  Animated,
-  StyleSheet,
-  Text,
-  View,
-  Platform,
-} from "react-native";
+import { Animated, StyleSheet, View, Platform,  } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNetworkStatus } from "../src/hooks/useNetworkStatus";
 import { Fonts } from "../src/theme/fonts";
+import { CustomText as Text } from './CustomText';
 
 /**
  * NetworkBanner

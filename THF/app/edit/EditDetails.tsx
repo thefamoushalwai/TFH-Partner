@@ -7,21 +7,7 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import {
-  ActivityIndicator,
-  Alert,
-  FlatList,
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Alert, FlatList, KeyboardAvoidingView, Modal, Platform, ScrollView, StatusBar, StyleSheet, TextInput, TouchableOpacity, View,  } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -29,6 +15,7 @@ import { auth } from '@/src/services/firebaseConfig';
 import { getUserProfile, updateUserProfile } from '@/src/services/userService';
 import { Image } from 'expo-image';
 import { useLanguage } from '@/src/hooks/useLanguage';
+import { CustomText as Text } from '../../components/CustomText';
 
 const PROFILE_CACHE_KEY = 'user_profile_cache';
 const GENDERS = ['Male', 'Female', 'Other'];
@@ -254,7 +241,7 @@ export default function EditDetailsScreen() {
             onPress={() => router.back()}
             activeOpacity={0.7}
           >
-            <Text style={styles.backArrow}>←</Text>
+            <Image source={require('../../assets/THF/left.svg')} style={{ width: 24, height: 24 }} contentFit="contain" />
           </TouchableOpacity>
 
           {/* Header */}

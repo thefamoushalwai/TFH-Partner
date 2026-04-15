@@ -6,28 +6,14 @@ import dayjs from 'dayjs';
 import { Image } from 'expo-image';
 import { useRouter, useFocusEffect } from 'expo-router';
 import React, { useEffect, useState, useCallback, useRef } from 'react';
-import {
-  ActivityIndicator,
-  Dimensions,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  RefreshControl,
-  TouchableOpacity,
-  View,
-  Linking,
-  Alert,
-  Modal,
-  Animated,
-  BackHandler,
-} from 'react-native';
+import { ActivityIndicator, Dimensions, ScrollView, StatusBar, StyleSheet, RefreshControl, TouchableOpacity, View, Linking, Alert, Modal, Animated, BackHandler,  } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 
 import Navbar from '../../components/Navbar';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useLanguage } from '@/src/hooks/useLanguage';
+import { CustomText as Text } from '../../components/CustomText';
 const { width } = Dimensions.get('window');
 
 /* ── Types ── */

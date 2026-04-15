@@ -1,21 +1,14 @@
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import {
-  ActivityIndicator,
-  Alert,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Alert, ScrollView, StatusBar, StyleSheet, TouchableOpacity, View,  } from 'react-native';
 import { SvgXml } from 'react-native-svg';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { auth } from '@/src/services/firebaseConfig';
 import { updateUserProfile, getUserProfile } from '@/src/services/userService';
 import { useLanguage } from '@/src/hooks/useLanguage';
+import { Image } from 'expo-image';
+import { CustomText as Text } from '../../components/CustomText';
 
 const PROFILE_CACHE_KEY = 'user_profile_cache';
 
@@ -114,7 +107,7 @@ export default function ExperienceScreen({ onBack, onContinue }: ExperienceScree
         }}
         activeOpacity={0.7}
       >
-        <Text style={styles.backArrow}>←</Text>
+        <Image source={require('../../assets/THF/left.svg')} style={{ width: 24, height: 24 }} contentFit="contain" />
       </TouchableOpacity>
 
       <ScrollView

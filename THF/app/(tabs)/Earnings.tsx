@@ -1,14 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  ScrollView,
-  StyleSheet,
-  ActivityIndicator,
-  StatusBar,
-  RefreshControl,
-} from 'react-native';
+import { View, TouchableOpacity, ScrollView, StyleSheet, ActivityIndicator, StatusBar, RefreshControl,  } from 'react-native';
 import { Image } from 'expo-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Navbar from '../../components/Navbar';
@@ -16,6 +7,7 @@ import { auth } from '@/src/services/firebaseConfig';
 import { getPartnerBookings, type Booking } from '@/src/services/bookingService';
 import dayjs from 'dayjs';
 import { useLanguage } from '@/src/hooks/useLanguage';
+import { CustomText as Text } from '../../components/CustomText';
 
 
 /* ── Local display type for TransactionRow component ── */
