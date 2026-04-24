@@ -99,11 +99,11 @@ const translations = {
   seconds: { en: 'SECONDS', hi: 'सेकंड' },
   pause: { en: 'Pause', hi: 'रोकें' },
   resume: { en: 'Resume', hi: 'जारी रखें' },
-  otpModalTitle: { en: 'Share the confirmation OTP to the client', hi: 'ग्राहक को पुष्टि OTP साझा करें' },
+  otpModalTitle: { en: 'Verify Arrival', hi: 'आगमन सत्यापित करें' },
   enterOtp: { en: 'Enter OTP', hi: 'OTP दर्ज करें' },
   verifyOtp: { en: 'Verify OTP', hi: 'OTP सत्यापित करें' },
-  invalidOtp: { en: 'Invalid OTP', hi: 'अवैध OTP' },
-  invalidOtpMsg: { en: 'Please enter a valid OTP provided by the client.', hi: 'कृपया ग्राहक द्वारा प्रदान किया गया मान्य OTP दर्ज करें।' },
+  invalidOtp: { en: 'Invalid OTP', hi: 'अमान्य OTP' },
+  invalidOtpMsg: { en: 'Please enter the 4-digit code sent to the client.', hi: 'कृपया ग्राहक को भेजा गया 4-अंकीय कोड दर्ज करें।' },
   time: { en: 'Time', hi: 'समय' },
   locationLabel: { en: 'Location', hi: 'स्थान' },
 
@@ -293,6 +293,11 @@ const translations = {
   uploadFailedAadharBack: { en: 'Unable to upload Aadhar back. Please try again.', hi: 'आधार पीछे अपलोड करने में असमर्थ। कृपया पुनः प्रयास करें।' },
   uploadFailedPan: { en: 'Unable to upload PAN document. Please try again.', hi: 'PAN दस्तावेज़ अपलोड करने में असमर्थ। कृपया पुनः प्रयास करें।' },
   uploadFailedSelfie: { en: 'Unable to upload selfie. Please try again.', hi: 'सेल्फी अपलोड करने में असमर्थ। कृपया पुनः प्रयास करें।' },
+
+  // ── OTP Arrival Verification (new keys only) ──────────────────────────
+  otpWillBeSentTo: { en: "An OTP will be sent to the client's phone number", hi: 'ग्राहक के फ़ोन नंबर पर OTP भेजा जाएगा' },
+  otpSentTitle: { en: 'OTP Sent', hi: 'OTP भेजा गया' },
+  otpSendFailed: { en: 'Failed to send OTP. Please try again.', hi: 'OTP भेजने में विफल। कृपया पुनः प्रयास करें।' },
 } as const;
 
 export type TranslationKey = keyof typeof translations;

@@ -11,7 +11,9 @@ import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
-import { db } from './firebaseConfig';
+import { getFirestore, doc, setDoc } from '@react-native-firebase/firestore';
+
+const db = getFirestore();
 
 // NOTE: setNotificationHandler is now configured in app/_layout.tsx
 // so it runs at app startup regardless of which screen loads first.
@@ -56,7 +58,8 @@ export async function registerForPushNotifications(
     console.log('[notifications] Device push token (FCM/APNs):', token);
 
     // Store token in Firestore as fcmToken
-    await db.collection('users').doc(uid).set(
+    await setDoc(
+      doc(db, 'users', uid),
       { fcmToken: token },
       { merge: true },
     );

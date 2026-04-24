@@ -1,4 +1,6 @@
-import { auth, db, storage } from '@/src/services/firebaseConfig';
+import { getAuth } from '@react-native-firebase/auth';
+import { getFirestore, doc, setDoc } from '@react-native-firebase/firestore';
+import { getStorage, ref, getDownloadURL } from '@react-native-firebase/storage';
 
 type KycDocumentType = 'selfie' | 'aadhar-front' | 'aadhar-back' | 'pan';
 
@@ -15,14 +17,15 @@ export const uploadKycImage = async (
   localUri: string,
   docType: KycDocumentType
 ): Promise<string> => {
-  const uid = auth.currentUser?.uid ?? 'anonymous';
+  const uid = getAuth().currentUser?.uid ?? 'anonymous';
   const extension = getFileExtension(localUri);
   const filePath = `kyc/${uid}/${docType}_${Date.now()}.${extension}`;
 
-  const ref = storage.ref(filePath);
-  await ref.putFile(localUri);
+  const storageRef = ref(getStorage(), filePath);
+  // putFile is an RN-specific method on the reference object
+  await (storageRef as any).putFile(localUri);
 
-  return ref.getDownloadURL();
+  return getDownloadURL(storageRef);
 };
 
 export interface KycDocumentUrls {
@@ -33,14 +36,18 @@ export interface KycDocumentUrls {
 }
 
 export const linkKycToUser = async (kycData: KycDocumentUrls): Promise<void> => {
-  const uid = auth.currentUser?.uid;
+  const uid = getAuth().currentUser?.uid;
   if (!uid) {
     throw new Error('User not authenticated');
   }
 
-  await db.collection('users').doc(uid).set({
-    kycDocuments: kycData,
-    kycStatus: 'pending_verification',
-    kycSubmittedAt: new Date().toISOString()
-  }, { merge: true });
+  await setDoc(
+    doc(getFirestore(), 'users', uid),
+    {
+      kycDocuments: kycData,
+      kycStatus: 'pending_verification',
+      kycSubmittedAt: new Date().toISOString(),
+    },
+    { merge: true },
+  );
 };

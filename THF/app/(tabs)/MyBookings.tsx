@@ -1,13 +1,16 @@
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { View, TouchableOpacity, ScrollView, StyleSheet, StatusBar, ActivityIndicator, RefreshControl, Linking, Alert, Modal, TextInput,  } from 'react-native';
+import { View, TouchableOpacity, ScrollView, StyleSheet, StatusBar, ActivityIndicator, RefreshControl, Linking, Alert, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Navbar from '../../components/Navbar';
+import OtpInputBoxes from '../../components/OtpInputBoxes';
 import { auth } from '@/src/services/firebaseConfig';
 import { getPartnerBookings, type Booking as FSBooking } from '@/src/services/bookingService';
 import dayjs from 'dayjs';
 import { useLanguage } from '@/src/hooks/useLanguage';
 import { CustomText as Text } from '../../components/CustomText';
+
+const HARDCODED_OTP = '123456';
 
 /* ── Types ── */
 type BookingStatus = 'Today' | 'Active' | 'Completed' | 'Upcoming';
@@ -115,30 +118,44 @@ export default function MyBookingsScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const { t } = useLanguage();
 
-  // OTP and Timer State
+  // OTP State
   const [showOtpModal, setShowOtpModal] = useState(false);
-  const [otpText, setOtpText] = useState('');
+  const [otpCode, setOtpCode] = useState('');
 
+  /** Open OTP modal */
+  const openOtpModal = () => {
+    setOtpCode('');
+    setShowOtpModal(true);
+  };
 
-  const verifyOtp = () => {
-    if (otpText.length >= 4) {
-      setShowOtpModal(false);
-      // Navigate to the Job Timer screen instead of starting an internal timer
-      router.push({
-        pathname: '/edit/JobTimer' as any,
-        params: {
-          bookingId: nextUp?.id || '',
-          title: nextUp?.title || '',
-          time: nextUp?.time || '',
-          location: nextUp?.locationNote || '',
-          guests: nextUp?.guests?.toString() || '0',
-          cuisine: nextUp?.cuisine || '',
-        }
-      });
-      setOtpText('');
-    } else {
+  /** Close OTP modal */
+  const closeOtpModal = () => {
+    setShowOtpModal(false);
+    setOtpCode('');
+  };
+
+  /** Verify hardcoded OTP */
+  const handleVerifyOtp = () => {
+    if (otpCode.length < 6) {
       Alert.alert(t('invalidOtp'), t('invalidOtpMsg'));
+      return;
     }
+    if (otpCode !== HARDCODED_OTP) {
+      Alert.alert(t('invalidOtp'), t('otpIncorrect'));
+      return;
+    }
+    closeOtpModal();
+    router.push({
+      pathname: '/edit/JobTimer' as any,
+      params: {
+        bookingId: nextUp?.id || '',
+        title: nextUp?.title || '',
+        time: nextUp?.time || '',
+        location: nextUp?.locationNote || '',
+        guests: nextUp?.guests?.toString() || '0',
+        cuisine: nextUp?.cuisine || '',
+      },
+    });
   };
 
 
@@ -235,7 +252,7 @@ export default function MyBookingsScreen() {
                <TouchableOpacity 
                  style={[styles.navBtn, { flex: 1, backgroundColor: '#EA243F' }]} 
                  activeOpacity={0.8}
-                 onPress={() => setShowOtpModal(true)}
+                 onPress={openOtpModal}
                >
                  <Text style={[styles.navBtnText, { color: '#fff' }]}>{t('reachedLocation')}</Text>
                </TouchableOpacity>
@@ -307,21 +324,28 @@ export default function MyBookingsScreen() {
       <Modal visible={showOtpModal} transparent animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>{t('otpModalTitle')}</Text>
-            <TextInput 
-              style={styles.otpInput} 
-              placeholder={t('enterOtp')} 
-              placeholderTextColor="#aaa"
-              keyboardType="number-pad"
-              value={otpText}
-              onChangeText={setOtpText}
-              maxLength={6}
+            <Text style={styles.modalTitle}>{t('enterOtp')}</Text>
+            <Text style={styles.modalSubtitle}>
+              Enter the 6-digit OTP to confirm you have reached the location.
+            </Text>
+
+            <OtpInputBoxes
+              length={6}
+              onChange={setOtpCode}
+              onComplete={(code) => setOtpCode(code)}
             />
-            <TouchableOpacity style={styles.verifyBtn} onPress={verifyOtp} activeOpacity={0.8}>
+
+            <TouchableOpacity
+              style={[styles.verifyBtn, otpCode.length < 6 && styles.btnDisabled]}
+              onPress={handleVerifyOtp}
+              activeOpacity={0.8}
+              disabled={otpCode.length < 6}
+            >
               <Text style={styles.verifyBtnText}>{t('verifyOtp')}</Text>
             </TouchableOpacity>
-            
-            <TouchableOpacity style={{ marginTop: 16 }} onPress={() => setShowOtpModal(false)}>
+
+            {/* Cancel */}
+            <TouchableOpacity style={{ marginTop: 16 }} onPress={closeOtpModal}>
               <Text style={{ color: '#888', fontWeight: '500' }}>{t('cancel')}</Text>
             </TouchableOpacity>
           </View>
@@ -406,10 +430,13 @@ const styles = StyleSheet.create({
   /* OTP Modal UI */
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
   modalContent: { backgroundColor: '#fff', borderRadius: 16, padding: 24, width: '90%', alignItems: 'center' },
-  modalTitle: { fontSize: 16, fontWeight: '600', color: '#111', marginBottom: 20 },
-  otpInput: { width: '100%', borderWidth: 1, borderColor: '#D9D9D9', borderRadius: 8, padding: 14, fontSize: 15, marginBottom: 20, color: '#333' },
+  modalTitle: { fontSize: 18, fontWeight: '700', color: '#111', marginBottom: 8 },
+  modalSubtitle: { fontSize: 13, color: '#777', marginBottom: 16, textAlign: 'center', lineHeight: 18 },
+  phoneDisplay: { backgroundColor: '#F5F5F7', borderRadius: 10, paddingVertical: 12, paddingHorizontal: 20, marginBottom: 20 },
+  phoneText: { fontSize: 16, fontWeight: '600', color: '#333', letterSpacing: 1 },
   verifyBtn: { backgroundColor: '#E8304A', width: '100%', paddingVertical: 14, borderRadius: 8, alignItems: 'center' },
   verifyBtnText: { color: '#fff', fontWeight: '600', fontSize: 15 },
+  btnDisabled: { opacity: 0.6 },
 });
 
 const cardStyles = StyleSheet.create({

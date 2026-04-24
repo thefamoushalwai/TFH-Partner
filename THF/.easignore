@@ -1,0 +1,39 @@
+# .easignore — files excluded from EAS Build uploads
+# EAS uses this like .gitignore but specifically for build artifact uploads.
+# Keeping this lean reduces upload size and build times.
+
+# Firebase Cloud Functions — not needed for the mobile app build
+functions/
+
+# Firebase hosting
+public/
+
+# Firebase debug logs
+firebase-debug.log
+firebase-debug.*.log
+.firebaserc
+firebase.json
+
+# Development & CI artifacts
+.expo/
+dist/
+web-build/
+
+# Docs & meta
+*.md
+walkthrough.md
+
+# macOS
+.DS_Store
+
+# VS Code
+.vscode/
+
+# Test & lint config
+eslint.config.js
+
+# Secrets — should be set via EAS Secrets, not uploaded
+.env
+.env.*
+functions/.env
+functions/.env.*

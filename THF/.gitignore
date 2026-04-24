@@ -31,7 +31,9 @@ yarn-error.*
 *.pem
 
 # local env files
-.env*.local
+.env
+.env.*
+!.env.example
 
 # typescript
 *.tsbuildinfo
@@ -42,4 +44,21 @@ app-example
 /ios
 /android
 
+# Firebase
+.firebaserc
+firebase-debug.log
+firebase-debug.*.log
 
+# Firebase Cloud Functions
+functions/node_modules/
+functions/.env
+functions/.env.*
+!functions/.env.example
+
+
+# EAS / Expo credentials
+credentials.json
+sha_output.txt
+
+# Firebase hosting generated folder
+/public
