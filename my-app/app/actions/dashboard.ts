@@ -214,12 +214,22 @@ export async function getDashboardAnalytics(): Promise<{
         }
       }
 
-      // Cuisine / Event type
-      const cuisine = b.eventType || b.cuisineType || b.occasion || "Others";
-      cuisineCounts[cuisine] = (cuisineCounts[cuisine] || 0) + 1;
+      // Occasion / Event type — normalize to known categories
+      const KNOWN_OCCASIONS = ["Roka ceremony", "Anniversary", "Birthday", "Wedding", "Pooja at home"];
+      const rawOccasion = (b.eventType || b.cuisineType || b.occasion || "").trim();
+      const matchedOccasion = KNOWN_OCCASIONS.find(
+        (k) => k.toLowerCase() === rawOccasion.toLowerCase()
+      );
+      const occasion = matchedOccasion || "Others";
+      cuisineCounts[occasion] = (cuisineCounts[occasion] || 0) + 1;
 
-      // Location
-      const loc = b.location || b.city || "Others";
+      // Location — normalize to known cities
+      const KNOWN_LOCATIONS = ["Delhi", "Noida", "Gurugram", "Faridabad", "Ghaziabad"];
+      const rawLoc = (b.location || b.city || "").trim();
+      const matchedLoc = KNOWN_LOCATIONS.find(
+        (k) => k.toLowerCase() === rawLoc.toLowerCase()
+      );
+      const loc = matchedLoc || "Others";
       locationCounts[loc] = (locationCounts[loc] || 0) + 1;
     }
 

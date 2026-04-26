@@ -53,57 +53,48 @@ export default function ChefsPage() {
     fetchAll();
   }, []);
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh] text-gray-500 gap-3">
-        <Loader2 className="w-5 h-5 animate-spin" />
-        <span className="text-sm font-medium">Loading chefs…</span>
-      </div>
-    );
-  }
-
-  if (error || !stats) {
+  if (error) {
     return (
       <div className="flex flex-col items-center justify-center p-12 bg-red-50 rounded-2xl border border-red-200 mt-10">
         <AlertCircle className="w-12 h-12 text-red-500 mb-4" />
         <h2 className="text-xl font-bold text-red-700">Failed to load chefs</h2>
         <p className="text-red-600/80 mt-2 text-center max-w-md">
-          {error || "An unknown error occurred while fetching chef data."}
+          {error}
         </p>
       </div>
     );
   }
 
   const tabs = [
-    { key: "all" as TabKey, label: "All Chefs", count: stats.total },
-    { key: "active" as TabKey, label: "Active", count: stats.active },
-    { key: "pending" as TabKey, label: "Pending", count: stats.pending },
-    { key: "suspended" as TabKey, label: "Suspended", count: stats.suspended },
-    { key: "inactive" as TabKey, label: "Inactive", count: stats.inactive },
+    { key: "all" as TabKey, label: "All Chefs", count: stats ? stats.total : "-" },
+    { key: "active" as TabKey, label: "Active", count: stats ? stats.active : "-" },
+    { key: "pending" as TabKey, label: "Pending", count: stats ? stats.pending : "-" },
+    { key: "suspended" as TabKey, label: "Suspended", count: stats ? stats.suspended : "-" },
+    { key: "inactive" as TabKey, label: "Inactive", count: stats ? stats.inactive : "-" },
   ];
 
   const cards = [
     {
       title: "Total Chef",
-      value: stats.total.toLocaleString(),
+      value: stats ? stats.total.toLocaleString() : "-",
       subtext: "Registered on platform",
       borderColor: "border-t-emerald-500",
     },
     {
       title: "Active Chef",
-      value: stats.active.toLocaleString(),
-      subtext: `of ${stats.total.toLocaleString()} total`,
+      value: stats ? stats.active.toLocaleString() : "-",
+      subtext: stats ? `of ${stats.total.toLocaleString()} total` : "of - total",
       borderColor: "border-t-blue-500",
     },
     {
       title: "Pending approval",
-      value: stats.pending.toLocaleString(),
+      value: stats ? stats.pending.toLocaleString() : "-",
       subtext: "Awaiting review",
       borderColor: "border-t-amber-600",
     },
     {
       title: "Suspended",
-      value: stats.suspended.toLocaleString(),
+      value: stats ? stats.suspended.toLocaleString() : "-",
       subtext: "Accounts on hold",
       borderColor: "border-t-[#E11D48]",
     },
@@ -177,7 +168,16 @@ export default function ChefsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {pageChefs.length > 0 ? (
+              {loading ? (
+                <tr>
+                  <td colSpan={9} className="px-6 py-12 text-center">
+                    <div className="flex items-center justify-center text-gray-500 gap-3">
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      <span className="text-sm font-medium">Loading chefs…</span>
+                    </div>
+                  </td>
+                </tr>
+              ) : pageChefs.length > 0 ? (
                 pageChefs.map((chef, i) => (
                   <tr key={chef.uid} className="hover:bg-gray-50 transition-colors">
                     <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-500 font-medium">

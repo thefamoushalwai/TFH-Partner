@@ -7,12 +7,12 @@ import type { DashboardAnalytics } from "@/app/actions/dashboard";
 // ─── Colour constants ──────────────────────────────────────────────────────────
 
 const BREAKDOWN_COLORS = [
-  "bg-[#D4AF37]",
-  "bg-[#22C55E]",
-  "bg-[#3B82F6]",
-  "bg-[#EF4444]",
-  "bg-[#8B5CF6]",
-  "bg-[#6366F1]",
+  "bg-[#e6c987]",
+  "bg-[#58b388]",
+  "bg-[#4b85ee]",
+  "bg-[#ef7381]",
+  "bg-[#805fbd]",
+  "bg-[#805fbd]",
 ];
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────
@@ -56,15 +56,24 @@ function LineChart({ data }: { data: { label: string; value: number }[] }) {
     label: d.label,
   }));
 
-  const linePath = pts.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(" ");
+  let linePath = "";
+  if (pts.length > 0) {
+    linePath = `M ${pts[0].x.toFixed(1)} ${pts[0].y.toFixed(1)}`;
+    for (let i = 1; i < pts.length; i++) {
+      const p0 = pts[i - 1];
+      const p1 = pts[i];
+      const cpX = (p1.x - p0.x) * 0.4;
+      linePath += ` C ${(p0.x + cpX).toFixed(1)} ${p0.y.toFixed(1)}, ${(p1.x - cpX).toFixed(1)} ${p1.y.toFixed(1)}, ${p1.x.toFixed(1)} ${p1.y.toFixed(1)}`;
+    }
+  }
 
-  const areaPath = [
-    `M ${pts[0].x.toFixed(1)} ${pts[0].y.toFixed(1)}`,
-    ...pts.slice(1).map((p) => `L ${p.x.toFixed(1)} ${p.y.toFixed(1)}`),
-    `L ${pts[pts.length - 1].x.toFixed(1)} ${(PAD.top + innerH).toFixed(1)}`,
-    `L ${pts[0].x.toFixed(1)} ${(PAD.top + innerH).toFixed(1)}`,
-    "Z",
-  ].join(" ");
+  let areaPath = "";
+  if (pts.length > 0) {
+    areaPath = linePath +
+      ` L ${pts[pts.length - 1].x.toFixed(1)} ${(PAD.top + innerH).toFixed(1)}` +
+      ` L ${pts[0].x.toFixed(1)} ${(PAD.top + innerH).toFixed(1)}` +
+      ` Z`;
+  }
 
   return (
     <svg
@@ -128,6 +137,34 @@ export default function DashboardClient({ data }: { data: DashboardAnalytics }) 
     locationBreakdown,
     recentBookings,
   } = data;
+
+  const displayOccasions = [
+    "Roka ceremony",
+    "Anniversary",
+    "Birthday",
+    "Wedding",
+    "Pooja at home",
+    "Others",
+  ].map((label) => {
+    const match = cuisineBreakdown?.find(
+      (c) => c.label === label
+    );
+    return { label, pct: match?.pct ?? 0 };
+  });
+
+  const displayLocations = [
+    "Delhi",
+    "Noida",
+    "Gurugram",
+    "Faridabad",
+    "Ghaziabad",
+    "Others",
+  ].map((label) => {
+    const match = locationBreakdown?.find(
+      (c) => c.label === label
+    );
+    return { label, pct: match?.pct ?? 0 };
+  });
 
   const chartData = chartMode === "weekly" ? weeklyBookings : monthlyBookings;
 
@@ -260,23 +297,25 @@ export default function DashboardClient({ data }: { data: DashboardAnalytics }) 
         {/* Right: breakdown panels */}
         <div className="lg:col-span-1 flex flex-col gap-5">
           {/* Bookings by Occasion */}
-          <div className="bg-white rounded-xl border border-[#d3dbe2] p-5">
-            <h2 className="text-[13px] font-bold text-gray-800">Bookings by occasion</h2>
-            <p className="text-[10px] text-gray-400 mb-5">By booking count</p>
-            <div className="space-y-4">
-              {cuisineBreakdown.length > 0 ? (
-                cuisineBreakdown.map((item, i) => (
-                  <div key={i} className="flex items-center gap-3">
-                    <span className="w-24 shrink-0 text-[11px] text-gray-600 font-medium leading-tight truncate">
+          <div className="bg-white rounded-xl border border-[#d3dbe2] overflow-hidden">
+            <div className="px-5 py-4 border-b border-[#F3F4F6]">
+              <h2 className="text-[13px] font-bold text-gray-800">Bookings by occasion</h2>
+              <p className="text-[10px] text-gray-500 mt-1">By booking count</p>
+            </div>
+            <div className="p-5 space-y-4">
+              {displayOccasions.length > 0 ? (
+                displayOccasions.map((item, i) => (
+                  <div key={i} className="flex items-center gap-4">
+                    <span className="w-[100px] shrink-0 text-xs text-gray-700 leading-tight truncate">
                       {item.label}
                     </span>
-                    <div className="flex-1 h-1.5 bg-[#EAEBEB] rounded-full overflow-hidden">
+                    <div className="flex-1 h-1.5 bg-[#e6e4df] rounded-full overflow-hidden">
                       <div
                         className={`h-full rounded-full ${BREAKDOWN_COLORS[i % BREAKDOWN_COLORS.length]}`}
                         style={{ width: `${item.pct}%` }}
                       />
                     </div>
-                    <span className="text-[10px] text-gray-400 w-8 text-right font-medium shrink-0">
+                    <span className="text-xs text-gray-500 w-8 text-right shrink-0">
                       {item.pct}%
                     </span>
                   </div>
@@ -288,23 +327,25 @@ export default function DashboardClient({ data }: { data: DashboardAnalytics }) 
           </div>
 
           {/* Bookings by Location */}
-          <div className="bg-white rounded-xl border border-[#d3dbe2] p-5">
-            <h2 className="text-[13px] font-bold text-gray-800">Bookings by Location</h2>
-            <p className="text-[10px] text-gray-400 mb-5">By booking count</p>
-            <div className="space-y-4">
-              {locationBreakdown.length > 0 ? (
-                locationBreakdown.map((item, i) => (
-                  <div key={i} className="flex items-center gap-3">
-                    <span className="w-24 shrink-0 text-[11px] text-gray-600 font-medium leading-tight truncate">
+          <div className="bg-white rounded-xl border border-[#d3dbe2] overflow-hidden">
+            <div className="px-5 py-4 border-b border-[#F3F4F6]">
+              <h2 className="text-[13px] font-bold text-gray-800">Bookings by Location</h2>
+              <p className="text-[10px] text-gray-500 mt-1">By booking count</p>
+            </div>
+            <div className="p-5 space-y-4">
+              {displayLocations.length > 0 ? (
+                displayLocations.map((item, i) => (
+                  <div key={i} className="flex items-center gap-4">
+                    <span className="w-[100px] shrink-0 text-xs text-gray-700 leading-tight truncate">
                       {item.label}
                     </span>
-                    <div className="flex-1 h-1.5 bg-[#EAEBEB] rounded-full overflow-hidden">
+                    <div className="flex-1 h-1.5 bg-[#e6e4df] rounded-full overflow-hidden">
                       <div
                         className={`h-full rounded-full ${BREAKDOWN_COLORS[i % BREAKDOWN_COLORS.length]}`}
                         style={{ width: `${item.pct}%` }}
                       />
                     </div>
-                    <span className="text-[10px] text-gray-400 w-8 text-right font-medium shrink-0">
+                    <span className="text-xs text-gray-500 w-8 text-right shrink-0">
                       {item.pct}%
                     </span>
                   </div>
