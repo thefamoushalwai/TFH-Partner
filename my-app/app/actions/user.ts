@@ -64,8 +64,10 @@ export interface UserProfileData {
   emergencyPhone?: string;
   gender?: string;
   jobType?: string;
+  language?: string;
   cuisines?: string[];      // stored as an array in Firestore
   workExperience?: string | string[];
+  experience?: string | string[];
   city?: string;
   zone?: string;
   address?: string;

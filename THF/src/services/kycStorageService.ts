@@ -33,6 +33,7 @@ export interface KycDocumentUrls {
   aadharFrontUrl: string;
   aadharBackUrl: string;
   panUrl: string;
+  aadharNumber?: string;
 }
 
 export const linkKycToUser = async (kycData: KycDocumentUrls): Promise<void> => {
@@ -45,6 +46,7 @@ export const linkKycToUser = async (kycData: KycDocumentUrls): Promise<void> => 
     doc(getFirestore(), 'users', uid),
     {
       kycDocuments: kycData,
+      aadharNumber: kycData.aadharNumber || '',
       kycStatus: 'pending_verification',
       kycSubmittedAt: new Date().toISOString(),
     },

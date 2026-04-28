@@ -172,13 +172,15 @@ export default function UploadDocumentsScreen({
                       'aadharPhotoUrl',
                       'aadharPhotoBackUrl',
                       'panPhotoUrl',
+                      'aadharNumber',
                     ]);
                     
                     const kycData = {
                       selfieUrl: values[0][1] || '',
                       aadharFrontUrl: values[1][1] || '',
                       aadharBackUrl: values[2][1] || '',
-                      panUrl: values[3][1] || ''
+                      panUrl: values[3][1] || '',
+                      aadharNumber: values[4][1] || '',
                     };
                     
                     await linkKycToUser(kycData);

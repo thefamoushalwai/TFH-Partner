@@ -69,6 +69,7 @@ export default function AadharScreen({ onBack, onUpload, onSkip }: AadharScreenP
         const downloadUrl = await uploadKycImage(uri, 'aadhar-back');
         await AsyncStorage.setItem('aadharPhotoBackUrl', downloadUrl);
         await AsyncStorage.setItem('aadharPhotoBack', uri);
+        await AsyncStorage.setItem('aadharNumber', rawDigits); // persist the typed number
         setStage('complete');
 
         if (onUpload) {

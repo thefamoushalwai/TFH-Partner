@@ -14,6 +14,7 @@ export interface ChefRow {
   earnings: number;
   docsStatus: "Approved" | "Pending" | string;
   status: "Active" | "Hold" | "Pending" | "Suspended" | "Inactive";
+  createdAt: string;
 }
 
 export interface ChefStats {
@@ -185,13 +186,19 @@ export async function getChefsList(
         bookings: partnerAgg.count,
         ratings: Number(user.ratings) || 0,
         earnings: partnerAgg.totalAmount,
-        docsStatus: docsApproved ? "Approved" : "Pending", // FIX #6: was always "Pending" due to broken ternary
+        docsStatus: docsApproved ? "Approved" : "Pending",
         status,
+        createdAt: user.createdAt || user.kycSubmittedAt || "",
       });
     }
 
-    // Sort by name
-    chefs.sort((a, b) => a.name.localeCompare(b.name));
+    // Sort descending by registration date (newest first); fall back to name for undated entries
+    chefs.sort((a, b) => {
+      const da = a.createdAt ? new Date(a.createdAt).getTime() : -Infinity;
+      const db = b.createdAt ? new Date(b.createdAt).getTime() : -Infinity;
+      if (da !== db) return db - da;
+      return a.name.localeCompare(b.name);
+    });
 
     return { success: true, data: { stats, chefs } };
   } catch (error: any) {

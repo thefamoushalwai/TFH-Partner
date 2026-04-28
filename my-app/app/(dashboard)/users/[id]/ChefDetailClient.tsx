@@ -217,16 +217,53 @@ interface Props { user: any; bookings: any[]; }
 export default function ChefDetailClient({ user, bookings }: Props) {
   const router = useRouter();
 
+  // ── Normalizers ────────────────────────────────────────
+  const normalizeGender = (g: string) => {
+    if (!g) return "";
+    const lower = g.toLowerCase();
+    if (lower === "male") return "Male";
+    if (lower === "female") return "Female";
+    if (lower === "other") return "Other";
+    return g;
+  };
+
+  const normalizeCity = (c: string) => {
+    if (!c) return "";
+    const lower = c.toLowerCase();
+    if (lower === "delhi" || lower === "new delhi") return "New Delhi";
+    return CITY_OPTIONS.find(opt => opt.toLowerCase() === lower) || c;
+  };
+
+  const normalizeZone = (z: string) => {
+    if (!z) return "";
+    const lower = z.toLowerCase();
+    if (lower === "north") return "North Zone";
+    if (lower === "south") return "South Zone";
+    if (lower === "east") return "East Zone";
+    if (lower === "west") return "West Zone";
+    if (lower === "central") return "Central Zone";
+    return ZONE_OPTIONS.find(opt => opt.toLowerCase() === lower) || z;
+  };
+
+  const normalizeLanguage = (l: string) => {
+    if (!l) return "";
+    const lower = l.toLowerCase();
+    if (lower === "en") return "English";
+    if (lower === "hi") return "Hindi";
+    return l.charAt(0).toUpperCase() + l.slice(1);
+  };
+
   // ── Form state ─────────────────────────────────────────
   const [form, setForm] = useState({
     phone:          user.phone          || "",
     email:          user.email          || "",
     emergencyPhone: user.emergencyPhone || "",
-    gender:         user.gender         || "",
+    gender:         normalizeGender(user.gender),
     jobType:        user.jobType        || "",
-    city:           user.city           || "",
-    zone:           user.zone           || "",
+    city:           normalizeCity(user.city),
+    zone:           normalizeZone(user.zone),
     address:        user.address        || "",
+    language:       normalizeLanguage(user.language),
     bankAccount:    user.bankAccount    || user.accountNumber || "",
     ifscCode:       user.ifscCode       || user.ifsc          || "",
     bankNumber:     user.bankNumber     || "",
@@ -239,11 +276,13 @@ export default function ChefDetailClient({ user, bookings }: Props) {
   const [cuisines, setCuisines] = useState<string[]>(
     Array.isArray(user.cuisines) ? user.cuisines : []
   );
+  
+  const initialExp = user.experience || user.workExperience;
   const [workExperience, setWorkExperience] = useState<string[]>(
-    Array.isArray(user.workExperience)
-      ? user.workExperience
-      : user.workExperience
-      ? [user.workExperience]
+    Array.isArray(initialExp)
+      ? initialExp
+      : initialExp
+      ? [initialExp]
       : []
   );
 
@@ -272,9 +311,15 @@ export default function ChefDetailClient({ user, bookings }: Props) {
   const handleSave = async (mode: "profile" | "draft") => {
     setSaving(true);
     setSaveErr(null);
+    let mappedLang = form.language;
+    if (mappedLang === "English") mappedLang = "en";
+    else if (mappedLang === "Hindi") mappedLang = "hi";
+
     const res = await updateUserProfile(user.uid, {
       ...form,
+      language: mappedLang,
       cuisines,
+      experience: workExperience as any,
       workExperience: workExperience as any,
     });
     setSaving(false);
@@ -369,6 +414,7 @@ export default function ChefDetailClient({ user, bookings }: Props) {
 
             <EditableSelect label="Select Gender" value={form.gender} onChange={set("gender")} options={["Male", "Female", "Other"]} />
             <EditableSelect label="Job Type"      value={form.jobType} onChange={set("jobType")} options={["Full Time", "Part Time", "Freelance"]} />
+            <EditableField label="Language"       value={form.language} onChange={set("language")} />
 
             {/* ── Cuisine Type multi-select ── */}
             <MultiSelectDropdown
@@ -395,7 +441,17 @@ export default function ChefDetailClient({ user, bookings }: Props) {
 
         {/* ── KYC Details ────────────────────────────────── */}
         <div className="bg-white rounded-2xl p-6 shadow-sm">
-          <h2 className="text-[16px] font-bold text-gray-900 mb-6">KYC details &amp; verification</h2>
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-[16px] font-bold text-gray-900">KYC details &amp; verification</h2>
+            <div className="text-right">
+              {user.kycSubmittedAt && (
+                <p className="text-[12px] text-gray-500">Submitted: {new Date(user.kycSubmittedAt).toLocaleString()}</p>
+              )}
+              {user.kycVerifiedAt && (
+                <p className="text-[12px] text-gray-500">Verified: {new Date(user.kycVerifiedAt).toLocaleString()}</p>
+              )}
+            </div>
+          </div>
           <div className="space-y-5">
             <div className="grid grid-cols-2 gap-8">
               <EditableField label="Adhaar number" value={form.aadharNumber} onChange={set("aadharNumber")} />

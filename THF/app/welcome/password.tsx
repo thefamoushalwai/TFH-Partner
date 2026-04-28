@@ -183,13 +183,7 @@ export default function CreatePasswordScreen() {
           )}
         </TouchableOpacity>
 
-        {/* Footer */}
-        <Text style={styles.footerText}>
-          {t('footerLegal')}{'\n'}
-          Tracto Healthcare{' '}
-          <Text style={styles.footerLink}>{t('termsConditions')}</Text>,{' '}
-          <Text style={styles.footerLink}>{t('privacyPolicy')}</Text>
-        </Text>
+      
       </View>
     </SafeAreaView>
   );
