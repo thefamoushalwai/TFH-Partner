@@ -39,6 +39,12 @@ const STATUS_CONFIG: Record<
     border: "border-t-[#E11D48]",
     subtext: "All time",
   },
+  Hold: {
+    pill: "bg-orange-50 text-orange-600 border-orange-100",
+    tab: "border-t-orange-500",
+    border: "border-t-orange-500",
+    subtext: "Paused",
+  },
 };
 
 export default async function BookingsPage(props: {
@@ -58,7 +64,7 @@ export default async function BookingsPage(props: {
 
   // ── Fetch data (chef-filtered or all) ────────────────
   let bookings: any[] = [];
-  let stats = { completed: 0, inProgress: 0, scheduled: 0, broadcasted: 0, cancelled: 0, total: 0 };
+  let stats = { completed: 0, inProgress: 0, scheduled: 0, broadcasted: 0, cancelled: 0, hold: 0, total: 0 };
   let fetchError: string | null = null;
   let chefName: string | null = null;
 
@@ -71,11 +77,12 @@ export default async function BookingsPage(props: {
       chefName = bookings[0]?.chefName ?? null;
       for (const b of bookings) {
         stats.total++;
-        if (b.status === "Completed")      stats.completed++;
+        if (b.status === "Completed")          stats.completed++;
         else if (b.status === "In progress")   stats.inProgress++;
-        else if (b.status === "Broadcasted")   stats.broadcasted++; // FIX #1
+        else if (b.status === "Broadcasted")   stats.broadcasted++;
         else if (b.status === "Scheduled")     stats.scheduled++;
         else if (b.status === "Cancelled")     stats.cancelled++;
+        else if (b.status === "Hold")          stats.hold++;
       }
     }
   } else {
@@ -169,15 +176,22 @@ export default async function BookingsPage(props: {
       subtext: STATUS_CONFIG["Cancelled"].subtext,
       borderColor: "border-t-[#E11D48]",
     },
+    {
+      title: "Hold",
+      value: stats.hold.toLocaleString(),
+      subtext: STATUS_CONFIG["Hold"].subtext,
+      borderColor: "border-t-orange-500",
+    },
   ];
 
   const tabs = [
     { label: "All Bookings", count: stats.total },
     { label: "Completed", count: stats.completed },
     { label: "In progress", count: stats.inProgress },
-    { label: "Broadcasted", count: stats.broadcasted }, // FIX #1
+    { label: "Broadcasted", count: stats.broadcasted },
     { label: "Scheduled", count: stats.scheduled },
     { label: "Cancelled", count: stats.cancelled },
+    { label: "Hold", count: stats.hold },
   ];
 
   return (
@@ -195,12 +209,12 @@ export default async function BookingsPage(props: {
           </Link>
         </div>
       )}
-      {/* Metric Cards — 5 columns now that Broadcasted is its own bucket */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-5 mb-6">
+      {/* Metric Cards — 6 columns: Completed, In Progress, Broadcasted, Scheduled, Cancelled, Hold */}
+      <div className="grid grid-cols-2 md:grid-cols-6 gap-5 mb-6">
         {cards.map((card, idx) => (
           <div
             key={idx}
-            className={`bg-white rounded-xl border-2 border-[#d3dbe2] border-t-4 ${card.borderColor} p-5`}
+            className={`bg-white rounded-xl border-2 border-[#d3dbe2] p-5`}
           >
             <p className="text-[11px] font-medium text-gray-500 mb-1">{card.title}</p>
             <p className="text-2xl font-bold text-gray-800">{card.value}</p>

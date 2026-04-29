@@ -15,6 +15,8 @@ export interface ChefRow {
   docsStatus: "Approved" | "Pending" | string;
   status: "Active" | "Hold" | "Pending" | "Suspended" | "Inactive";
   createdAt: string;
+  cuisines: string[];
+  serviceType: string;
 }
 
 export interface ChefStats {
@@ -189,6 +191,8 @@ export async function getChefsList(
         docsStatus: docsApproved ? "Approved" : "Pending",
         status,
         createdAt: user.createdAt || user.kycSubmittedAt || "",
+        cuisines: Array.isArray(user.cuisines) ? user.cuisines : (user.cuisineType ? [user.cuisineType] : []),
+        serviceType: user.serviceType || "",
       });
     }
 

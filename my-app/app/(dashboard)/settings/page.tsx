@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Upload, Send, Bell, X, CheckCircle, Loader2 } from "lucide-react";
+import { Upload, Send, Bell, X, CheckCircle, Loader2, EyeOff, ChevronDown } from "lucide-react";
 
 type SendState = "idle" | "sending" | "success" | "error";
 
@@ -107,11 +107,12 @@ export default function SettingsPage() {
   const canSend = headline.trim().length > 0 && message.trim().length > 0;
 
   return (
-    <div className="w-full bg-white h-full border border-blue-400/30 rounded-sm">
-      {/* Header */}
-      <div className="border-b border-gray-100 px-6 py-4">
-        <h1 className="text-base font-semibold text-gray-700">Send Custom Notification</h1>
-      </div>
+    <div className="space-y-6 mx-6 bg-transparent">
+      {/* Existing Send Notification Component */}
+      <div className="w-full bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100">
+        <div className="border-b border-gray-100 px-6 py-4">
+          <h1 className="text-base font-bold text-gray-800">Account Settings</h1>
+        </div>
 
       <div className="p-6 md:p-8">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
@@ -127,7 +128,7 @@ export default function SettingsPage() {
             >
               <div className="flex items-center text-red-500 mb-2 mt-2 font-medium text-[13px]">
                 <Upload className="w-4 h-4 mr-2" />
-                <span>Upload Notification Image</span>
+                <span>Upload Identity document</span>
               </div>
               <p className="text-[11px] text-gray-400 leading-relaxed mb-1">
                 Supports: JPG, JPEG, PNG | File size should not be<br />more than 5 MB
@@ -163,7 +164,7 @@ export default function SettingsPage() {
           </div>
 
           {/* ── Right Column ─────────────────── */}
-          <div className="flex flex-col space-y-6">
+          <div className="flex flex-col space-y-6 mx-20">
             
             {/* Image Preview Box */}
             <div className="relative w-full h-48 bg-[#D9D9D9] rounded-xl overflow-hidden flex items-center justify-center border border-transparent">
@@ -197,7 +198,7 @@ export default function SettingsPage() {
             >
               {sendState === "sending" ? (
                  <span className="flex items-center justify-center gap-2"><Loader2 className="w-4 h-4 animate-spin"/> Sending...</span>
-              ) : "Send Notification"}
+              ) : "Preview"}
             </button>
             
             <div className="min-h-[24px]">
@@ -211,6 +212,127 @@ export default function SettingsPage() {
           </div>
         </div>
       </div>
+      </div>
+
+      {/* Settings Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        
+        {/* Left Column - Account Settings */}
+        <div className="space-y-6">
+          
+          {/* Create New Password Card */}
+          <div className="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100">
+            <div className="border-b border-gray-100 px-6 py-4">
+              <h2 className="text-base font-bold text-gray-800">Account Settings</h2>
+            </div>
+            <div className="p-6">
+              <div className="mb-5">
+                <h3 className="text-sm font-semibold text-gray-800 mb-1">Create new password</h3>
+                <p className="text-[12px] text-[#8A98AC]">Your new password must be different from previous used passwords.</p>
+              </div>
+              <div className="space-y-4">
+                <div className="relative">
+                  <input 
+                    type="password" 
+                    placeholder="Enter Password" 
+                    className="w-full text-sm px-4 py-2.5 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-red-500 text-gray-600 placeholder-gray-400" 
+                  />
+                  <EyeOff className="w-4 h-4 absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 cursor-pointer hover:text-gray-600" />
+                </div>
+                <div className="relative">
+                  <input 
+                    type="password" 
+                    placeholder="Confirm Password" 
+                    className="w-full text-sm px-4 py-2.5 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-red-500 text-gray-600 placeholder-gray-400" 
+                  />
+                  <EyeOff className="w-4 h-4 absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 cursor-pointer hover:text-gray-600" />
+                </div>
+                <button className="w-full bg-[#EEF2F6] text-[#8A98AC] font-medium py-2.5 rounded-md text-sm mt-2 cursor-not-allowed transition-colors">
+                  Reset Password
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Platform Settings Card */}
+          <div className="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100">
+            <div className="border-b border-gray-100 px-6 py-4">
+              <h2 className="text-base font-bold text-gray-800">Account Settings</h2>
+            </div>
+            <div className="p-6 space-y-7">
+              <div className="flex justify-between items-center gap-4">
+                <div>
+                  <p className="text-[13px] text-gray-700">Platform Commission rate</p>
+                  <p className="text-[11px] text-[#8A98AC] mt-0.5">Percentage deducted from each booking</p>
+                </div>
+                <input 
+                  type="text" 
+                  defaultValue="5%" 
+                  className="w-[100px] px-3 py-2 border border-gray-200 rounded-md text-[13px] text-center focus:outline-none text-gray-600 bg-white" 
+                  readOnly 
+                />
+              </div>
+              
+              <div className="flex justify-between items-center gap-4">
+                <div>
+                  <p className="text-[13px] text-gray-700">Minimum payout amount</p>
+                  <p className="text-[11px] text-[#8A98AC] mt-0.5">Minimum balance before chef receives payout</p>
+                </div>
+                <input 
+                  type="text" 
+                  defaultValue="Rs. 500" 
+                  className="w-[100px] px-3 py-2 border border-gray-200 rounded-md text-[13px] text-center focus:outline-none text-gray-600 bg-white" 
+                  readOnly 
+                />
+              </div>
+
+              <div className="flex justify-between items-center gap-4">
+                <div>
+                  <p className="text-[13px] text-gray-700">Schedule payout</p>
+                  <p className="text-[11px] text-[#8A98AC] mt-0.5">How often payouts are processed</p>
+                </div>
+                <div className="relative w-[100px]">
+                  <select className="w-full appearance-none px-3 py-2 border border-gray-200 rounded-md text-[13px] text-center focus:outline-none focus:ring-1 focus:ring-red-500 text-gray-600 bg-white cursor-pointer">
+                    <option>Monthly</option>
+                    <option>Weekly</option>
+                  </select>
+                  <ChevronDown className="w-4 h-4 absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                </div>
+              </div>
+            </div>
+          </div>
+          
+        </div>
+
+        {/* Right Column - Notifications */}
+        <div>
+          <div className="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100 h-3/6">
+            <div className="border-b border-gray-100 px-6 py-4">
+              <h2 className="text-base font-bold text-gray-800">Notification</h2>
+            </div>
+            <div className="p-6 space-y-7">
+              {[
+                "New Booking Alerts",
+                "Chef availability updates",
+                "Payment Confirmation",
+                "SMS Alerts",
+                "Cancellation Alert",
+                "Payout Alert"
+              ].map((item, idx) => (
+                <div key={idx} className="flex justify-between items-center">
+                  <span className="text-[13px] text-[#8A98AC]">{item}</span>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" defaultChecked className="sr-only peer" />
+                    <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-red-500"></div>
+                  </label>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+      </div>
+
     </div>
   );
 }

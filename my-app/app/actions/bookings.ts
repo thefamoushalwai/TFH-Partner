@@ -30,6 +30,7 @@ export interface BookingStats {
   scheduled: number;
   broadcasted: number; // Issue #1: separate bucket for broadcasted
   cancelled: number;
+  hold: number;
   total: number;
 }
 
@@ -64,6 +65,7 @@ function normaliseStatus(raw: string = ""): string {
   if (s === "broadcasted" || s === "broadcast") return "Broadcasted"; // FIX #1
   if (s === "scheduled" || s === "confirmed" || s === "pending") return "Scheduled";
   if (s === "cancelled" || s === "canceled" || s === "rejected") return "Cancelled";
+  if (s === "hold" || s === "on hold" || s === "on_hold") return "Hold";
   return "Scheduled"; // default
 }
 
@@ -75,6 +77,7 @@ const DISPLAY_TO_FIRESTORE_STATUS: Record<string, string> = {
   "Broadcasted": "broadcasted",
   "Scheduled":   "scheduled",
   "Cancelled":   "cancelled",
+  "Hold":        "hold",
 };
 
 export async function getBookingsData(): Promise<{
@@ -97,7 +100,7 @@ export async function getBookingsData(): Promise<{
       nameMap[doc.id] = d.name || d.displayName || email || "Unknown";
     }
 
-    const stats: BookingStats = { completed: 0, inProgress: 0, scheduled: 0, broadcasted: 0, cancelled: 0, total: 0 };
+    const stats: BookingStats = { completed: 0, inProgress: 0, scheduled: 0, broadcasted: 0, cancelled: 0, hold: 0, total: 0 };
     const bookings: BookingRow[] = [];
 
     for (const doc of bookingsSnap.docs) {
@@ -109,6 +112,7 @@ export async function getBookingsData(): Promise<{
       else if (status === "Broadcasted") stats.broadcasted++; // FIX #1
       else if (status === "Scheduled")   stats.scheduled++;
       else if (status === "Cancelled")   stats.cancelled++;
+      else if (status === "Hold")        stats.hold++;
 
       // Issue #2: broadcasted bookings have partnerId = "generic-booking" — show broadcast info instead
       let chefName: string;

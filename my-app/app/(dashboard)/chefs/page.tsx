@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Eye, Pencil, AlertCircle, Loader2 } from "lucide-react";
+import { Eye, Pencil, AlertCircle, Loader2, ChevronDown, Search, Plus } from "lucide-react";
 import Link from "next/link";
 import { getChefsList } from "@/app/actions/chefs";
 import type { ChefRow, ChefStats } from "@/app/actions/chefs";
@@ -26,6 +26,10 @@ export default function ChefsPage() {
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabKey>("all");
   const [currentPage, setCurrentPage] = useState(1);
+  const [serviceTypeFilter, setServiceTypeFilter] = useState("");
+  const [cuisineTypeFilter, setCuisineTypeFilter] = useState("");
+  const [locationFilter, setLocationFilter] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     async function fetchAll() {
@@ -100,14 +104,31 @@ export default function ChefsPage() {
     },
   ];
 
-  const chefs = chefsByTab[activeTab] || [];
-  const totalPages = Math.max(1, Math.ceil(chefs.length / ITEMS_PER_PAGE));
+  const allChefsForFilters = chefsByTab["all"] || [];
+  const uniqueServiceTypes = Array.from(new Set(allChefsForFilters.map(c => c.serviceType).filter(Boolean)));
+  const uniqueCuisines = Array.from(new Set(allChefsForFilters.flatMap(c => c.cuisines || []).filter(Boolean)));
+  const uniqueLocations = Array.from(new Set(allChefsForFilters.map(c => c.city).filter(Boolean)));
+
+  const baseChefs = chefsByTab[activeTab] || [];
+  const filteredChefs = baseChefs.filter(c => {
+    if (serviceTypeFilter && c.serviceType !== serviceTypeFilter) return false;
+    if (cuisineTypeFilter && !c.cuisines?.includes(cuisineTypeFilter)) return false;
+    if (locationFilter && c.city !== locationFilter) return false;
+    if (searchQuery && !c.name.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+    return true;
+  });
+
+  const totalPages = Math.max(1, Math.ceil(filteredChefs.length / ITEMS_PER_PAGE));
   const startIdx = (currentPage - 1) * ITEMS_PER_PAGE;
-  const pageChefs = chefs.slice(startIdx, startIdx + ITEMS_PER_PAGE);
+  const pageChefs = filteredChefs.slice(startIdx, startIdx + ITEMS_PER_PAGE);
 
   const handleTabChange = (key: TabKey) => {
     setActiveTab(key);
     setCurrentPage(1);
+    setServiceTypeFilter("");
+    setCuisineTypeFilter("");
+    setLocationFilter("");
+    setSearchQuery("");
   };
 
   return (
@@ -117,7 +138,7 @@ export default function ChefsPage() {
         {cards.map((card, idx) => (
           <div
             key={idx}
-            className={`bg-white rounded-xl border-2 border-[#d3dbe2] border-t-4 ${card.borderColor} p-5`}
+            className={`bg-white rounded-xl border-2 border-[#d3dbe2]  p-5`}
           >
             <p className="text-[11px] font-medium text-gray-500 mb-1">{card.title}</p>
             <p className="text-2xl font-bold text-gray-800">{card.value}</p>
@@ -126,28 +147,80 @@ export default function ChefsPage() {
         ))}
       </div>
 
-      {/* Tabs */}
-      <div className="flex flex-wrap items-center gap-3 mb-6">
-        {tabs.map((tab) => (
-          <button
-            key={tab.key}
-            onClick={() => handleTabChange(tab.key)}
-            className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold transition-colors border ${
-              activeTab === tab.key
-                ? "bg-[#C44629] text-white border-transparent"
-                : "bg-white text-gray-600 border-2 border-[#d3dbe2] hover:bg-gray-50"
-            }`}
-          >
-            <span>{tab.label}</span>
-            <span
-              className={`flex items-center justify-center w-5 h-5 rounded-full text-[10px] ${
-                activeTab === tab.key ? "bg-white text-[#C44629]" : "bg-[#F3F4F6] text-gray-500"
-              }`}
+      {/* Filters and Actions */}
+      <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 mb-6">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="relative">
+            <select
+              value={activeTab}
+              onChange={(e) => handleTabChange(e.target.value as TabKey)}
+              className="appearance-none bg-white border border-[#d3dbe2] rounded-md pl-3 pr-8 py-2 text-xs font-medium text-gray-600 min-w-[130px] hover:bg-gray-50 transition-colors focus:outline-none focus:ring-1 focus:ring-[#C44629] cursor-pointer"
             >
-              {tab.count}
-            </span>
-          </button>
-        ))}
+              {tabs.map((tab) => (
+                <option key={tab.key} value={tab.key}>
+                  {tab.label} {tab.count !== "-" ? `(${tab.count})` : ""}
+                </option>
+              ))}
+            </select>
+            <ChevronDown className="w-4 h-4 text-gray-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+          </div>
+          <div className="relative">
+            <select
+              value={serviceTypeFilter}
+              onChange={(e) => { setServiceTypeFilter(e.target.value); setCurrentPage(1); }}
+              className="appearance-none bg-white border border-[#d3dbe2] rounded-md pl-3 pr-8 py-2 text-xs font-medium text-gray-600 min-w-[130px] hover:bg-gray-50 transition-colors focus:outline-none focus:ring-1 focus:ring-[#C44629] cursor-pointer"
+            >
+              <option value="">Service Type</option>
+              {uniqueServiceTypes.map((st, i) => (
+                <option key={i} value={st}>{st}</option>
+              ))}
+            </select>
+            <ChevronDown className="w-4 h-4 text-gray-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+          </div>
+          <div className="relative">
+            <select
+              value={cuisineTypeFilter}
+              onChange={(e) => { setCuisineTypeFilter(e.target.value); setCurrentPage(1); }}
+              className="appearance-none bg-white border border-[#d3dbe2] rounded-md pl-3 pr-8 py-2 text-xs font-medium text-gray-600 min-w-[130px] hover:bg-gray-50 transition-colors focus:outline-none focus:ring-1 focus:ring-[#C44629] cursor-pointer"
+            >
+              <option value="">Cuisine Type</option>
+              {uniqueCuisines.map((c, i) => (
+                <option key={i} value={c}>{c}</option>
+              ))}
+            </select>
+            <ChevronDown className="w-4 h-4 text-gray-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+          </div>
+          <div className="relative">
+            <select
+              value={locationFilter}
+              onChange={(e) => { setLocationFilter(e.target.value); setCurrentPage(1); }}
+              className="appearance-none bg-white border border-[#d3dbe2] rounded-md pl-3 pr-8 py-2 text-xs font-medium text-gray-600 min-w-[130px] hover:bg-gray-50 transition-colors focus:outline-none focus:ring-1 focus:ring-[#C44629] cursor-pointer"
+            >
+              <option value="">All Location</option>
+              {uniqueLocations.map((loc, i) => (
+                <option key={i} value={loc}>{loc}</option>
+              ))}
+            </select>
+            <ChevronDown className="w-4 h-4 text-gray-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="relative">
+            <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <input
+              type="text"
+              placeholder="Search chef"
+              value={searchQuery}
+              onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
+              className="pl-9 pr-4 py-2 bg-white border border-[#d3dbe2] rounded-md text-xs w-[250px] focus:outline-none focus:ring-1 focus:ring-[#C44629] transition-all placeholder-gray-400 text-gray-700"
+            />
+          </div>
+          <Link href="/chefs/onboard" className="flex items-center gap-1.5 bg-[#df201f] text-white px-4 py-2 rounded-md text-xs font-medium hover:bg-[#c21a19] transition-colors shadow-sm">
+            <Plus className="w-3.5 h-3.5" />
+            <span>Add Chef</span>
+          </Link>
+        </div>
       </div>
 
       {/* Table Section */}
@@ -167,7 +240,7 @@ export default function ChefsPage() {
                 <th className="px-6 py-4 whitespace-nowrap">Action</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-gray-300">
               {loading ? (
                 <tr>
                   <td colSpan={9} className="px-6 py-12 text-center">
@@ -179,7 +252,7 @@ export default function ChefsPage() {
                 </tr>
               ) : pageChefs.length > 0 ? (
                 pageChefs.map((chef, i) => (
-                  <tr key={chef.uid} className="hover:bg-gray-50 transition-colors">
+                  <tr key={chef.uid} className="hover:bg-gray-50 transition-colors ">
                     <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-500 font-medium">
                       {String(startIdx + i + 1).padStart(2, "0")}
                     </td>
@@ -308,11 +381,10 @@ export default function ChefsPage() {
                   <button
                     key={page}
                     onClick={() => setCurrentPage(page)}
-                    className={`flex items-center justify-center w-7 h-7 rounded text-xs font-medium shadow-sm ${
-                      currentPage === page
+                    className={`flex items-center justify-center w-7 h-7 rounded text-xs font-medium shadow-sm ${currentPage === page
                         ? "bg-[#E11D48] text-white"
                         : "border border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
-                    }`}
+                      }`}
                   >
                     {page}
                   </button>

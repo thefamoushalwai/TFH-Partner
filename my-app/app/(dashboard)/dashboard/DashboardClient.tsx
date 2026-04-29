@@ -41,7 +41,7 @@ function statusStyle(status: string) {
 
 function LineChart({ data }: { data: { label: string; value: number }[] }) {
   const W = 600;
-  const H = 190;
+  const H = 200;
   const PAD = { top: 24, right: 12, bottom: 28, left: 42 };
   const innerW = W - PAD.left - PAD.right;
   const innerH = H - PAD.top - PAD.bottom;
@@ -199,7 +199,7 @@ export default function DashboardClient({ data }: { data: DashboardAnalytics }) 
         {/* Left: chart + table */}
         <div className="lg:col-span-2 flex flex-col gap-5">
           {/* Booking Revenue */}
-          <div className="bg-white rounded-xl border border-[#d3dbe2] p-5">
+          <div className="bg-white rounded-xl border py-7 border-[#d3dbe2] p-5">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-sm font-bold text-gray-800">Booking Revenue</h2>
               <div className="flex items-center gap-0.5 bg-[#F3F4F6] rounded-full p-0.5">

@@ -39,7 +39,7 @@ export default function BookingDetailsModal({ booking, onClose }: BookingDetails
   };
 
   // Shared styles
-  const card = "bg-[#F9FAFB] rounded-2xl p-4 flex flex-col gap-1 min-w-0";
+  const card = "bg-[#F9FAFB] rounded-2xl p-4 flex flex-col border border-gray-200 gap-1 min-w-0";
   const label = "text-[10px] font-semibold text-gray-400 uppercase tracking-widest flex items-center gap-1.5";
   const value = "text-[14px] font-semibold text-[#111827] break-words leading-snug";
   const editCard = "bg-[#F9FAFB] rounded-2xl p-4 flex flex-col gap-2 min-w-0";
@@ -100,7 +100,7 @@ export default function BookingDetailsModal({ booking, onClose }: BookingDetails
           </div>
 
           {/* Row 3: Date, Time & Guests */}
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 gap-3">
             <div className={card}>
               <span className={label}><Calendar className="w-3 h-3" /> Date</span>
               <span className={value}>{booking.date}</span>
@@ -109,22 +109,27 @@ export default function BookingDetailsModal({ booking, onClose }: BookingDetails
               <span className={label}><Clock className="w-3 h-3" /> Time</span>
               <span className={value}>{booking.time}</span>
             </div>
-            <div className={card}>
-              <span className={label}><Users className="w-3 h-3" /> Guests</span>
-              <span className={value}>{booking.guests}</span>
-            </div>
+          
           </div>
 
           {/* Row 4: Location & Address */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className={card}>
-              <span className={label}><MapPin className="w-3 h-3" /> Area/Location</span>
-              <span className={value}>{booking.location || "—"}</span>
-            </div>
+          <div className="grid  gap-3">
+           
             <div className={card}>
               <span className={label}><MapPin className="w-3 h-3" /> Full Address</span>
               <span className={value + " whitespace-pre-wrap"}>{booking.address || "—"}</span>
             </div>
+          </div>
+
+            <div className="grid grid-cols-2  gap-3">
+              <div className={card}>
+              <span className={label}><Users className="w-3 h-3" /> Guests</span>
+              <span className={value}>{booking.guests}</span>
+            </div>
+                   <div className={card}>
+              <span className={label}><MapPin className="w-3 h-3" /> Area/Location</span>
+              <span className={value}>{booking.location || "—"}</span>
+            </div> 
           </div>
 
           {/* Row 5: Additional notes (full width) */}
@@ -133,9 +138,7 @@ export default function BookingDetailsModal({ booking, onClose }: BookingDetails
             <span className={value + " whitespace-pre-wrap"}>{booking.requirements || "—"}</span>
           </div>
 
-          {/* ── Divider ── */}
-          <div className="border-t border-dashed border-gray-200 my-1" />
-          <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest">Edit booking</p>
+
 
           {/* Row 6: Amount (editable) + Zone (editable) */}
           <div className="grid grid-cols-2 gap-3">
@@ -183,6 +186,7 @@ export default function BookingDetailsModal({ booking, onClose }: BookingDetails
               <option value="In progress">In progress</option>
               <option value="Completed">Completed</option>
               <option value="Cancelled">Cancelled</option>
+              <option value="Hold">Hold</option>
             </select>
           </div>
 

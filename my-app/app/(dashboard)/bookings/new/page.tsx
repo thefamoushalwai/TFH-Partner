@@ -3,6 +3,7 @@
 import { createBookingForChef, getChefsByZone, ChefForBroadcast } from "@/app/actions/booking";
 import { X, Calendar, ChevronDown, Loader2, CheckCircle2, Clock } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useRef, useState, useTransition } from "react";
 
 /* ─── Shared styles ─── */
@@ -190,7 +191,9 @@ function ChefSelectionModal({
 
 /* ─── Main Page ─── */
 export default function CreateBookingPage() {
+  const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
+  const today = new Date().toISOString().split("T")[0];
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -270,11 +273,35 @@ export default function CreateBookingPage() {
       setSuccess(true);
       setPendingData(null);
       formRef.current?.reset();
-      setTimeout(() => setSuccess(false), 4000);
+      setTimeout(() => {
+        setSuccess(false);
+        router.back();
+      }, 3500);
     } else {
       setError(result.error || "Something went wrong.");
     }
   };
+
+  if (success) {
+    return (
+      <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-[#0a0f1c]/20 backdrop-blur-sm">
+        <div className="bg-white w-[380px] rounded-[24px] shadow-xl flex flex-col items-center justify-center py-14 px-6 animate-in fade-in zoom-in-95 duration-200 border border-gray-100">
+          <div className="mb-6 relative text-[#2EBB65]">
+            <svg width="72" height="72" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M32 2.5L37 7.5L44 6L48.5 11.5L55.5 12L57 19.5L62 25L58 32L62 39L57 44.5L55.5 52L48.5 52.5L44 58L37 56.5L32 61.5L27 56.5L20 58L15.5 52.5L8.5 52L7 44.5L2 39L6 32L2 25L7 19.5L8.5 12L15.5 11.5L20 6L27 7.5L32 2.5Z" fill="currentColor"/>
+              <path d="M22 32L29 39L44 24" stroke="white" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M22 17L24 21L28 23L24 25L22 29L20 25L16 23L20 21L22 17Z" fill="white"/>
+              <path d="M43 43L44 45.5L46.5 46.5L44 47.5L43 50L42 47.5L39.5 46.5L42 45.5L43 43Z" fill="white"/>
+              <path d="M48 13L49 15L51 16L49 17L48 19L47 17L45 16L47 15L48 13Z" fill="white"/>
+            </svg>
+          </div>
+          <h2 className="text-[18px] font-semibold text-[#1F2937] text-center">
+            New booking has been created
+          </h2>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0a0f1c]/20 backdrop-blur-sm">
@@ -298,13 +325,6 @@ export default function CreateBookingPage() {
           {error && (
             <div className="p-3 bg-red-50 text-red-600 rounded-lg text-xs border border-red-100">
               {error}
-            </div>
-          )}
-
-          {success && (
-            <div className="p-3 bg-green-50 text-green-700 rounded-lg text-xs border border-green-100 flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
-              Booking broadcasted successfully!
             </div>
           )}
 
@@ -353,7 +373,11 @@ export default function CreateBookingPage() {
 
           {/* Row 3: Guests & Cuisine */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <input name="guests" type="number" required placeholder="No of guests" className={inputClass} />
+            <input name="guests" type="number" required min="10" max="999" onInput={(e) => {
+              if (e.currentTarget.value.length > 3) {
+                e.currentTarget.value = e.currentTarget.value.slice(0, 3);
+              }
+            }} placeholder="No of guests" className={inputClass} />
             <div className="relative">
               <select name="cuisine" required className={inputClass + " appearance-none bg-white"}>
                 <option value="">Cuisine type</option>
@@ -372,6 +396,7 @@ export default function CreateBookingPage() {
                 name="date"
                 type="text"
                 required
+                min={today}
                 onFocus={(e) => (e.target.type = "date")}
                 placeholder="Select date"
                 className={inputClass}
@@ -388,12 +413,19 @@ export default function CreateBookingPage() {
                 <option value="" disabled>Select time</option>
                 {Array.from({ length: 48 }, (_, i) => {
                   const h24 = Math.floor(i / 2);
+                  // Only show from 7 AM to 8 PM
+                  if (h24 < 7 || h24 > 20 || (h24 === 20 && i % 2 !== 0)) return null;
+                  
                   const mins = i % 2 === 0 ? "00" : "30";
                   const period = h24 < 12 ? "AM" : "PM";
                   const h12 = h24 === 0 ? 12 : h24 > 12 ? h24 - 12 : h24;
                   const value = `${String(h24).padStart(2, "0")}:${mins}`;
                   const label = `${h12}:${mins} ${period}`;
-                  return <option key={value} value={value}>{label}</option>;
+                  return (
+                    <option key={value} value={value}>
+                      {label}
+                    </option>
+                  );
                 })}
               </select>
               <Clock className="w-5 h-5 text-[#9CA3AF] absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -416,6 +448,12 @@ export default function CreateBookingPage() {
               name="amount"
               type="number"
               step="0.01"
+              max="99999"
+              onInput={(e) => {
+                if (e.currentTarget.value.length > 5) {
+                  e.currentTarget.value = e.currentTarget.value.slice(0, 5);
+                }
+              }}
               required
               placeholder="Booking Amount (₹)"
               className={inputClass}

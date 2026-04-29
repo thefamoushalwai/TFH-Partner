@@ -27,17 +27,17 @@ export default function Sidebar() {
         <p className="text-[13px] font-medium text-zinc-500 mt-1">Admin Platform</p>
       </div>
 
-      <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
+      <nav className="flex-1 py-6 space-y-2 overflow-y-auto">
         {navItems.map((item) => {
           const isActive = pathname === item.href;
           return (
             <Link
               key={item.href}
               href={item.href}
-              className={`relative flex items-start justify-start w-full px-4 py-3 pl-8  rounded-lg transition-all font-medium text-[14px] ${
+              className={`relative flex items-start justify-start w-full px-4 py-3 pl-8   transition-all font-medium text-[14px] ${
                 isActive
                   ? "bg-[#eb243e] text-white shadow-sm"
-                  : "bg-[#F9FAFB] text-gray-700 border-2 border-[#d3dbe2] hover:bg-gray-100"
+                  : "bg-[#F9FAFB] text-gray-700  hover:bg-gray-100"
               }`}
             >
               <span>{item.name}</span>
