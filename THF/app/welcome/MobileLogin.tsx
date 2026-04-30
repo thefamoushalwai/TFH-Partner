@@ -101,22 +101,7 @@ export default function MobileLoginScreen({ onGetStarted }: MobileLoginScreenPro
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        {/* Back Button */}
-        <TouchableOpacity
-          style={styles.backBtn}
-          onPress={() => {
-            if (router.canGoBack()) {
-              router.back();
-            } else {
-              router.replace('/');
-            }
-          }}
-          activeOpacity={0.7}
-        >
-          <Image source={require('../../assets/THF/left.svg')} style={{ width: 24, height: 24 }} contentFit="contain" />
-        </TouchableOpacity>
 
-        {/* Hero Image */}
 
 
         {/* Bottom Content */}

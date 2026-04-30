@@ -19,7 +19,8 @@
         "foregroundImage": "./assets/app_assets/Adaptive.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.thfpartner.myapp",
+      "package": "com.thfpartnerv1.next.myapp",
+      "versionCode": 2,
       "permissions": [
         "android.permission.CAMERA"
       ]
