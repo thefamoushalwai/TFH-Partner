@@ -65,6 +65,19 @@ const translations = {
   phoneNotProvided: { en: 'Phone number not provided for this booking', hi: 'इस बुकिंग में फ़ोन नंबर प्रदान नहीं किया गया' },
   phoneNotProvided2: { en: 'Phone number not provided', hi: 'फ़ोन नंबर उपलब्ध नहीं है' },
 
+  // ── KYC Details ────────────────────────────────────────────────────────
+  kycDetailsHeading: { en: 'Personal Details', hi: 'व्यक्तिगत विवरण' },
+  kycDetailsSub: { en: 'Enter your details below', hi: 'नीचे अपना विवरण दर्ज करें' },
+  enterName: { en: 'Enter Name', hi: 'नाम दर्ज करें' },
+  enterEmail: { en: 'Enter Email', hi: 'ईमेल दर्ज करें' },
+  emergencyContact: { en: 'Emergency Contact', hi: 'आपातकालीन संपर्क' },
+  selectGender: { en: 'Select Gender', hi: 'लिंग चुनें' },
+  selectCity: { en: 'Select City', hi: 'शहर चुनें' },
+  selectZone: { en: 'Select Zone', hi: 'ज़ोन चुनें' },
+  addressLabel: { en: 'Address', hi: 'पता' },
+  pinCodeLabel: { en: 'Pin Code', hi: 'पिन कोड' },
+  register: { en: 'Register', hi: 'रजिस्टर करें' },
+
   // ── Profile ───────────────────────────────────────────────────────────
   myProfile: { en: 'My profile', hi: 'मेरी प्रोफाइल' },
   cityNotSet: { en: 'City not set', hi: 'शहर निर्धारित नहीं' },
@@ -81,6 +94,10 @@ const translations = {
   ok: { en: 'OK', hi: 'ठीक है' },
   error: { en: 'Error', hi: 'त्रुटि' },
   failedLogout: { en: 'Failed to logout. Please try again.', hi: 'लॉगआउट विफल हुआ। कृपया पुनः प्रयास करें।' },
+  jobPreference: { en: 'Job Preference', hi: 'कार्य प्राथमिकता' },
+  workExperience: { en: 'Work Experience', hi: 'कार्य अनुभव' },
+  cuisineType: { en: 'Cuisine Type', hi: 'व्यंजन प्रकार' },
+  
 
   // ── My Bookings ───────────────────────────────────────────────────────
   myBookings: { en: 'My Bookings', hi: 'मेरी बुकिंग' },
@@ -156,17 +173,7 @@ const translations = {
   notRegisteredMsg: { en: 'This mobile number is not registered. Please sign up first.', hi: 'यह मोबाइल नंबर पंजीकृत नहीं है। कृपया पहले साइन अप करें।' },
   backToLogin: { en: 'Back to Login', hi: 'लॉगिन पर वापस जाएं' },
 
-  // ── KYC – Details ─────────────────────────────────────────────────────
-  kycDetailsHeading: { en: 'Please share the details', hi: 'कृपया विवरण साझा करें' },
-  kycDetailsSub: { en: 'To sign up to an account in the application, enter your details below.', hi: 'खाता बनाने के लिए नीचे अपना विवरण दर्ज करें।' },
-  enterName: { en: 'Enter Name', hi: 'नाम दर्ज करें' },
-  enterEmail: { en: 'Enter Email (Optional)', hi: 'ईमेल दर्ज करें (वैकल्पिक)' },
-  emergencyContact: { en: 'Emergency contact number', hi: 'आपातकालीन संपर्क नंबर' },
-  selectGender: { en: 'Select Gender', hi: 'लिंग चुनें' },
-  selectCity: { en: 'Select City', hi: 'शहर चुनें' },
-  selectZone: { en: 'Select Zone', hi: 'ज़ोन चुनें' },
-  addressLabel: { en: 'Address', hi: 'पता' },
-  register: { en: 'Register', hi: 'पंजीकरण करें' },
+
 
   // ── KYC – Aadhar ──────────────────────────────────────────────────────
   aadharHeading: { en: 'Enter your Aadhar details', hi: 'अपना आधार विवरण दर्ज करें' },
@@ -209,6 +216,7 @@ const translations = {
   cuisinesHeading: { en: 'Please choose the cuisines you can cook', hi: 'कृपया वे व्यंजन चुनें जिन्हें आप पका सकते हैं' },
   cuisinesSub: { en: 'This will help us to understand the area of expertise so that we could allocate the bookings accordingly', hi: 'यह हमें आपकी विशेषज्ञता के क्षेत्र को समझने में मदद करेगा ताकि हम बुकिंग आवंटित कर सकें।' },
   continueBtn: { en: 'Continue', hi: 'जारी रखें' },
+  saveBtn: { en: 'Save', hi: 'सहेजें' },
 
   // ── KYC – Upload Documents ────────────────────────────────────────────
   uploadDocsHeading: { en: 'Upload documents', hi: 'दस्तावेज़ अपलोड करें' },
@@ -304,6 +312,7 @@ export type TranslationKey = keyof typeof translations;
 
 export function getTranslation(key: TranslationKey, lang: Language): string {
   const entry = translations[key];
+  if (!entry) return key; // Fallback to key itself if missing
   return entry[lang] ?? entry['en'];
 }
 

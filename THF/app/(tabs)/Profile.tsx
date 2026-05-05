@@ -186,7 +186,7 @@ export default function ProfileScreen() {
           </View>
         </View>
 
-        {/* ── KYC Status Row ── */}
+      
         {/* ── Stats Section ── */}
         <View style={styles.threeStatsRow}>
           <View style={styles.threeStatCard}>
@@ -207,22 +207,26 @@ export default function ProfileScreen() {
 
         {/* ── Menu Items ── */}
         <View style={styles.menuSection}>
-          <MenuRow label={t('accountDetail')} onPress={() => router.push('/edit/EditDetails')} />
+          <MenuRow label={t('accountDetail') || 'Account detail'} onPress={() => router.push('/edit/EditDetails')} />
           <View style={styles.menuDivider} />
-          <MenuRow label={t('bankDetails')} onPress={() => router.push('/edit/AccountDetails')} />
+          <MenuRow label={t('jobPreference') || 'Job preference'} onPress={() => router.push({ pathname: '/kyc/JobPreference', params: { isEditMode: 'true' } })} />
           <View style={styles.menuDivider} />
-          <MenuRow label={t('referFriend')} badge={t('referBadge')} onPress={() => router.push('/edit/ReferFriend')} />
+          <MenuRow label={t('workExperience') || 'Work experience'} onPress={() => router.push({ pathname: '/kyc/Experience', params: { isEditMode: 'true' } })} />
           <View style={styles.menuDivider} />
-          <MenuRow label={t('changeLanguage')} onPress={() => router.push('/edit/ChangeLanguage')} />
+          <MenuRow label={t('cuisineType') || 'Cuisine type'} onPress={() => router.push({ pathname: '/kyc/Cuisines', params: { isEditMode: 'true' } })} />
+          <View style={styles.menuDivider} />
+          <MenuRow label={t('bankDetails') || 'Bank details'} onPress={() => router.push('/edit/AccountDetails')} />
+          <View style={styles.menuDivider} />
+          <MenuRow label={t('referFriend') || 'Refer a friend & Earn'} badge="Earn upto ₹5000" onPress={() => router.push('/edit/ReferFriend')} />
+          <View style={styles.menuDivider} />
+          <MenuRow label={t('changeLanguage') || 'Change Language'} onPress={() => router.push('/edit/ChangeLanguage')} />
+          <View style={styles.menuDivider} />
+          <MenuRow label={t('logout') || 'Log out'} onPress={handleLogout} />
         </View>
-
-        <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout} activeOpacity={0.85}>
-          <Text style={styles.logoutText}>{t('logout')}</Text>
-        </TouchableOpacity>
 
         <View style={styles.footerInfo}>
           <Text style={styles.versionText}>Version {Constants.expoConfig?.version ?? '1.0.0'}</Text>
-          <Text style={styles.developerText}>Developed by Mohit Aggarwal</Text>
+          <Text style={styles.developerText}>Developed by The Famous Halwai</Text>
         
         </View>
 

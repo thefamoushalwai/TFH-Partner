@@ -26,25 +26,20 @@ const SELECTED_SVG = `<svg width="24" height="24" viewBox="0 0 18 18" fill="none
 </svg>`;
 
 const OPTIONS = [
-  'Hotel',
-  'Hostels',
-  'Canteen',
-  'Houses',
-  'Restaurant',
-  'Pub & bar',
-  'Other',
+  'Part-Time',
+  'Full-Time',
 ];
 
-interface ExperienceScreenProps {
+interface JobPreferenceScreenProps {
   onBack?: () => void;
-  onContinue?: (selected: string[]) => void;
+  onContinue?: (selected: string) => void;
 }
 
-export default function ExperienceScreen({ onBack, onContinue }: ExperienceScreenProps) {
+export default function JobPreferenceScreen({ onBack, onContinue }: JobPreferenceScreenProps) {
   const router = useRouter();
   const { isEditMode } = useLocalSearchParams<{ isEditMode?: string }>();
   const { t } = useLanguage();
-  const [selected, setSelected] = useState<string[]>([]);
+  const [selected, setSelected] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   React.useEffect(() => {
@@ -53,8 +48,8 @@ export default function ExperienceScreen({ onBack, onContinue }: ExperienceScree
       if (!uid) return;
       try {
         const existing = await getUserProfile(uid);
-        if (existing?.experience) {
-          setSelected(existing.experience);
+        if (existing?.jobPreference) {
+          setSelected(existing.jobPreference);
         }
       } catch (e) {
         console.log(e);
@@ -64,15 +59,11 @@ export default function ExperienceScreen({ onBack, onContinue }: ExperienceScree
   }, []);
 
   const toggleOption = (option: string) => {
-    if (selected.includes(option)) {
-      setSelected(selected.filter((item) => item !== option));
-    } else {
-      setSelected([...selected, option]);
-    }
+    setSelected(option);
   };
 
   const handleContinue = async () => {
-    if (selected.length === 0 || saving) return;
+    if (!selected || saving) return;
 
     if (onContinue) {
       onContinue(selected);
@@ -87,8 +78,8 @@ export default function ExperienceScreen({ onBack, onContinue }: ExperienceScree
 
     setSaving(true);
     try {
-      // Save experience tags to Firestore
-      await updateUserProfile(uid, { experience: selected });
+      // Save job preference to Firestore
+      await updateUserProfile(uid, { jobPreference: selected as 'Part-Time' | 'Full-Time' });
 
       // Update AsyncStorage cache
       const fresh = await getUserProfile(uid);
@@ -97,17 +88,17 @@ export default function ExperienceScreen({ onBack, onContinue }: ExperienceScree
       if (isEditMode === 'true') {
         router.back();
       } else {
-        router.push('/kyc/Cuisines');
+        router.push('/kyc/Experience');
       }
     } catch (err: any) {
-      console.error('[ExperienceScreen] save error:', err);
+      console.error('[JobPreferenceScreen] save error:', err);
       Alert.alert('Error', err?.message ?? 'Failed to save. Please try again.');
     } finally {
       setSaving(false);
     }
   };
 
-  const isSelected = (option: string) => selected.includes(option);
+  const isSelected = (option: string) => selected === option;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -122,7 +113,7 @@ export default function ExperienceScreen({ onBack, onContinue }: ExperienceScree
           } else if (isEditMode === 'true') {
             router.back();
           } else {
-            router.replace('/kyc/JobPreference');
+            router.replace('/(tabs)/Dashboard');
           }
         }}
         activeOpacity={0.7}
@@ -136,8 +127,8 @@ export default function ExperienceScreen({ onBack, onContinue }: ExperienceScree
         showsVerticalScrollIndicator={false}
       >
         {/* Heading */}
-        <Text style={styles.heading}>{t('expHeading')}</Text>
-        <Text style={styles.subheading}>{t('expSub')}</Text>
+        <Text style={styles.heading}>What are you looking for?</Text>
+        <Text style={styles.subheading}>Please select your job preference.</Text>
 
         {/* Options */}
         <View style={styles.optionsList}>
@@ -168,15 +159,15 @@ export default function ExperienceScreen({ onBack, onContinue }: ExperienceScree
       {/* Continue Button */}
       <View style={styles.footer}>
         <TouchableOpacity
-          style={[styles.continueBtn, selected.length > 0 && !saving && styles.continueBtnActive]}
+          style={[styles.continueBtn, selected !== null && !saving && styles.continueBtnActive]}
           onPress={handleContinue}
-          activeOpacity={selected.length > 0 && !saving ? 0.85 : 1}
-          disabled={selected.length === 0 || saving}
+          activeOpacity={selected !== null && !saving ? 0.85 : 1}
+          disabled={selected === null || saving}
         >
           {saving ? (
             <ActivityIndicator color="#fff" size="small" />
           ) : (
-              <Text style={[styles.continueText, selected.length > 0 && styles.continueTextActive]}>
+              <Text style={[styles.continueText, selected !== null && styles.continueTextActive]}>
                 {isEditMode === 'true' ? t('saveBtn') || 'Save' : t('continueBtn')}
               </Text>
           )}

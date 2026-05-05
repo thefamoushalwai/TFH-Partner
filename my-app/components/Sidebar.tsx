@@ -11,6 +11,7 @@ export default function Sidebar() {
     { name: "Chefs", href: "/chefs", badge: "1200" },
     { name: "Bookings", href: "/bookings", badge: "2k" },
     { name: "Onboard Chef", href: "/onboard-chef" },
+    { name: "Referrals", href: "/referrals" },
     { name: "Payments", href: "/payments" },
     { name: "Settings", href: "/settings" },
   ];

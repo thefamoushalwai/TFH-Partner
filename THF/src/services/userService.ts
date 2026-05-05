@@ -40,6 +40,7 @@ export interface UserProfile {
   city: string;
   zone?: string;
   address: string;
+  pinCode?: string;
   /** List of experience tags, e.g. ["Hotel", "Houses"] */
   experience: string[];
   /** List of cuisines the user can cook */
@@ -60,6 +61,7 @@ export interface UserProfile {
     bankName: string;
     upiId?: string;
   };
+  jobPreference?: 'Part-Time' | 'Full-Time';
 }
 
 export interface KycDocument {

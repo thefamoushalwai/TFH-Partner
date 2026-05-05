@@ -287,3 +287,17 @@ export async function onboardChef(formData: FormData) {
     return { success: false, error: err.message };
   }
 }
+
+export async function deleteChef(uid: string) {
+  try {
+    getAdminDb();
+    await adminDb.collection("users").doc(uid).delete();
+    // Note: We might want to delete from Firebase Auth too, 
+    // but the users collection is the main display.
+    await admin.auth().deleteUser(uid).catch(() => console.log("User not found in Auth, or already deleted."));
+    return { success: true };
+  } catch (err: any) {
+    console.error("Error deleting chef:", err);
+    return { success: false, error: err.message };
+  }
+}

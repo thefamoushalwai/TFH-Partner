@@ -2,11 +2,11 @@
   "expo": {
     "name": "TFH Partner",
     "slug": "thefamoushalwaipartners",
-    "version": "1.1",
+    "version": "1.2",
     "orientation": "portrait",
     "icon": "./assets/app_assets/icon.png",
     "splash": {
-      "image": "./assets/app_assets/splashscreen.png",
+      "image": "./assets/app_assets/ss.png",
       "resizeMode": "contain",
       "backgroundColor": "#EA243F"
     },
@@ -20,7 +20,7 @@
       },
       "predictiveBackGestureEnabled": false,
       "package": "com.thfpartnerv1.next.myapp",
-      "versionCode": 3,
+      "versionCode": 4,
       "permissions": [
         "android.permission.CAMERA"
       ]

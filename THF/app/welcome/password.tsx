@@ -70,7 +70,7 @@ export default function CreatePasswordScreen() {
 
       const profile = await getUserProfile(uid);
       if (hasCompletedProfile(profile)) router.replace('/(tabs)/Dashboard');
-      else router.replace('/kyc/Experience');
+      else router.replace('/kyc/JobPreference');
     } catch (error: any) {
       Alert.alert(t('error'), error?.message ?? t('couldNotSavePassword'));
     } finally {

@@ -44,7 +44,16 @@ export default function ReferFriendScreen() {
       }
 
       const referralId = await createReferral({ referrerId: uid, referredPhone: e164Phone });
-      Alert.alert(t('referralSent'), `${t('referralSentMsg')} ID: ${referralId.slice(0, 8)}...`);
+      Alert.alert(
+        t('referralSent'),
+        `${t('referralSentMsg')} ID: ${referralId.slice(0, 8)}...`,
+        [
+          {
+            text: 'OK',
+            onPress: () => router.replace('/(tabs)/Profile'),
+          },
+        ],
+      );
       setName('');
       setContact('');
       setEmail('');

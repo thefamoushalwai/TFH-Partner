@@ -102,6 +102,7 @@ export default function RootLayout() {
         <Stack.Screen name="kyc/Experience" />
         <Stack.Screen name="kyc/Cuisines" />
         <Stack.Screen name="kyc/Details" />
+        <Stack.Screen name="kyc/JobPreference" />
         <Stack.Screen name="kyc/UploadDocuments_1" />
         <Stack.Screen name="kyc/Selfie" />
         <Stack.Screen name="kyc/Aadhar" />

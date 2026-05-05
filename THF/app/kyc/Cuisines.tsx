@@ -1,4 +1,4 @@
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import React, { useState } from 'react';
 import { ActivityIndicator, Alert, ScrollView, StatusBar, StyleSheet, TouchableOpacity, View,  } from 'react-native';
 import { SvgXml } from 'react-native-svg';
@@ -30,8 +30,10 @@ const OPTIONS = [
   'South Indian',
   'Chinese',
   'Mexican',
-  'Continental',
   'Thai',
+  'Fast Food',
+  'Korean',
+  'Italian',
 ];
 
 interface CuisinesScreenProps {
@@ -41,9 +43,26 @@ interface CuisinesScreenProps {
 
 export default function CuisinesScreen({ onBack, onContinue }: CuisinesScreenProps) {
   const router = useRouter();
+  const { isEditMode } = useLocalSearchParams<{ isEditMode?: string }>();
   const { t } = useLanguage();
   const [selected, setSelected] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
+
+  React.useEffect(() => {
+    const loadExisting = async () => {
+      const uid = auth.currentUser?.uid;
+      if (!uid) return;
+      try {
+        const existing = await getUserProfile(uid);
+        if (existing?.cuisines) {
+          setSelected(existing.cuisines);
+        }
+      } catch (e) {
+        console.log(e);
+      }
+    };
+    loadExisting();
+  }, []);
 
   const toggleOption = (option: string) => {
     if (selected.includes(option)) {
@@ -76,7 +95,11 @@ export default function CuisinesScreen({ onBack, onContinue }: CuisinesScreenPro
       const fresh = await getUserProfile(uid);
       if (fresh) await AsyncStorage.setItem(PROFILE_CACHE_KEY, JSON.stringify(fresh));
 
-      router.push('/kyc/Details');
+      if (isEditMode === 'true') {
+        router.back();
+      } else {
+        router.push('/kyc/Details');
+      }
     } catch (err: any) {
       console.error('[CuisinesScreen] save error:', err);
       Alert.alert('Error', err?.message ?? 'Failed to save. Please try again.');
@@ -97,6 +120,8 @@ export default function CuisinesScreen({ onBack, onContinue }: CuisinesScreenPro
         onPress={() => {
           if (onBack) {
             onBack();
+          } else if (isEditMode === 'true') {
+            router.back();
           } else {
             router.back();
           }
@@ -153,7 +178,7 @@ export default function CuisinesScreen({ onBack, onContinue }: CuisinesScreenPro
             <ActivityIndicator color="#fff" size="small" />
           ) : (
               <Text style={[styles.continueText, selected.length > 0 && styles.continueTextActive]}>
-                {t('continueBtn')}
+                {isEditMode === 'true' ? t('saveBtn') || 'Save' : t('continueBtn')}
               </Text>
           )}
         </TouchableOpacity>

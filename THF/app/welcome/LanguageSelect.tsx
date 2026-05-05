@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { Dimensions, StatusBar, StyleSheet, TouchableOpacity, View,  } from 'react-native';
+import { Dimensions, StatusBar, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Image } from 'expo-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { getTranslation, type Language } from '@/src/i18n/translations';
@@ -46,7 +46,7 @@ export default function LanguageSelectScreen({ onContinue }: LanguageSelectScree
       {/* Hero Image */}
       <View style={styles.imageContainer}>
         <Image
-          source={require('../../assets/THF/language-start.png')}
+          source={require('../../assets/THF/top-hero.png')}
           style={styles.heroImage}
           contentFit="cover"
         />
@@ -113,7 +113,7 @@ const styles = StyleSheet.create({
   /* ── Hero Image ── */
   imageContainer: {
     width: '100%',
-    height: height * 0.55,
+    height: height * 0.65,
     overflow: 'hidden',
   },
   heroImage: {
@@ -125,7 +125,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    height: 40,
+ 
     backgroundColor: 'rgba(255,255,255,0.15)',
   },
 
@@ -150,6 +150,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 12,
     marginBottom: 24,
+    
   },
   optionButton: {
     flex: 1,

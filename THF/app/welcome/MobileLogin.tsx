@@ -97,7 +97,7 @@ export default function MobileLoginScreen({ onGetStarted }: MobileLoginScreenPro
         if (hasCompletedProfile(existingProfile)) {
           router.replace('/(tabs)/Dashboard');
         } else {
-          router.replace('/kyc/Experience');
+          router.replace('/kyc/JobPreference');
         }
       }
     } catch (error: any) {
@@ -188,17 +188,6 @@ export default function MobileLoginScreen({ onGetStarted }: MobileLoginScreenPro
             </View>
           )}
 
-          {/* Forgot Password Link */}
-          {step === 'password' && (
-            <TouchableOpacity
-              onPress={() => router.push({ pathname: '/welcome/ForgotPassword', params: { phone: mobile } } as any)}
-              disabled={loading}
-              style={styles.forgotPasswordBtn}
-            >
-              <Text style={styles.forgotPasswordText}>{t('forgotPassword')}</Text>
-            </TouchableOpacity>
-          )}
-
           {!!errorMessage && (
             <Text style={styles.errorText}>{errorMessage}</Text>
           )}
@@ -218,6 +207,17 @@ export default function MobileLoginScreen({ onGetStarted }: MobileLoginScreenPro
               </Text>
             )}
           </TouchableOpacity>
+
+          {/* Forgot Password Link */}
+          {step === 'password' && (
+            <TouchableOpacity
+              onPress={() => router.push({ pathname: '/welcome/ForgotPassword', params: { phone: mobile } } as any)}
+              disabled={loading}
+              style={styles.forgotPasswordBtn}
+            >
+              <Text style={styles.forgotPasswordText}>{t('forgotPassword')}</Text>
+            </TouchableOpacity>
+          )}
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -335,8 +335,8 @@ const styles = StyleSheet.create({
   },
   forgotPasswordBtn: {
     alignSelf: 'flex-end',
-    marginBottom: 10,
-    marginTop: -6,
+  
+    marginTop: 16,
 
   },
   forgotPasswordText: {

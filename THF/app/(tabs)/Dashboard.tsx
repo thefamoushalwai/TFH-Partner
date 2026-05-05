@@ -111,7 +111,7 @@ function BookingCard({
           <Text style={bookingStyles.nextUp}>{booking.nextUpLabel}</Text>
           <Text style={bookingStyles.clientName}>{booking.clientName}</Text>
           <Text style={bookingStyles.meta}>
-            {booking.occasion} | {booking.guests} {t('guests')} | {booking.location}
+            {booking.occasion} | {booking.guests} {t('guests')} | {booking.address ? `${booking.address}, ` : ''}{booking.location}
           </Text>
         </View>
       </View>
@@ -182,7 +182,7 @@ function BroadcastedBookingCard({
             {bTime.isValid() ? bTime.format('MMM DD, YYYY') : ''} | {booking.eventType} | {booking.guests} guests
           </Text>
           <Text style={bookingStyles.meta} numberOfLines={1}>
-            {booking.location}
+            {booking.address ? `${booking.address}, ` : ''}{booking.location}
           </Text>
           <Text style={{ marginTop: 4, fontWeight: 'bold', color: '#111', fontSize: 13 }}>
             {t('amount')}: ₹{booking.amount}
@@ -423,7 +423,7 @@ export default function DashboardScreen() {
           <SummaryCard icon={<KycIcon />} label={t('ratings')} value={'4.8'} iconBg="#ffffff" />
         </View>
 
-        <Text style={styles.sectionTitle}>{t('todayBookings')}</Text>
+        {isVerified && <Text style={styles.sectionTitle}>{t('todayBookings')}</Text>}
 
         {/* ── Today's Bookings ── */}
         {!profile?.kycDocuments ? (
@@ -455,9 +455,11 @@ export default function DashboardScreen() {
           <ActivityIndicator color="#E8304A" style={{ marginTop: 20 }} />
         ) : todaysBookings.length === 0 ? (
           <View style={styles.emptyCard}>
+            
             <Text style={styles.emptyText}>{t('noBookingsToday')}</Text>
           </View>
         ) : (
+          
           todaysBookings.map((booking, index) => (
             <BookingCard
               key={booking.bookingId}
@@ -531,16 +533,16 @@ export default function DashboardScreen() {
               {t('time')}: {selectedBooking?.time} - {selectedBooking?.period}
             </Text>
             <Text style={modalStyles.detailText}>
-              {t('locationLabel')}: {selectedBooking?.location}
+              {t('locationLabel')}: {selectedBooking?.address ? `${selectedBooking.address}, ` : ''}{selectedBooking?.location}
             </Text>
             <Text style={modalStyles.detailText}>
               {selectedBooking?.guests} guests | North Indian + Cake
             </Text>
 
-            <View style={modalStyles.mapPlaceholder}>
+            {/* <View style={modalStyles.mapPlaceholder}>
               <Text style={modalStyles.mapText}>{t('mapPreview')}</Text>
-              <Text style={modalStyles.mapSubText}>{selectedBooking?.location}</Text>
-            </View>
+              <Text style={modalStyles.mapSubText}>{selectedBooking?.address ? `${selectedBooking.address}, ` : ''}{selectedBooking?.location}</Text>
+            </View> */}
 
             <View style={modalStyles.actionRow}>
               <TouchableOpacity
@@ -623,7 +625,7 @@ const modalStyles = StyleSheet.create({
   detailText: {
     fontSize: 14,
     color: '#4b5563',
-    marginBottom: 6,
+    marginBottom: 20,
     lineHeight: 20,
   },
   mapPlaceholder: {
@@ -866,7 +868,7 @@ const bookingStyles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'center',
-
+    paddingHorizontal: 10
   },
   callBtnText: { fontSize: 13, color: '#fff', fontWeight: '600' },
 });

@@ -68,7 +68,7 @@ export default function OTPScreen({ onVerify, onBack }: OTPScreenProps) {
 
     const existingProfile = await getUserProfile(user.uid);
     if (hasCompletedProfile(existingProfile)) router.replace('/(tabs)/Dashboard');
-    else router.replace('/kyc/Experience');
+    else router.replace('/kyc/JobPreference');
   }, [mode, phoneNumber, verificationId, otp, router]);
 
   /* ── Handle auto-verification (Android same device) ── */

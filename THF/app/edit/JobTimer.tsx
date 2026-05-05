@@ -1,12 +1,18 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useState, useEffect, useRef } from 'react';
-import { View, TouchableOpacity, StyleSheet, StatusBar, Alert,  } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, StatusBar, Alert } from 'react-native';
 import Navbar from '@/components/Navbar';
 import { updateBookingStatus } from '@/src/services/bookingService';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLanguage } from '@/src/hooks/useLanguage';
 import type { TranslationKey } from '@/src/i18n/translations';
 import { CustomText as Text } from '../../components/CustomText';
+import {
+  saveTimerState,
+  saveTimerJobParams,
+  loadTimerState,
+  clearTimerState,
+} from '@/src/utils/timerStorage';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface JobDetails {
@@ -16,7 +22,6 @@ interface JobDetails {
   guests: number;
   cuisine: string;
 }
-
 
 // ─── Job Card ─────────────────────────────────────────────────────────────────
 const JobCard = ({ job, t }: { job: JobDetails; t: (key: TranslationKey) => string }) => (
@@ -72,8 +77,6 @@ const TimerDisplay = ({ seconds, running, t }: TimerDisplayProps) => {
 };
 
 // ─── Main Screen ──────────────────────────────────────────────────────────────
-
-
 export default function JobTimerScreen() {
   const { t } = useLanguage();
   const params = useLocalSearchParams<{
@@ -85,7 +88,6 @@ export default function JobTimerScreen() {
     cuisine?: string;
   }>();
 
-  // Combine params with safe fallbacks
   const JOB: JobDetails = {
     title: params.title || 'Ongoing Job',
     time: params.time || 'N/A',
@@ -96,14 +98,51 @@ export default function JobTimerScreen() {
 
   const { bookingId } = params;
   const router = useRouter();
+
+  // ── Timer state (UI display) ──
   const [elapsed, setElapsed] = useState(0);
   const [running, setRunning] = useState(false);
+
+  // ── Persistent refs (survive re-renders, no stale closures) ──
+  // Wall-clock ms when this running segment started
+  const startMsRef = useRef<number | null>(null);
+  // Accumulated seconds from all previous running segments
+  const pausedElapsedRef = useRef<number>(0);
+
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  // ── Load persisted state on mount ────────────────────────────────────────
+  useEffect(() => {
+    if (!bookingId) return;
 
+    (async () => {
+      const saved = await loadTimerState(bookingId);
+      pausedElapsedRef.current = saved.pausedElapsed;
+
+      if (saved.running && saved.startMs !== null) {
+        // Timer was running when app was killed — resume with accurate elapsed
+        startMsRef.current = saved.startMs;
+        const wallElapsed = Math.floor((Date.now() - saved.startMs) / 1000);
+        const total = saved.pausedElapsed + wallElapsed;
+        setElapsed(total);
+        setRunning(true);
+      } else {
+        // Was paused or never started
+        setElapsed(saved.pausedElapsed);
+        setRunning(false);
+      }
+    })();
+  }, [bookingId]);
+
+  // ── Interval — uses wall-clock diff (drift-proof) ─────────────────────────
   useEffect(() => {
     if (running) {
-      intervalRef.current = setInterval(() => setElapsed((e) => e + 1), 1000);
+      intervalRef.current = setInterval(() => {
+        if (startMsRef.current !== null) {
+          const wallElapsed = Math.floor((Date.now() - startMsRef.current) / 1000);
+          setElapsed(pausedElapsedRef.current + wallElapsed);
+        }
+      }, 1000);
     } else {
       if (intervalRef.current) clearInterval(intervalRef.current);
     }
@@ -112,11 +151,45 @@ export default function JobTimerScreen() {
     };
   }, [running]);
 
-  const handleStart = () => {
+  // ── Handlers ──────────────────────────────────────────────────────────────
+  const handleStart = async () => {
+    startMsRef.current = Date.now();
     setRunning(true);
+    if (bookingId) {
+      await saveTimerState(bookingId, {
+        startMs: startMsRef.current,
+        pausedElapsed: pausedElapsedRef.current,
+        running: true,
+      });
+      // Save job display params so they survive app kills
+      await saveTimerJobParams({
+        bookingId,
+        title: JOB.title,
+        time: JOB.time,
+        location: JOB.location,
+        guests: String(JOB.guests),
+        cuisine: JOB.cuisine,
+      });
+    }
   };
 
-  const handlePause = () => setRunning(false);
+  const handlePause = async () => {
+    // Accumulate elapsed up to this moment before pausing
+    if (startMsRef.current !== null) {
+      pausedElapsedRef.current += Math.floor(
+        (Date.now() - startMsRef.current) / 1000,
+      );
+    }
+    startMsRef.current = null;
+    setRunning(false);
+    if (bookingId) {
+      await saveTimerState(bookingId, {
+        startMs: null,
+        pausedElapsed: pausedElapsedRef.current,
+        running: false,
+      });
+    }
+  };
 
   const handleEnd = () => {
     Alert.alert(t('quitConfirmTitle'), t('quitConfirmMsg'), [
@@ -126,23 +199,20 @@ export default function JobTimerScreen() {
         style: 'destructive',
         onPress: async () => {
           setRunning(false);
-          
           if (bookingId) {
+            // Clear persisted timer state before navigating away
+            await clearTimerState(bookingId);
             try {
               await updateBookingStatus(bookingId, 'completed');
             } catch (err) {
               console.error('[JobTimer] error marking completed:', err);
             }
           }
-
-          // Redirect to dashboard after a short delay or immediately
-          // Based on "on finished direct to dashboard screen"
           router.replace('/(tabs)/Dashboard');
         },
       },
     ]);
   };
-
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -151,22 +221,19 @@ export default function JobTimerScreen() {
         <Navbar />
         <JobCard job={JOB} t={t} />
 
-        <View style={{ height: 100 }}></View>
+        <View style={{ height: 100 }} />
 
         {/* Timer area */}
         <View style={styles.timerArea}>
-
-
-
           {/* Status badge */}
           {running ? (
             <View style={styles.liveBadge}>
               <View style={styles.liveDot} />
               <Text style={styles.liveBadgeText}>{t('live')}</Text>
             </View>
-          ): <View style={styles.void}>
-              
-            </View>}
+          ) : (
+            <View style={styles.void} />
+          )}
           <TimerDisplay seconds={elapsed} running={running} t={t} />
         </View>
 
@@ -197,9 +264,9 @@ export default function JobTimerScreen() {
               <TouchableOpacity style={styles.endBtn} onPress={handleEnd} activeOpacity={0.85}>
                 <Text style={styles.endBtnText}>{t('stopBtn')}</Text>
               </TouchableOpacity>
-              <TouchableOpacity 
-                style={[styles.startBtn, { flex: 1, height: 54 }]} 
-                onPress={handleStart} 
+              <TouchableOpacity
+                style={[styles.startBtn, { flex: 1, height: 54 }]}
+                onPress={handleStart}
                 activeOpacity={0.88}
               >
                 <Text style={styles.startBtnText}>{t('resumeLabel')}</Text>
@@ -214,7 +281,6 @@ export default function JobTimerScreen() {
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 const RED = '#E53935';
-const RED_DARK = '#C62828';
 const TEXT = '#1A1A1A';
 const MUTED = '#6B7280';
 

@@ -1,9 +1,9 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Eye, Pencil, AlertCircle, Loader2, ChevronDown, Search, Plus } from "lucide-react";
+import { Eye, Pencil, Trash2, AlertCircle, Loader2, ChevronDown, Search, Plus } from "lucide-react";
 import Link from "next/link";
-import { getChefsList } from "@/app/actions/chefs";
+import { getChefsList, deleteChef } from "@/app/actions/chefs";
 import type { ChefRow, ChefStats } from "@/app/actions/chefs";
 
 function formatEarnings(value: number): string {
@@ -30,32 +30,51 @@ export default function ChefsPage() {
   const [cuisineTypeFilter, setCuisineTypeFilter] = useState("");
   const [locationFilter, setLocationFilter] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+  const [deleteConfirm, setDeleteConfirm] = useState({ isOpen: false, uid: "", name: "" });
+
+  const fetchAll = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const results = await Promise.all(TAB_KEYS.map((k) => getChefsList(k)));
+      const [allResult] = results;
+      if (!allResult.success || !allResult.data) {
+        setError(allResult.error || "Failed to load chefs.");
+        return;
+      }
+      setStats(allResult.data.stats);
+      const map: Record<string, ChefRow[]> = {};
+      TAB_KEYS.forEach((k, i) => {
+        map[k] = results[i].data?.chefs || [];
+      });
+      setChefsByTab(map);
+    } catch (e: any) {
+      setError(e.message || "An unexpected error occurred.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    async function fetchAll() {
-      setLoading(true);
-      setError(null);
-      try {
-        const results = await Promise.all(TAB_KEYS.map((k) => getChefsList(k)));
-        const [allResult] = results;
-        if (!allResult.success || !allResult.data) {
-          setError(allResult.error || "Failed to load chefs.");
-          return;
-        }
-        setStats(allResult.data.stats);
-        const map: Record<string, ChefRow[]> = {};
-        TAB_KEYS.forEach((k, i) => {
-          map[k] = results[i].data?.chefs || [];
-        });
-        setChefsByTab(map);
-      } catch (e: any) {
-        setError(e.message || "An unexpected error occurred.");
-      } finally {
-        setLoading(false);
-      }
-    }
     fetchAll();
   }, []);
+
+  const openDeleteConfirm = (uid: string, name: string) => {
+    setDeleteConfirm({ isOpen: true, uid, name });
+  };
+
+  const confirmDelete = async () => {
+    setLoading(true);
+    const { uid } = deleteConfirm;
+    setDeleteConfirm({ isOpen: false, uid: "", name: "" });
+    const res = await deleteChef(uid);
+    if (res.success) {
+      await fetchAll();
+    } else {
+      alert(res.error || "Failed to delete chef.");
+      setLoading(false);
+    }
+  };
 
   if (error) {
     return (
@@ -216,7 +235,7 @@ export default function ChefsPage() {
               className="pl-9 pr-4 py-2 bg-white border border-[#d3dbe2] rounded-md text-xs w-[250px] focus:outline-none focus:ring-1 focus:ring-[#C44629] transition-all placeholder-gray-400 text-gray-700"
             />
           </div>
-          <Link href="/chefs/onboard" className="flex items-center gap-1.5 bg-[#df201f] text-white px-4 py-2 rounded-md text-xs font-medium hover:bg-[#c21a19] transition-colors shadow-sm">
+          <Link href="/onboard-chef" className="flex items-center gap-1.5 bg-[#df201f] text-white px-4 py-2 rounded-md text-xs font-medium hover:bg-[#c21a19] transition-colors shadow-sm">
             <Plus className="w-3.5 h-3.5" />
             <span>Add Chef</span>
           </Link>
@@ -332,11 +351,16 @@ export default function ChefsPage() {
                         <Link
                           href={`/users/${chef.uid}`}
                           className="hover:text-gray-600 transition-colors"
+                          title="View"
                         >
                           <Eye className="w-4 h-4" />
                         </Link>
-                        <button className="hover:text-gray-600 transition-colors">
-                          <Pencil className="w-4 h-4" />
+                        <button 
+                          onClick={() => openDeleteConfirm(chef.uid, chef.name)}
+                          className="hover:text-red-600 transition-colors"
+                          title="Delete"
+                        >
+                          <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
                     </td>
@@ -408,6 +432,30 @@ export default function ChefsPage() {
           </div>
         )}
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {deleteConfirm.isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+          <div className="bg-white rounded-xl shadow-lg w-full max-w-sm p-8 text-center animate-in fade-in zoom-in-95 duration-200">
+            <h3 className="text-xl font-bold text-gray-900 mb-2">Confirmation</h3>
+            <p className="text-gray-600 text-[15px] mb-8">Do you want to delete the profile</p>
+            <div className="flex items-center gap-4 w-full">
+              <button
+                onClick={() => setDeleteConfirm({ isOpen: false, uid: "", name: "" })}
+                className="flex-1 py-2.5 px-4 rounded-md border border-gray-300 text-gray-700 text-sm font-medium hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDelete}
+                className="flex-1 py-2.5 px-4 rounded-md bg-[#e32828] text-white text-sm font-medium hover:bg-[#c62020] transition-colors"
+              >
+                Submit
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

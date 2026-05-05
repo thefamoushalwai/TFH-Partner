@@ -12,9 +12,8 @@ import { useEffect, useRef, useState } from "react";
 // ─────────────────────────────────────────────────────────────────────────────
 const CUISINE_OPTIONS = [
   "North Indian", "South Indian", "Chinese", "Mexican",
-  "Continental", "Thai", "Italian", "Mughlai", "Bengali",
-  "Rajasthani", "Gujarati", "Punjabi", "Hyderabadi",
-  "Street Food", "Desserts", "Bakery",
+  "Continental", "Thai", "Italian", "Korean"
+  
 ];
 
 const WORK_EXP_OPTIONS = [
@@ -23,12 +22,12 @@ const WORK_EXP_OPTIONS = [
 ];
 
 const CITY_OPTIONS = [
-  "New Delhi", "Mumbai", "Bangalore", "Hyderabad",
-  "Chennai", "Kolkata", "Pune", "Ahmedabad", "Jaipur", "Noida", "Gurugram",
+  "Delhi", "Noida", "Ghaziabad", "Faridabad", "Gurugram",
+  
 ];
 
 const ZONE_OPTIONS = [
-  "North Zone", "South Zone", "East Zone", "West Zone", "Central Zone",
+  "North Zone", "South Zone", "East Zone", "West Zone"
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -259,7 +258,7 @@ export default function ChefDetailClient({ user, bookings }: Props) {
     email:          user.email          || "",
     emergencyPhone: user.emergencyPhone || "",
     gender:         normalizeGender(user.gender),
-    jobType:        user.jobType        || "",
+    jobPreference:  user.jobPreference        || "",
     city:           normalizeCity(user.city),
     zone:           normalizeZone(user.zone),
     address:        user.address        || "",
@@ -334,7 +333,7 @@ export default function ChefDetailClient({ user, bookings }: Props) {
 
   // ── Header tags ────────────────────────────────────────
   const tags: string[] = [];
-  if (form.jobType)        tags.push(form.jobType);
+  if (form.jobPreference)  tags.push(form.jobPreference);
   if (cuisines.length > 0) tags.push(cuisines.slice(0, 2).join(", "));
   if (form.city)           tags.push(form.city);
 
@@ -413,7 +412,7 @@ export default function ChefDetailClient({ user, bookings }: Props) {
             <EditableField label="Emergency contact number" value={form.emergencyPhone} onChange={set("emergencyPhone")} type="tel" />
 
             <EditableSelect label="Select Gender" value={form.gender} onChange={set("gender")} options={["Male", "Female", "Other"]} />
-            <EditableSelect label="Job Type"      value={form.jobType} onChange={set("jobType")} options={["Full Time", "Part Time", "Freelance"]} />
+            <EditableSelect label="Job Preference" value={form.jobPreference} onChange={set("jobPreference")} options={["Full-Time", "Part-Time", "Freelance"]} />
             <EditableField label="Language"       value={form.language} onChange={set("language")} />
 
             {/* ── Cuisine Type multi-select ── */}
@@ -445,10 +444,10 @@ export default function ChefDetailClient({ user, bookings }: Props) {
             <h2 className="text-[16px] font-bold text-gray-900">KYC details &amp; verification</h2>
             <div className="text-right">
               {user.kycSubmittedAt && (
-                <p className="text-[12px] text-gray-500">Submitted: {new Date(user.kycSubmittedAt).toLocaleString()}</p>
+                <p className="text-[12px] text-gray-500" suppressHydrationWarning>Submitted: {new Date(user.kycSubmittedAt).toLocaleString()}</p>
               )}
               {user.kycVerifiedAt && (
-                <p className="text-[12px] text-gray-500">Verified: {new Date(user.kycVerifiedAt).toLocaleString()}</p>
+                <p className="text-[12px] text-gray-500" suppressHydrationWarning>Verified: {new Date(user.kycVerifiedAt).toLocaleString()}</p>
               )}
             </div>
           </div>

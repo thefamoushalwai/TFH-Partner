@@ -32,7 +32,9 @@ export function hasCompletedProfile(
   const hasGender = typeof profile.gender === 'string' && profile.gender.trim().length > 0;
   const hasCity = typeof profile.city === 'string' && profile.city.trim().length > 0;
   const hasAddress = typeof profile.address === 'string' && profile.address.trim().length > 0;
+  const hasJobPreference = typeof profile.jobPreference === 'string' && profile.jobPreference.trim().length > 0;
+  const hasPinCode = typeof profile.pinCode === 'string' && /^[0-9]{6}$/.test(profile.pinCode);
   const hasExperience = Array.isArray(profile.experience) && profile.experience.length > 0;
 
-  return hasName && hasGender && hasCity && hasAddress && hasExperience;
+  return hasName && hasGender && hasCity && hasAddress && hasJobPreference && hasPinCode && hasExperience;
 }

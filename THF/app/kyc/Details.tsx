@@ -34,8 +34,8 @@ const SELECTED_SVG = `<svg width="24" height="24" viewBox="0 0 18 18" fill="none
 </svg>`;
 
 const GENDERS = ['Male', 'Female', 'Other'];
-const CITIES = ['Delhi', 'Mumbai', 'Bangalore', 'Chennai', 'Hyderabad', 'Kolkata', 'Pune', 'Ahmedabad'];
-const ZONES = ['North zone', 'South zone', 'East zone', 'West zone', 'Central zone'];
+const CITIES = ['Delhi', 'Noida', 'Ghaziabad', 'Faridabad', 'Gurugram'];
+const ZONES = ['North zone', 'South zone', 'East zone', 'West zone'];
 
 const isValidEmail = (e: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
 const isValidPhone = (p: string) => /^[0-9]{10}$/.test(p);
@@ -170,6 +170,7 @@ export interface RegistrationDetails {
   city: string;
   zone: string;
   address: string;
+  pinCode: string;
 }
 
 interface DetailsScreenProps {
@@ -187,6 +188,7 @@ export default function DetailsScreen({ onBack, onRegister }: DetailsScreenProps
   const [city, setCity] = useState('');
   const [zone, setZone] = useState('');
   const [address, setAddress] = useState('');
+  const [pinCode, setPinCode] = useState('');
   const [saving, setSaving] = useState(false);
 
   React.useEffect(() => {
@@ -205,6 +207,7 @@ export default function DetailsScreen({ onBack, onRegister }: DetailsScreenProps
           if (existing.city) setCity(existing.city);
           if (existing.zone) setZone(existing.zone);
           if (existing.address) setAddress(existing.address);
+          if (existing.pinCode) setPinCode(existing.pinCode);
         }
       } catch (e) {
         console.error("Failed to load existing profile", e);
@@ -220,14 +223,15 @@ export default function DetailsScreen({ onBack, onRegister }: DetailsScreenProps
     gender &&
     city &&
     zone &&
-    address.trim().length > 5;
+    address.trim().length > 5 &&
+    /^[0-9]{6}$/.test(pinCode);
 
   const handleRegister = async () => {
     if (!allFilled || saving) return;
 
     // Custom callback mode (e.g., used as a nested component)
     if (onRegister) {
-      onRegister({ name, email, emergency, gender, city, zone, address });
+      onRegister({ name, email, emergency, gender, city, zone, address, pinCode });
       return;
     }
 
@@ -254,6 +258,7 @@ export default function DetailsScreen({ onBack, onRegister }: DetailsScreenProps
         // Issue #4: normalize zone before saving — "North zone" → "north"
         zone: normalizeZoneForStorage(zone),
         address: address.trim(),
+        pinCode: pinCode.trim(),
         language: 'en',
       };
 
@@ -316,6 +321,7 @@ export default function DetailsScreen({ onBack, onRegister }: DetailsScreenProps
           <DropdownField label={t('selectZone')} value={zone} options={ZONES} onSelect={setZone} />
 
           <FloatingInput label={t('addressLabel')} value={address} onChangeText={setAddress} multiline isValid={address.trim().length > 5} editable={!saving} />
+          <FloatingInput label={t('pinCodeLabel') || 'Pin Code'} value={pinCode} onChangeText={setPinCode} keyboardType="number-pad" isValid={/^[0-9]{6}$/.test(pinCode)} editable={!saving} maxLength={6} />
 
           <View style={{ height: 16 }} />
         </ScrollView>
