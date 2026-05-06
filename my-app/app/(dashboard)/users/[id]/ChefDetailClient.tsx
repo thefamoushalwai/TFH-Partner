@@ -13,7 +13,7 @@ import { useEffect, useRef, useState } from "react";
 const CUISINE_OPTIONS = [
   "North Indian", "South Indian", "Chinese", "Mexican",
   "Continental", "Thai", "Italian", "Korean"
-  
+
 ];
 
 const WORK_EXP_OPTIONS = [
@@ -22,8 +22,33 @@ const WORK_EXP_OPTIONS = [
 ];
 
 const CITY_OPTIONS = [
-  "Delhi", "Noida", "Ghaziabad", "Faridabad", "Gurugram",
-  
+  "Delhi",
+  "Noida",
+  "Ghaziabad",
+  "Faridabad",
+  "Gurugram",
+  "Mumbai",
+  'Bengaluru',
+  'Chennai',
+  'Kolkata',
+  'Hyderabad',
+  'Pune',
+  'Jaipur',
+  'Lucknow',
+  'Chandigarh',
+  'Indore',
+  'Kochi',
+  'Ahmedabad',
+  'Bhubaneswar',
+  'Nagpur',
+  'Dehradun',
+  'Shimla',
+  'Jalandhar',
+  'Mysuru',
+  'Udaipur',
+  'Varanasi',
+  'Rajkot',
+
 ];
 
 const ZONE_OPTIONS = [
@@ -112,8 +137,8 @@ function MultiSelectDropdown({
     selected.length === 0
       ? "— Select —"
       : selected.length <= 2
-      ? selected.join(", ")
-      : `${selected.slice(0, 2).join(", ")} +${selected.length - 2} more`;
+        ? selected.join(", ")
+        : `${selected.slice(0, 2).join(", ")} +${selected.length - 2} more`;
 
   return (
     <div className="relative" ref={ref}>
@@ -254,35 +279,35 @@ export default function ChefDetailClient({ user, bookings }: Props) {
 
   // ── Form state ─────────────────────────────────────────
   const [form, setForm] = useState({
-    phone:          user.phone          || "",
-    email:          user.email          || "",
+    phone: user.phone || "",
+    email: user.email || "",
     emergencyPhone: user.emergencyPhone || "",
-    gender:         normalizeGender(user.gender),
-    jobPreference:  user.jobPreference        || "",
-    city:           normalizeCity(user.city),
-    zone:           normalizeZone(user.zone),
-    address:        user.address        || "",
-    language:       normalizeLanguage(user.language),
-    bankAccount:    user.bankAccount    || user.accountNumber || "",
-    ifscCode:       user.ifscCode       || user.ifsc          || "",
-    bankNumber:     user.bankNumber     || "",
-    upiId:          user.upiId          || user.upi           || "",
-    aadharNumber:   user.kycDocuments?.aadharNumber || user.aadharNumber || "",
-    panNumber:      user.kycDocuments?.panNumber    || user.panNumber    || "",
+    gender: normalizeGender(user.gender),
+    jobPreference: user.jobPreference || "",
+    city: normalizeCity(user.city),
+    zone: normalizeZone(user.zone),
+    address: user.address || "",
+    language: normalizeLanguage(user.language),
+    bankAccount: user.bankAccount || user.accountNumber || "",
+    ifscCode: user.ifscCode || user.ifsc || "",
+    bankNumber: user.bankNumber || "",
+    upiId: user.upiId || user.upi || "",
+    aadharNumber: user.kycDocuments?.aadharNumber || user.aadharNumber || "",
+    panNumber: user.kycDocuments?.panNumber || user.panNumber || "",
   });
 
   // ── Array states (multi-select) ────────────────────────
   const [cuisines, setCuisines] = useState<string[]>(
     Array.isArray(user.cuisines) ? user.cuisines : []
   );
-  
+
   const initialExp = user.experience || user.workExperience;
   const [workExperience, setWorkExperience] = useState<string[]>(
     Array.isArray(initialExp)
       ? initialExp
       : initialExp
-      ? [initialExp]
-      : []
+        ? [initialExp]
+        : []
   );
 
   const set = (key: keyof typeof form) => (value: string) =>
@@ -290,7 +315,7 @@ export default function ChefDetailClient({ user, bookings }: Props) {
 
   // ── Approval ───────────────────────────────────────────
   const [approvalOpen, setApprovalOpen] = useState(false);
-  const [kycLoading,   setKycLoading]   = useState<string | null>(null);
+  const [kycLoading, setKycLoading] = useState<string | null>(null);
   const isVerified = user.kycStatus === "approved" || user.kycStatus === "verified";
 
   const handleKycUpdate = async (status: "approved" | "rejected") => {
@@ -303,8 +328,8 @@ export default function ChefDetailClient({ user, bookings }: Props) {
   };
 
   // ── Save ───────────────────────────────────────────────
-  const [saving,  setSaving]  = useState(false);
-  const [saved,   setSaved]   = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
   const [saveErr, setSaveErr] = useState<string | null>(null);
 
   const handleSave = async (mode: "profile" | "draft") => {
@@ -333,9 +358,9 @@ export default function ChefDetailClient({ user, bookings }: Props) {
 
   // ── Header tags ────────────────────────────────────────
   const tags: string[] = [];
-  if (form.jobPreference)  tags.push(form.jobPreference);
+  if (form.jobPreference) tags.push(form.jobPreference);
   if (cuisines.length > 0) tags.push(cuisines.slice(0, 2).join(", "));
-  if (form.city)           tags.push(form.city);
+  if (form.city) tags.push(form.city);
 
   return (
     <div className="min-h-screen bg-[#f5f5f5]">
@@ -379,8 +404,8 @@ export default function ChefDetailClient({ user, bookings }: Props) {
                 {kycLoading
                   ? `${kycLoading === "approved" ? "Approving" : "Rejecting"}…`
                   : isVerified ? "KYC Approved"
-                  : user.kycStatus === "rejected" ? "KYC Rejected"
-                  : "Select Approval Status"}
+                    : user.kycStatus === "rejected" ? "KYC Rejected"
+                      : "Select Approval Status"}
               </span>
               <ChevronDown className="w-4 h-4 text-gray-400" />
             </button>
@@ -407,13 +432,13 @@ export default function ChefDetailClient({ user, bookings }: Props) {
           </div>
 
           <div className="grid grid-cols-3 gap-x-8 gap-y-6">
-            <EditableField label="Enter mobile number"      value={form.phone}          onChange={set("phone")}          type="tel" />
-            <EditableField label="Enter Email"              value={form.email}          onChange={set("email")}          type="email" />
+            <EditableField label="Enter mobile number" value={form.phone} onChange={set("phone")} type="tel" />
+            <EditableField label="Enter Email" value={form.email} onChange={set("email")} type="email" />
             <EditableField label="Emergency contact number" value={form.emergencyPhone} onChange={set("emergencyPhone")} type="tel" />
 
             <EditableSelect label="Select Gender" value={form.gender} onChange={set("gender")} options={["Male", "Female", "Other"]} />
             <EditableSelect label="Job Preference" value={form.jobPreference} onChange={set("jobPreference")} options={["Full-Time", "Part-Time", "Freelance"]} />
-            <EditableField label="Language"       value={form.language} onChange={set("language")} />
+            <EditableField label="Language" value={form.language} onChange={set("language")} />
 
             {/* ── Cuisine Type multi-select ── */}
             <MultiSelectDropdown
@@ -454,7 +479,7 @@ export default function ChefDetailClient({ user, bookings }: Props) {
           <div className="space-y-5">
             <div className="grid grid-cols-2 gap-8">
               <EditableField label="Adhaar number" value={form.aadharNumber} onChange={set("aadharNumber")} />
-              <EditableField label="PAN number"    value={form.panNumber}    onChange={set("panNumber")} />
+              <EditableField label="PAN number" value={form.panNumber} onChange={set("panNumber")} />
             </div>
             {user.kycDocuments ? (
               <div className="grid grid-cols-2 gap-4">
@@ -479,8 +504,8 @@ export default function ChefDetailClient({ user, bookings }: Props) {
           <h2 className="text-[16px] font-bold text-gray-900 mb-6">Bank Details</h2>
           <div className="grid grid-cols-3 gap-x-8 gap-y-6 mb-8">
             <EditableField label="Bank Account number" value={form.bankAccount} onChange={set("bankAccount")} />
-            <EditableField label="IFSC code"           value={form.ifscCode}   onChange={set("ifscCode")} />
-            <EditableField label="Bank Number"         value={form.bankNumber} onChange={set("bankNumber")} />
+            <EditableField label="IFSC code" value={form.ifscCode} onChange={set("ifscCode")} />
+            <EditableField label="Bank Number" value={form.bankNumber} onChange={set("bankNumber")} />
           </div>
           <h3 className="text-[15px] font-bold text-gray-900 mb-4">UPI Details</h3>
           <div className="grid grid-cols-3 gap-x-8">

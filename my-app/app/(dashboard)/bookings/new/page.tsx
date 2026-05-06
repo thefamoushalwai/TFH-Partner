@@ -99,20 +99,18 @@ function ChefSelectionModal({
                   <tr
                     key={chef.uid}
                     onClick={() => toggle(chef.uid)}
-                    className={`cursor-pointer transition-colors ${
-                      selected.has(chef.uid)
+                    className={`cursor-pointer transition-colors ${selected.has(chef.uid)
                         ? "bg-red-50/60"
                         : "hover:bg-gray-50"
-                    }`}
+                      }`}
                   >
                     {/* Checkbox */}
                     <td className="pl-6 pr-2 py-4">
                       <div
-                        className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${
-                          selected.has(chef.uid)
+                        className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${selected.has(chef.uid)
                             ? "bg-[#1a1a2e] border-[#1a1a2e]"
                             : "border-gray-300 bg-white"
-                        }`}
+                          }`}
                       >
                         {selected.has(chef.uid) && (
                           <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
@@ -166,8 +164,8 @@ function ChefSelectionModal({
             {selected.size > 0
               ? `${selected.size} chef${selected.size > 1 ? "s" : ""} selected`
               : chefs.length === 0
-              ? "Will broadcast to all chefs"
-              : "Select chefs to broadcast to"}
+                ? "Will broadcast to all chefs"
+                : "Select chefs to broadcast to"}
           </p>
           <button
             onClick={() => onBroadcast([...selected])}
@@ -288,11 +286,11 @@ export default function CreateBookingPage() {
         <div className="bg-white w-[380px] rounded-[24px] shadow-xl flex flex-col items-center justify-center py-14 px-6 animate-in fade-in zoom-in-95 duration-200 border border-gray-100">
           <div className="mb-6 relative text-[#2EBB65]">
             <svg width="72" height="72" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M32 2.5L37 7.5L44 6L48.5 11.5L55.5 12L57 19.5L62 25L58 32L62 39L57 44.5L55.5 52L48.5 52.5L44 58L37 56.5L32 61.5L27 56.5L20 58L15.5 52.5L8.5 52L7 44.5L2 39L6 32L2 25L7 19.5L8.5 12L15.5 11.5L20 6L27 7.5L32 2.5Z" fill="currentColor"/>
-              <path d="M22 32L29 39L44 24" stroke="white" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M22 17L24 21L28 23L24 25L22 29L20 25L16 23L20 21L22 17Z" fill="white"/>
-              <path d="M43 43L44 45.5L46.5 46.5L44 47.5L43 50L42 47.5L39.5 46.5L42 45.5L43 43Z" fill="white"/>
-              <path d="M48 13L49 15L51 16L49 17L48 19L47 17L45 16L47 15L48 13Z" fill="white"/>
+              <path d="M32 2.5L37 7.5L44 6L48.5 11.5L55.5 12L57 19.5L62 25L58 32L62 39L57 44.5L55.5 52L48.5 52.5L44 58L37 56.5L32 61.5L27 56.5L20 58L15.5 52.5L8.5 52L7 44.5L2 39L6 32L2 25L7 19.5L8.5 12L15.5 11.5L20 6L27 7.5L32 2.5Z" fill="currentColor" />
+              <path d="M22 32L29 39L44 24" stroke="white" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M22 17L24 21L28 23L24 25L22 29L20 25L16 23L20 21L22 17Z" fill="white" />
+              <path d="M43 43L44 45.5L46.5 46.5L44 47.5L43 50L42 47.5L39.5 46.5L42 45.5L43 43Z" fill="white" />
+              <path d="M48 13L49 15L51 16L49 17L48 19L47 17L45 16L47 15L48 13Z" fill="white" />
             </svg>
           </div>
           <h2 className="text-[18px] font-semibold text-[#1F2937] text-center">
@@ -342,6 +340,29 @@ export default function CreateBookingPage() {
                 <option value="delhi">Delhi</option>
                 <option value="mumbai">Mumbai</option>
                 <option value="bangalore">Bangalore</option>
+                <option value="noida">Noida</option>
+                <option value="ghaziabad">Ghaziabad</option>
+                <option value="faridabad">Faridabad</option>
+                <option value="gurugram">Gurugram</option>
+                <option value="chennai">Chennai</option>
+                <option value="kolkata">Kolkata</option>
+                <option value="hyderabad">Hyderabad</option>
+                <option value="pune">Pune</option>
+                <option value="jaipur">Jaipur</option>
+                <option value="lucknow">Lucknow</option>
+                <option value="chandigarh">Chandigarh</option>
+                <option value="indore">Indore</option>
+                <option value="kochi">Kochi</option>
+                <option value="ahmedabad">Ahmedabad</option>
+                <option value="bhubaneswar">Bhubaneswar</option>
+                <option value="nagpur">Nagpur</option>
+                <option value="dehradun">Dehradun</option>
+                <option value="shimla">Shimla</option>
+                <option value="jalandhar">Jalandhar</option>
+                <option value="mysuru">Mysuru</option>
+                <option value="udaipur">Udaipur</option>
+                <option value="varanasi">Varanasi</option>
+                <option value="rajkot">Rajkot</option>
               </select>
               <ChevronDown className="w-4 h-4 text-[#9CA3AF] absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" />
             </div>
@@ -415,7 +436,7 @@ export default function CreateBookingPage() {
                   const h24 = Math.floor(i / 2);
                   // Only show from 7 AM to 8 PM
                   if (h24 < 7 || h24 > 20 || (h24 === 20 && i % 2 !== 0)) return null;
-                  
+
                   const mins = i % 2 === 0 ? "00" : "30";
                   const period = h24 < 12 ? "AM" : "PM";
                   const h12 = h24 === 0 ? 12 : h24 > 12 ? h24 - 12 : h24;

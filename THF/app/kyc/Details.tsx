@@ -34,7 +34,32 @@ const SELECTED_SVG = `<svg width="24" height="24" viewBox="0 0 18 18" fill="none
 </svg>`;
 
 const GENDERS = ['Male', 'Female', 'Other'];
-const CITIES = ['Delhi', 'Noida', 'Ghaziabad', 'Faridabad', 'Gurugram'];
+const CITIES = [  "Delhi",
+  "Noida",
+  "Ghaziabad",
+  "Faridabad",
+  "Gurugram",
+  "Mumbai",
+  'Bengaluru',
+  'Chennai',
+  'Kolkata',
+  'Hyderabad',
+  'Pune',
+  'Jaipur',
+  'Lucknow',
+  'Chandigarh',
+  'Indore',
+  'Kochi',
+  'Ahmedabad',
+  'Bhubaneswar',
+  'Nagpur',
+  'Dehradun',
+  'Shimla',
+  'Jalandhar',
+  'Mysuru',
+  'Udaipur',
+  'Varanasi',
+  'Rajkot'];
 const ZONES = ['North zone', 'South zone', 'East zone', 'West zone'];
 
 const isValidEmail = (e: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);

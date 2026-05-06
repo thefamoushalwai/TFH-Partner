@@ -19,7 +19,32 @@ import { CustomText as Text } from '../../components/CustomText';
 
 const PROFILE_CACHE_KEY = 'user_profile_cache';
 const GENDERS = ['Male', 'Female', 'Other'];
-const CITIES = ['Delhi', 'Mumbai', 'Bangalore', 'Chennai', 'Hyderabad', 'Kolkata', 'Pune', 'Ahmedabad'];
+const CITIES = [  "Delhi",
+  "Noida",
+  "Ghaziabad",
+  "Faridabad",
+  "Gurugram",
+  "Mumbai",
+  'Bengaluru',
+  'Chennai',
+  'Kolkata',
+  'Hyderabad',
+  'Pune',
+  'Jaipur',
+  'Lucknow',
+  'Chandigarh',
+  'Indore',
+  'Kochi',
+  'Ahmedabad',
+  'Bhubaneswar',
+  'Nagpur',
+  'Dehradun',
+  'Shimla',
+  'Jalandhar',
+  'Mysuru',
+  'Udaipur',
+  'Varanasi',
+  'Rajkot'];
 
 // ── Editable field ──────────────────────────────────────────────────────────
 interface EditFieldProps {
@@ -136,6 +161,7 @@ export default function EditDetailsScreen() {
   const [gender, setGender] = useState('');
   const [city, setCity] = useState('');
   const [address, setAddress] = useState('');
+  const [pinCode, setPinCode] = useState('');
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -178,6 +204,7 @@ export default function EditDetailsScreen() {
     setGender(p.gender ? p.gender.charAt(0).toUpperCase() + p.gender.slice(1) : '');
     setCity(p.city ?? '');
     setAddress(p.address ?? '');
+    setPinCode(p.pinCode ?? '');
   }
 
   // ── Save to Firestore + cache ─────────────────────────────────────────
@@ -199,6 +226,7 @@ export default function EditDetailsScreen() {
         gender: gender.toLowerCase() as 'male' | 'female' | 'other',
         city,
         address: address.trim(),
+        pinCode: pinCode.trim(),
       };
 
       await updateUserProfile(uid, payload);
@@ -256,6 +284,8 @@ export default function EditDetailsScreen() {
           <DropdownField label={t('selectCityLabel')} value={city} options={CITIES} onSelect={setCity} disabled={saving} />
 
           <EditField label={t('addressLabel2')} value={address} onChangeText={setAddress} multiline disabled={saving} />
+
+          <EditField label={t('pinCodeLabel')} value={pinCode} onChangeText={setPinCode} keyboardType="phone-pad" disabled={saving} maxLength={6} />
 
           <View style={{ height: 16 }} />
         </ScrollView>
