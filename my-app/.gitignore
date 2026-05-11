@@ -39,3 +39,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Firebase service accounts
+tfh-partner-app-firebase-adminsdk-fbsvc-*.json

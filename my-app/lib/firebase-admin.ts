@@ -23,19 +23,31 @@ function ensureInitialized() {
         storageBucket: "tfh-partner-app.firebasestorage.app",
       });
     } else if (process.env.FIREBASE_PRIVATE_KEY && process.env.FIREBASE_CLIENT_EMAIL && process.env.FIREBASE_PROJECT_ID) {
+      // Clean up the private key. Vercel sometimes wraps env vars in quotes or escapes newlines.
+      let privateKey = process.env.FIREBASE_PRIVATE_KEY;
+      
+      // Remove surrounding quotes if present
+      if (privateKey.startsWith('"') && privateKey.endsWith('"')) {
+        privateKey = privateKey.slice(1, -1);
+      } else if (privateKey.startsWith("'") && privateKey.endsWith("'")) {
+        privateKey = privateKey.slice(1, -1);
+      }
+      
+      // Replace literal \n with actual newline character
+      privateKey = privateKey.replace(/\\n/g, '\n');
+
       admin.initializeApp({
         credential: admin.credential.cert({
           projectId: process.env.FIREBASE_PROJECT_ID,
           clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-          // Replace literal \n with actual newline character
-          privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+          privateKey: privateKey,
         }),
         storageBucket: "tfh-partner-app.firebasestorage.app",
       });
     } else {
       // Local development: use the service account JSON file in the project root
       // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const serviceAccount = require("../tfh-partner-app-firebase-adminsdk-fbsvc-238c3dff75.json");
+      const serviceAccount = require("../tfh-partner-app-firebase-adminsdk-fbsvc-f78730d175.json");
       admin.initializeApp({
         credential: admin.credential.cert(serviceAccount),
         storageBucket: "tfh-partner-app.firebasestorage.app",
